@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Лабораторная работа №2 — C++ & Win32 API</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --border-focus: #cbd5e1;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --accent-purple: #7c3aed;
+      --accent-purple-bg: #f5f3ff;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.6;
+      padding-bottom: 60px;
+    }
+
+    /* Верхняя плашка для телефона */
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      background-color: rgba(255, 255, 255, 0.95);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-content {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .badge-sub {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.3;
+    }
+
+    /* Навигационные чипсы */
+    .nav-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 10px 0 2px 0;
+      scrollbar-width: none;
+    }
+    .nav-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .nav-chip {
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: var(--bg-code);
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+
+    .nav-chip:active, .nav-chip.active {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    /* Основной контейнер */
+    main {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Секции */
+    .section-title-wrap {
+      margin-top: 8px;
+      margin-bottom: 4px;
+    }
+
+    .section-tag {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent-purple);
+      background: var(--accent-purple-bg);
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Карточки задач */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .card-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      background: #fafbfc;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.4;
+    }
+
+    .card-subtitle {
+      font-size: 12px;
+      color: var(--text-subtle);
+      margin-top: 2px;
+    }
+
+    .card-body {
+      padding: 16px;
+    }
+
+    /* Блоки условий и результатов */
+    .block-box {
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .block-box.task {
+      background: #f8fafc;
+      border-left: 4px solid var(--primary);
+    }
+
+    .block-box.result {
+      background: var(--accent-green-bg);
+      border-left: 4px solid var(--accent-green);
+      color: #065f46;
+    }
+
+    .block-box.warning {
+      background: var(--accent-amber-bg);
+      border-left: 4px solid var(--accent-amber);
+      color: #92400e;
+    }
+
+    .block-box-title {
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    /* Шаги решения */
+    .steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 14px 0;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 12px;
+      background: #fcfdfe;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+    }
+
+    .step-num {
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step-content {
+      font-size: 13.5px;
+      color: var(--text-main);
+    }
+
+    .step-content strong {
+      color: var(--text-main);
+      display: block;
+      margin-bottom: 2px;
+      font-size: 14px;
+    }
+
+    /* Таблицы */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin: 14px 0;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: var(--text-main);
+      font-weight: 700;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:nth-child(even) {
+      background-color: #fafbfc;
+    }
+
+    .highlight-cell {
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* Код */
+    pre {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: #1e293b;
+      margin: 12px 0;
+    }
+
+    code {
+      font-family: var(--font-mono);
+      background: var(--bg-code);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #0f172a;
+    }
+
+    pre code {
+      background: transparent;
+      padding: 0;
+    }
+
+    /* Файловая плашка */
+    .file-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 4px 10px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      text-decoration: none;
+    }
+
+    /* Вопросы гармошка / карточки */
+    .qa-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: #ffffff;
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .qa-header {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .qa-tag {
+      font-size: 11px;
+      font-weight: 800;
+      background: #0284c7;
+      color: #ffffff;
+      padding: 2px 7px;
+      border-radius: 6px;
+      min-width: 28px;
+      text-align: center;
+    }
+
+    .qa-question {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.4;
+    }
+
+    .qa-answer {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .qa-answer p {
+      margin-bottom: 8px;
+    }
+
+    .qa-answer ul {
+      margin-left: 20px;
+      margin-bottom: 8px;
+    }
+
+    .qa-answer li {
+      margin-bottom: 4px;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-subtle);
+      margin-top: 32px;
+      padding: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ХЕДЕР И БЫСТРАЯ НАВИГАЦИЯ ДЛЯ ТЕЛЕФОНА -->
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Лабораторная работа №2</span>
+      <h1>C++ & Win32: Разбор и решения</h1>
+      <div class="nav-scroll">
+        <a href="#sec-qa" class="nav-chip">6 Вопросов ОС</a>
+        <a href="#sec-hungarian" class="nav-chip">Префиксы типов</a>
+        <a href="#sec-sizeof" class="nav-chip">Модели памяти x86/x64</a>
+        <a href="#sec-trunc" class="nav-chip">Фикс усечения указателя</a>
+        <a href="#sec-handles" class="nav-chip">Хэндлы ядра</a>
+        <a href="#sec-photo1" class="nav-chip">Задачи: Фото 1</a>
+        <a href="#sec-photo2" class="nav-chip">Задачи: Фото 2</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- СЕКЦИЯ 1: ВОПРОСЫ НА КАРТИНКАХ (ФОТО 3) -->
+    <div id="sec-qa" class="section-title-wrap">
+      <span class="section-tag">Теория ОС и Win32</span>
+      <h2>Ответы на экзаменационные вопросы</h2>
+    </div>
+
+    <!-- Вопрос 1 -->
+    <div class="qa-card">
+      <div class="qa-header">
+        <span class="qa-tag">В1</span>
+        <div class="qa-question">Что произойдет, если запустить ReadFile асинхронно, но сразу же закрыть хэндл файла через CloseHandle, не дожидаясь окончания операции?</div>
+      </div>
+      <div class="qa-answer">
+        <div class="block-box warning">
+          <span class="block-box-title">Краткий итог:</span>
+          Память объекта файла сразу не освободится, но операция прервется/отменится, а передача буфера на стеке может вызвать <strong>порчу памяти (Memory Corruption)</strong> или падение приложения!
+        </div>
+        <p><strong>Подробная физика процесса:</strong></p>
+        <ul>
+          <li><strong>Создание IRP:</strong> При вызове <code>ReadFile</code> с флагом <code>OVERLAPPED</code> подсистема ввода-вывода Windows создает <em>I/O Request Packet (IRP)</em> и направляет его драйверу накопителя. Функция сразу возвращает управление со статусом <code>ERROR_IO_PENDING</code>.</li>
+          <li><strong>Счетчик ссылок ядра:</strong> Объект файла ядра (File Object) имеет счетчик ссылок (Reference Count). <code>CloseHandle</code> удаляет дескриптор из таблицы процесса и уменьшает счетчик. Однако драйвер, обрабатывающий запрос, держит свою ссылку на File Object, поэтому сам объект ядра останется жив до фактического завершения пакета.</li>
+          <li><strong>Отмена запроса:</strong> Закрытие дескриптора обычно отправляет драйверу команду очистки (<code>IRP_MJ_CLEANUP</code>), приводя к попытке отмены операции (I/O Cancellation).</li>
+          <li><strong>Критическая опасность для буфера:</strong> Если буфер данных (<code>lpBuffer</code>) или структура <code>OVERLAPPED</code> были объявлены локально в функции, поток выйдет из нее, стек будет перезаписан, а DMA-контроллер или драйвер затем попытается записать прочитанные с диска данные по старому адресу. Это классическое повреждение памяти.</li>
+          <li><strong>Потеря статуса:</strong> Функция <code>GetOverlappedResult</code> вернет ошибку <code>ERROR_INVALID_HANDLE</code>, так как дескриптор файла закрыт.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Вопрос 2 -->
+    <div class="qa-card">
+      <div class="qa-header">
+        <span class="qa-tag">В2</span>
+        <div class="qa-question">Почему для структуры OVERLAPPED критически важно обнулять её поля (например, через = {0} или memset) перед передачей в системный вызов?</div>
+      </div>
+      <div class="qa-answer">
+        <div class="block-box warning">
+          <span class="block-box-title">Главная причина:</span>
+          Неинициализированная структура содержит случайный стек-мусор, который ОС примет за файловое смещение и дескриптор события!
+        </div>
+        <p>Структура <code>OVERLAPPED</code> имеет вид:</p>
+        <pre><code>typedef struct _OVERLAPPED {
+    ULONG_PTR Internal;     // [OUT] Код возврата NTSTATUS
+    ULONG_PTR InternalHigh; // [OUT] Число переданных байт
+    union {
+        struct {
+            DWORD Offset;     // [IN] Младшие 32 бита файлового смещения
+            DWORD OffsetHigh; // [IN] Старшие 32 бита файлового смещения
+        };
+        PVOID Pointer;
+    };
+    HANDLE hEvent;          // [IN] Дескриптор события для ожидания
+} OVERLAPPED;</code></pre>
+        <ul>
+          <li><strong>Смещение (Offset / OffsetHigh):</strong> В асинхронных операциях ОС не использует неявный файловый указатель! Смещение, откуда читать или куда писать, считывается исключительно из полей <code>Offset</code>. Мусорные байты заставят ОС читать файл с случайного адреса (например, 3 терабайта), вернув <code>ERROR_HANDLE_EOF</code>.</li>
+          <li><strong>Хэндл события (hEvent):</strong> Драйвер проверяет <code>hEvent != NULL</code>. Если в поле окажется мусорное число, ядро воспримет его как валидный хэндл и попытается вызвать для него <code>SetEvent()</code>, что приведет к непредсказуемым ошибкам в работе других объектов.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Вопрос 3 -->
+    <div class="qa-card">
+      <div class="qa-header">
+        <span class="qa-tag">В3</span>
+        <div class="qa-question">Маленький файл (10 байт) сохранен в NTFS как резидентный. Будет ли при его чтении через ReadFile с флагом OVERLAPPED происходить реальная асинхронная задержка ввода-вывода?</div>
+      </div>
+      <div class="qa-answer">
+        <div class="block-box result">
+          <span class="block-box-title">Ответ:</span>
+          <strong>НЕТ, реальной асинхронной задержки не будет!</strong> Операция завершится синхронно и мгновенно.
+        </div>
+        <p><strong>Почему это происходит:</strong></p>
+        <ul>
+          <li>В файловой системе NTFS файлы размером до ~700–800 байт помещаются прямо внутрь 1-килобайтной записи таблицы <strong>MFT (Master File Table)</strong> в качестве резидентного атрибута <code>$DATA</code>.</li>
+          <li>При открытии файла запись MFT уже находится в оперативной памяти (в пуле ядра / системном кэше метаданных NTFS).</li>
+          <li>Поскольку данные уже лежат в ОЗУ, драйверу NTFS <em>не требуется</em> формировать запросы к физическому контроллеру диска, позиционировать головки или ждать завершения DMA.</li>
+          <li><code>ReadFile</code> мгновенно копирует 10 байт из памяти MFT в буфер вызывающей программы и возвращает <code>TRUE</code> (операция завершена синхронно без <code>ERROR_IO_PENDING</code>).</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Вопрос 4 -->
+    <div class="qa-card">
+      <div class="qa-header">
+        <span class="qa-tag">В4</span>
+        <div class="qa-question">Как можно открыть файлы с именем $MFT?</div>
+      </div>
+      <div class="qa-answer">
+        <p>Файл <code>$MFT</code> — это главная таблица метаданных тома NTFS. Стандартный путь <code>C:\$MFT</code> заблокирован драйвером файловой системы (возвращает <code>ERROR_ACCESS_DENIED</code>).</p>
+        <p><strong>Способы получить к нему доступ:</strong></p>
+        <ul>
+          <li><strong>Способ 1 (Низкоуровневый доступ к тому — Raw Volume Access):</strong><br>
+            С правами Администратора открыть том как блочное устройство:
+            <code>CreateFileW(L"\\\\.\\C:", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);</code><br>
+            Затем через функцию <code>DeviceIoControl()</code> с управляющими кодами:
+            <ul>
+              <li><code>FSCTL_GET_NTFS_FILE_RECORD</code> — чтение конкретных записей MFT (например, запись 0 — это $MFT).</li>
+              <li><code>FSCTL_GET_RETRIEVAL_POINTERS</code> — получение экстентов (LCN/VCN цепочек) размещения MFT на диске.</li>
+            </ul>
+          </li>
+          <li><strong>Способ 2 (Журнал изменений USN):</strong> Использование официального API <code>FSCTL_READ_USN_JOURNAL</code> для потокового чтения истории записей MFT.</li>
+          <li><strong>Способ 3 (Теневые копии тома VSS):</strong> Создание Volume Shadow Copy (теневой копии) через службу VSS. В теневой копии драйвер NTFS часто позволяет читать $MFT напрямую.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Вопрос 5 -->
+    <div class="qa-card">
+      <div class="qa-header">
+        <span class="qa-tag">В5</span>
+        <div class="qa-question">Почему в Windows файлы ИМЯ.txt и имя.txt — это один и тот же файл?</div>
+      </div>
+      <div class="qa-answer">
+        <div class="block-box task">
+          <span class="block-box-title">Архитектурный факт:</span>
+          Ядро Windows NT и файловая система NTFS <strong>поддерживают регистрозависимость</strong>, но подсистема <strong>Win32 API принудительно игнорирует регистр</strong>!
+        </div>
+        <ul>
+          <li><strong>Наследие MS-DOS:</strong> Исторически пользовательская среда DOS/Windows создавалась так, чтобы пользователи не путались из-за регистра букв при вводе команд.</li>
+          <li><strong>Win32 Subsystem:</strong> При вызове Win32 функций (<code>CreateFile</code>, <code>FindFirstFile</code>) библиотека <code>kernel32.dll</code> транслирует вызов в Native API ядру (<code>NtCreateFile</code>), передавая системный флаг <code>OBJ_CASE_INSENSITIVE</code>.</li>
+          <li><strong>Нормализация:</strong> Имена файлов приводятся к верхнему регистру по системной таблице Unicode Uppercase Table перед поиском записи в каталоге. При этом регистр сохраняется для отображения (Case-Preserving).</li>
+          <li><em>Примечание:</em> В Windows 10/11 для каталогов WSL чувствительность к регистру можно включить командой <code>fsutil.exe file setCaseSensitiveInfo &lt;папка&gt; enable</code>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Вопрос 6 -->
+    <div class="qa-card">
+      <div class="qa-header">
+        <span class="qa-tag">В6</span>
+        <div class="qa-question">Как ОС узнает свободен ли сектор на диске?</div>
+      </div>
+      <div class="qa-answer">
+        <p>Операционная система работает с диском на уровне <strong>кластеров</strong> (Cluster, обычно 4 КБ = 8 секторов по 512 байт).</p>
+        <ul>
+          <li><strong>Битовая карта тома в NTFS ($Bitmap):</strong> В корне любого раздела NTFS хранится специальный метафайл <code>$Bitmap</code> (запись 6 в MFT). Он представляет собой непрерывный битовый массив:
+            <ul>
+              <li><strong>Бит = 0:</strong> кластер свободен для записи;</li>
+              <li><strong>Бит = 1:</strong> кластер занят данными файла или метаданными.</li>
+            </ul>
+            При создании файла ОС сканирует <code>$Bitmap</code> в поисках нулевых бит, резервирует их (устанавливает в 1) и записывает данные.
+          </li>
+          <li><strong>В файловых системах FAT/FAT32:</strong> Статус определяется таблицей FAT: свободный кластер содержит число <code>0x00000000</code>.</li>
+          <li><strong>На уровне физического SSD (команда TRIM):</strong> Когда кластер освобождается, драйвер ОС отправляет контроллеру твердотельного накопителя команду <strong>TRIM</strong> (ATA) или <strong>Deallocate</strong> (NVMe), уведомляя, что физические ячейки памяти можно очистить.</li>
+        </ul>
+      </div>
+    </div>
+
+
+    <!-- СЕКЦИЯ 2: ЗАДАНИЯ ИЗ WORD ФАЙЛА -->
+    <div id="sec-hungarian" class="section-title-wrap">
+      <span class="section-tag">Задания из Word-файла</span>
+      <h2>Задание 1: Венгерская нотация и типы Win32</h2>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Расшифровка префиксов и реальных типов данных</div>
+        <div class="card-subtitle">LPCSTR pszName, LPVOID lpBuffer, HMODULE hMod, DWORD cbSize</div>
+      </div>
+      <div class="card-body">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Переменная</th>
+                <th>Префикс</th>
+                <th>Значение префикса</th>
+                <th>Тип Win32</th>
+                <th>Реальный базовый тип C/C++</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>pszName</code></td>
+                <td><code>psz</code></td>
+                <td>p = Pointer, sz = String Zero-terminated</td>
+                <td><code>LPCSTR</code></td>
+                <td><span class="highlight-cell">const char*</span> (ANSI строка с '\0')</td>
+              </tr>
+              <tr>
+                <td><code>lpBuffer</code></td>
+                <td><code>lp</code></td>
+                <td>Long Pointer (указатель)</td>
+                <td><code>LPVOID</code></td>
+                <td><span class="highlight-cell">void*</span> (универсальный указатель)</td>
+              </tr>
+              <tr>
+                <td><code>hMod</code></td>
+                <td><code>h</code></td>
+                <td>Handle (дескриптор объекта)</td>
+                <td><code>HMODULE</code></td>
+                <td><span class="highlight-cell">HINSTANCE -> HANDLE -> void*</span> (базовый адрес модуля)</td>
+              </tr>
+              <tr>
+                <td><code>cbSize</code></td>
+                <td><code>cb</code></td>
+                <td>Count of Bytes (число байт)</td>
+                <td><code>DWORD</code></td>
+                <td><span class="highlight-cell">unsigned long</span> (32-битное целое)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ЗАДАНИЕ 2 WORD: SIZEOF И МОДЕЛИ ПАМЯТИ -->
+    <div id="sec-sizeof" class="section-title-wrap">
+      <span class="section-tag">Задания из Word-файла</span>
+      <h2>Задание 2: Исследование моделей данных (sizeof)</h2>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <a class="file-badge" href="task7_win32_types_sizeof.cpp">Исходник: task7_win32_types_sizeof.cpp</a>
+        <div class="card-title">Сравнение размеров типов в x86 и x64</div>
+        <div class="card-subtitle">Модель ILP32 (x86) против LLP64 (x64 в Windows)</div>
+      </div>
+      <div class="card-body">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Тип данных</th>
+                <th>x86 (32-бит)</th>
+                <th>x64 (64-бит)</th>
+                <th>Изменяется?</th>
+                <th>Назначение</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>int</code></td>
+                <td>4 байта</td>
+                <td>4 байта</td>
+                <td>Нет</td>
+                <td>Базовое целое со знаком</td>
+              </tr>
+              <tr>
+                <td><code>long</code></td>
+                <td>4 байта</td>
+                <td>4 байта</td>
+                <td>Нет</td>
+                <td>В Windows LLP64 всегда 32 бита!</td>
+              </tr>
+              <tr>
+                <td><code>long long</code></td>
+                <td>8 байт</td>
+                <td>8 байт</td>
+                <td>Нет</td>
+                <td>64-битное целое число</td>
+              </tr>
+              <tr>
+                <td><code>void*</code></td>
+                <td>4 байта</td>
+                <td><span class="highlight-cell">8 байт</span></td>
+                <td><strong>ДА</strong></td>
+                <td>Указатель на память</td>
+              </tr>
+              <tr>
+                <td><code>DWORD</code></td>
+                <td>4 байта</td>
+                <td>4 байта</td>
+                <td>Нет</td>
+                <td>32-битное беззнаковое целое</td>
+              </tr>
+              <tr>
+                <td><code>LONG</code></td>
+                <td>4 байта</td>
+                <td>4 байта</td>
+                <td>Нет</td>
+                <td>32-битное знаковое целое</td>
+              </tr>
+              <tr>
+                <td><code>ULONG_PTR</code></td>
+                <td>4 байта</td>
+                <td><span class="highlight-cell">8 байт</span></td>
+                <td><strong>ДА</strong></td>
+                <td>Целое число точности указателя</td>
+              </tr>
+              <tr>
+                <td><code>DWORD_PTR</code></td>
+                <td>4 байта</td>
+                <td><span class="highlight-cell">8 байт</span></td>
+                <td><strong>ДА</strong></td>
+                <td>Беззнаковое целое точности указателя</td>
+              </tr>
+              <tr>
+                <td><code>INT_PTR</code></td>
+                <td>4 байта</td>
+                <td><span class="highlight-cell">8 байт</span></td>
+                <td><strong>ДА</strong></td>
+                <td>Знаковое целое точности указателя</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="block-box task">
+          <span class="block-box-title">Почему так устроен Windows:</span>
+          Windows на 64-битных процессорах использует модель <strong>LLP64</strong> (а не LP64 как в Linux). В ней <code>long</code> и <code>int</code> остаются 32-битными, чтобы сохранить работоспособность старого Win32 кода.
+          Для хранения адресов памяти в целых числах Microsoft ввела семейство полиморфных типов <code>*_PTR</code>, которые расширяются до 8 байт на x64.
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ЗАДАНИЕ 3 WORD: ФИКС УСЕЧЕНИЯ УКАЗАТЕЛЯ -->
+    <div id="sec-trunc" class="section-title-wrap">
+      <span class="section-tag">Задания из Word-файла</span>
+      <h2>Задание 3: Ошибка усечения указателя в x64</h2>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <a class="file-badge" href="task8_ptr_truncation_fix.cpp">Исходник: task8_ptr_truncation_fix.cpp</a>
+        <div class="card-title">Проблема каста (DWORD)lpContext и ее устранение</div>
+      </div>
+      <div class="card-body">
+        <div class="block-box warning">
+          <span class="block-box-title">Ошибка в оригинальном коде:</span>
+          <code>DWORD TRUNCATED_PTR = (DWORD)lpContext;</code><br>
+          В 64-битной сборке указатель <code>lpContext</code> имеет размер 8 байт, а <code>DWORD</code> — 4 байта. Происходит <em>Pointer Truncation</em>: старшие 32 бита адреса стираются. При обратном касте в указатель получается поврежденный адрес и происходит падение <code>0xC0000005 (Access Violation)</code>!
+        </div>
+
+        <div class="block-box result">
+          <span class="block-box-title">Исправленное решение:</span>
+          Использовать <code>DWORD_PTR</code> вместо <code>DWORD</code>!
+        </div>
+
+        <pre><code>// БЫЛО (с ошибкой в x64):
+void ProcessData(DWORD dataStylePointer) {
+    int* pNumber = (int*)dataStylePointer; // Авария в x64!
+    ...
+}
+
+// СТАЛО (исправлено для x86 и x64):
+void ProcessData(DWORD_PTR dataStylePointer) {
+    int* pNumber = reinterpret_cast&lt;int*&gt;(dataStylePointer);
+    if (pNumber != nullptr) {
+        std::cout &lt;&lt; "Value: " &lt;&lt; *pNumber &lt;&lt; std::endl;
+    }
+}
+
+int main() {
+    int criticalValue = 2026;
+    int* lpContext = &criticalValue;
+    // Безопасное приведение без потери битов:
+    DWORD_PTR SAFE_PTR = (DWORD_PTR)lpContext;
+    ProcessData(SAFE_PTR);
+    return 0;
+}</code></pre>
+      </div>
+    </div>
+
+
+    <!-- ЗАДАНИЕ 4 WORD: ОБЪЕКТЫ ЯДРА И ХЭНДЛЫ -->
+    <div id="sec-handles" class="section-title-wrap">
+      <span class="section-tag">Задания из Word-файла</span>
+      <h2>Задание 4: Хэндлы объектов ядра Windows</h2>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <a class="file-badge" href="task9_kernel_handles.cpp">Исходник: task9_kernel_handles.cpp</a>
+        <div class="card-title">CreateFile, CreateEvent, GetCurrentProcess</div>
+      </div>
+      <div class="card-body">
+        <div class="steps-list">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <strong>Почему хэндлы кратны 4 и малы?</strong>
+              Хэндл — это не адрес в памяти ядра, а индекс (смещение) в таблице дескрипторов процесса (Process Handle Table). Записи идут с шагом, кратным 4, а младшие 2 бита зарезервированы ядром под служебные флаги (например, запрет наследования). Поэтому значения равны 4, 8, 12, 16...
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <strong>Почему GetCurrentProcess возвращает -1 (0xFFFFFFFF)?</strong>
+              Это константа-маркер (псевдо-дескриптор / pseudo-handle). Она не расходует запись в таблице дескрипторов. Ядро, видя -1, сразу обращается к текущему процессу. Его не нужно закрывать через <code>CloseHandle()</code>!
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- СЕКЦИЯ 3: ЗАДАЧИ С ФОТО 1 -->
+    <div id="sec-photo1" class="section-title-wrap">
+      <span class="section-tag">Задачи с фото (Фото 1)</span>
+      <h2>Задачи на указатели и память строк</h2>
+    </div>
+
+    <!-- Фото 1 Задача 1 -->
+    <div class="card">
+      <div class="card-header">
+        <a class="file-badge" href="task1_pointers.cpp">Исходник: task1_pointers.cpp</a>
+        <div class="card-title">Задача 1: Базовые операции с указателями</div>
+      </div>
+      <div class="card-body">
+        <div class="block-box task">
+          <span class="block-box-title">Код задачи:</span>
+          <code>int a = 10; int b = 20; int* p = &a; *p = 30; p = &b; *p = 40; std::cout &lt;&lt; a &lt;&lt; " " &lt;&lt; b;</code>
+        </div>
+        <div class="block-box result">
+          <span class="block-box-title">Результат вывода программы:</span>
+          <strong>30 40</strong>
+        </div>
+        <div class="steps-list">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-content"><strong>a = 10, b = 20</strong> — в стеке созданы две переменные.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-content"><strong>int* p = &a;</strong> — указатель p теперь хранит адрес переменной a.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div class="step-content"><strong>*p = 30;</strong> — разыменовываем p и записываем 30 в ячейку a. Теперь a = 30.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">4</div>
+            <div class="step-content"><strong>p = &b;</strong> — перенаправляем указатель p на адрес переменной b.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">5</div>
+            <div class="step-content"><strong>*p = 40;</strong> — разыменовываем p и записываем 40 в ячейку b. Теперь b = 40.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">6</div>
+            <div class="step-content"><strong>cout &lt;&lt; a &lt;&lt; " " &lt;&lt; b;</strong> — печатает "30 40".</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Фото 1 Задача 2 -->
+    <div class="card">
+      <div class="card-header">
+        <a class="file-badge" href="task2_strings_memory.cpp">Исходник: task2_strings_memory.cpp</a>
+        <div class="card-title">Задача 2: Строки и массивы в памяти</div>
+      </div>
+      <div class="card-body">
+        <div class="block-box task">
+          <span class="block-box-title">Код задачи:</span>
+          <code>char str[] = "Hello"; const char* p = "Hello"; std::cout &lt;&lt; sizeof(str) &lt;&lt; " " &lt;&lt; sizeof(p);</code>
+        </div>
+        <div class="block-box result">
+          <span class="block-box-title">Результат вывода в 64-битной системе:</span>
+          <strong>6 8</strong> (в 32-битной было бы 6 4)
+        </div>
+        <div class="steps-list">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <strong>sizeof(str) == 6 байт</strong>
+              'str' — локальный массив на стеке. Слово "Hello" содержит 5 букв + 1 нуль-терминатор <code>'\0'</code>. Размер: 5 + 1 = 6 байт.
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <strong>sizeof(p) == 8 байт</strong>
+              'p' — переменная-указатель. Оператор <code>sizeof(p)</code> вычисляет размер самого указателя, а не строки! В x64 любой адрес занимает 8 байт.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- СЕКЦИЯ 4: ЗАДАЧИ С ФОТО 2 -->
+    <div id="sec-photo2" class="section-title-wrap">
+      <span class="section-tag">Задачи с фото (Фото 2)</span>
+      <h2>Задачи «Два из четырех наизусть»</h2>
+    </div>
+
+    <!-- Фото 2 Задача 1 -->
+    <div class="card">
+      <div class="card-header">
+        <a class="file-badge" href="task3_vars_discount.cpp">Исходник: task3_vars_discount.cpp</a>
+        <div class="card-title">Задача 1: Переменные, сдача и расчет скидки</div>
+      </div>
+      <div class="card-body">
+        <p>Даны <code>price</code> (цена в рублях) и <code>money</code> (купюра). Посчитать сдачу и цену со скидкой <code>discount = 0.15</code>.</p>
+        <pre><code>int price = 350;
+int money = 500;
+int change = money - price; // Сдача: 150 руб.
+
+double discount = 0.15; // Скидка 15%
+double discountedPrice = price * (1.0 - discount); // 297.50 руб.</code></pre>
+      </div>
+    </div>
+
+    <!-- Фото 2 Задача 2 -->
+    <div class="card">
+      <div class="card-header">
+        <a class="file-badge" href="task4_type_casting.cpp">Исходник: task4_type_casting.cpp</a>
+        <div class="card-title">Задача 2: Преобразование типов (явное и неявное)</div>
+      </div>
+      <div class="card-body">
+        <p>Даны <code>int a = 7; int b = 3;</code>. Вычислить <code>a / b</code>, затем с приведением к <code>double</code> и округлением до 3 знаков.</p>
+        <pre><code>// 1. Целочисленное деление:
+int res1 = a / b; // = 2 (дробная часть отброшена)
+
+// 2. Явное приведение типов:
+double res2 = static_cast&lt;double&gt;(a) / b; // = 2.33333333...
+
+// 3. Округление до 3 знаков:
+std::cout &lt;&lt; std::fixed &lt;&lt; std::setprecision(3) &lt;&lt; res2; // 2.333</code></pre>
+      </div>
+    </div>
+
+    <!-- Фото 2 Задача 3 -->
+    <div class="card">
+      <div class="card-header">
+        <a class="file-badge" href="task5_char_reading.cpp">Исходник: task5_char_reading.cpp</a>
+        <div class="card-title">Задача 3: Посимвольное чтение через getchar()</div>
+      </div>
+      <div class="card-body">
+        <p>Считывать символы функцией <code>getchar()</code> до переноса строки <code>'\n'</code> и подсчитать количество введенных пробелов.</p>
+        <pre><code>int ch;
+int spaceCount = 0;
+
+while ((ch = getchar()) != '\n' && ch != EOF) {
+    if (ch == ' ') {
+        spaceCount++;
+    }
+}
+std::cout &lt;&lt; "Пробелов введено: " &lt;&lt; spaceCount;</code></pre>
+      </div>
+    </div>
+
+    <!-- Фото 2 Задача 4 -->
+    <div class="card">
+      <div class="card-header">
+        <a class="file-badge" href="task6_num_to_string.cpp">Исходник: task6_num_to_string.cpp</a>
+        <div class="card-title">Задача 4: Преобразование числа в строку (sprintf / itoa)</div>
+      </div>
+      <div class="card-body">
+        <p>Строка <code>"Клиент №"</code>, число <code>int ID = 245;</code>. Перевести число в массив через <code>sprintf</code> или <code>itoa</code> и склеить в <code>"Клиент №245"</code>.</p>
+        <pre><code>char clientStr[128] = "Клиент №";
+char idStr[32];
+int ID = 245;
+
+// Перевод числа в строку:
+sprintf(idStr, "%d", ID);
+
+// Склеивание строк:
+strcat(clientStr, idStr);
+
+// Итог: "Клиент №245"</code></pre>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    Лабораторная работа №2 по C++ & Win32 API • 2026
+  </footer>
+
+</body>
+</html>

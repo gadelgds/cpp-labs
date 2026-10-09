@@ -1,0 +1,25 @@
+# Исполняемые файлы и объектные файлы
+*.exe
+*.obj
+*.o
+*.pdb
+*.ilk
+*.idb
+*.exp
+*.lib
+*.dll
+
+# Временные файлы
+*.tmp
+*.log
+
+# Папки сред разработки
+.vs/
+.vscode/
+.idea/
+x64/
+x86/
+Debug/
+Release/
+bin/
+obj/
