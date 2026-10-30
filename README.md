@@ -9,33 +9,49 @@ c++/
 ├── .gitignore
 ├── README.md                            # Главное оглавление репозитория
 │
-├── lab2c++/                             # Лабораторная работа №2 и ДЗ
+├── lab2c++/                             # Лабораторная работа №2 и домашние задания
 │   ├── index.html                       # Мобильная веб-шпаргалка
-│   ├── README.md                        # Навигация по работе №2
+│   ├── README.md                        # Навигация и разбор лабораторной работы №2
 │   ├── 1_lab2_word/                     # Задания из Word: префиксы, sizeof x86/x64, усечение указателя, хэндлы
 │   ├── 2_lecture_hw/                    # ДЗ с лекции: указатели, память строк, 6 вопросов по ОС
 │   └── 3_practice_hw/                   # ДЗ на практику: переменные, приведение типов, getchar, sprintf
 │
-└── lab3c++/                             # Лабораторная работа №3 и продвинутые задания
+├── lab3c++/                             # Лабораторная работа №3
+│   ├── index.html                       # Мобильная веб-шпаргалка с кнопками копирования и построчным разбором
+│   ├── README.md                        # Подробный методический разбор лабораторной работы №3
+│   ├── task1_async_copy_overlapped.cpp  # Задача 1: Асинхронное копирование 1 ГБ файла с OVERLAPPED и hEvent
+│   ├── task2_mft_resident_theory.cpp    # Задача 2: Чтение MFT, резидентные и нерезидентные атрибуты $DATA
+│   ├── task3_mft_physical_size.cpp      # Задача 3: Реальный размер файлов на диске вне MFT (200B vs 2000B)
+│   └── task4_sync_blocking_demo.cpp     # Задача 4: Эффект блокировки потока при синхронном вызове ReadFile
+│
+├── lab4c++/                             # Лабораторная работа №4
+│   ├── index.html                       # Мобильная веб-шпаргалка с кнопками копирования и построчным разбором
+│   ├── README.md                        # Подробный методический разбор лабораторной работы №4
+│   ├── task1_explicit_casting.cpp       # Задача 1 (Наизусть): static_cast для long/int и double/float
+│   ├── task2_void_pointers_x64.cpp      # Задача 2 (Самостоятельно): Универсальные указатели void* в x64
+│   └── task3_memory_mapped_offset.cpp   # Задача 3 (Самостоятельно): MapViewOfFile со смещением (Allocation Granularity)
+│
+└── lab5c++/                             # Лабораторная работа №5
     ├── index.html                       # Мобильная веб-шпаргалка с кнопками копирования и построчным разбором
-    ├── README.md                        # Навигация по работе №3
-    ├── 1_async_and_mft/                 # Асинхронное копирование 1 ГБ, MFT резидентность, размер вне MFT, блокировка
-    ├── 2_types_and_pointers/            # static_cast (long/double), указатели void* в x64, MapViewOfFile смещение
-    └── 3_advanced_io_memory/            # Небуферизированный I/O (код 87), симуляция СУБД (TLB Flush), VirtualAlloc
+    ├── README.md                        # Подробный методический разбор лабораторной работы №5
+    ├── task1_no_buffering_bench.cpp     # Задача №1: Прямой I/O (NO_INTERMEDIATE_BUFFERING), ошибка 87, VirtualAlloc
+    ├── task2_dbms_sim_filemapping_tlb.cpp # Задача №2: Симуляция СУБД (10 000 операций), ReadFile vs сброс TLB
+    └── task3_direct_kernel_memory.cpp   # Задача №3: Прямое выделение памяти у ядра Windows через VirtualAlloc
 ```
 
-## Лабораторные работы в репозитории
+## Описание лабораторных работ
 
 1. [**Лабораторная работа №2**](lab2c++/) — Типы данных Win32, модели памяти x86/x64, указатели, строки, объекты ядра Windows, асинхронный ввод-вывод и устройство NTFS.
-2. [**Лабораторная работа №3**](lab3c++/) — Асинхронный ввод-вывод (`FILE_FLAG_OVERLAPPED`, `hEvent`), структура MFT и резидентные атрибуты, физический размер файлов, небуферизированный ввод-вывод (`FILE_FLAG_NO_INTERMEDIATE_BUFFERING`), симуляция СУБД и накладные расходы сброса TLB, прямое управление страницами виртуальной памяти через `VirtualAlloc` и `VirtualFree`.
+2. [**Лабораторная работа №3**](lab3c++/) — Асинхронное копирование файлов большого объема (`FILE_FLAG_OVERLAPPED`, `hEvent`), структура MFT и резидентные атрибуты, физический размер на диске вне MFT (`GetCompressedFileSizeW`), эффект блокировки потока при синхронном вводе-выводе.
+3. [**Лабораторная работа №4**](lab4c++/) — Явное статическое приведение типов (`static_cast`), работа с универсальными указателями `void*` в 64-битной архитектуре, проецирование среза файла через `MapViewOfFile` со смещением, строго кратным гранулярности распределения памяти (`Allocation Granularity`).
+4. [**Лабораторная работа №5**](lab5c++/) — Небуферизированный прямой ввод-вывод (`FILE_FLAG_NO_INTERMEDIATE_BUFFERING`), аппаратная ошибка 87 (`ERROR_INVALID_PARAMETER`), выравнивание через `VirtualAlloc`, симуляция СУБД (10 000 случайных операций) и накладные расходы сброса ассоциативного буфера трансляции адресов процессора (**TLB Flush**), прямое выделение и освобождение страниц памяти у ядра ОС Windows (`VirtualAlloc` / `VirtualFree`).
 
-## Сборка и запуск программ
-* Исходный код написан на C++ с поддержкой Windows API (`<windows.h>`).
-* Компилируется в Microsoft Visual Studio (MSVC) или MinGW-w64 (g++):
-  ```bash
-  # Сборка через MSVC:
-  cl /EHsc /utf-8 task1_async_copy_overlapped.cpp
-  
-  # Сборка через MinGW g++:
-  g++ task1_async_copy_overlapped.cpp -o task1_async_copy_overlapped.exe
-  ```
+## Сборка и компиляция
+Каждый исходный файл компилируется в Microsoft Visual Studio (MSVC) или MinGW-w64 (g++):
+```bash
+# Пример компиляции в MSVC:
+cl /EHsc /utf-8 task1_async_copy_overlapped.cpp
+
+# Пример компиляции в MinGW g++:
+g++ task1_async_copy_overlapped.cpp -o task1_async_copy_overlapped.exe
+```

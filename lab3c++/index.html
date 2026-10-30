@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-  <title>Лабораторная работа №3 — Асинхронный ввод-вывод, MFT и память ядра Win32</title>
+  <title>Лабораторная работа №3 — Асинхронный I/O и MFT в Windows</title>
   <style>
     :root {
       --bg-page: #f8fafc;
@@ -20,8 +20,6 @@
       --accent-green-bg: #ecfdf5;
       --accent-amber: #d97706;
       --accent-amber-bg: #fffbeb;
-      --accent-purple: #7c3aed;
-      --accent-purple-bg: #f5f3ff;
       --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
       --radius-sm: 8px;
       --radius-md: 12px;
@@ -29,23 +27,9 @@
       --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-page); color: var(--text-main); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; padding-bottom: 80px; }
 
-    body {
-      background-color: var(--bg-page);
-      color: var(--text-main);
-      font-family: var(--font-sans);
-      font-size: 15px;
-      line-height: 1.6;
-      padding-bottom: 80px;
-    }
-
-    /* Верхняя панель (Sticky для телефона) */
     header {
       background: rgba(255, 255, 255, 0.96);
       border-bottom: 1px solid var(--border);
@@ -56,325 +40,77 @@
       padding: 12px 16px;
       box-shadow: var(--shadow-sm);
     }
+    .header-content { max-width: 760px; margin: 0 auto; }
+    .badge-sub { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    h1 { font-size: 19px; font-weight: 800; color: var(--text-main); line-height: 1.25; }
 
-    .header-content {
-      max-width: 760px;
-      margin: 0 auto;
-    }
+    .nav-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px 0; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+    .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
 
-    .badge-sub {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--primary);
-      background: var(--primary-light);
-      padding: 3px 8px;
-      border-radius: 6px;
-      margin-bottom: 4px;
-    }
+    main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+    .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .task-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .task-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .task-path { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-subtle); background: var(--bg-code); padding: 3px 7px; border-radius: 4px; }
+    .task-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
 
-    h1 {
-      font-size: 19px;
-      font-weight: 800;
-      color: var(--text-main);
-      line-height: 1.25;
-    }
+    .code-container { position: relative; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-code); overflow: hidden; }
+    .code-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: #e2e8f0; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); }
+    .copy-btn { background: #ffffff; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: var(--text-main); transition: all 0.2s; }
+    .copy-btn:hover { background: var(--primary); color: #ffffff; border-color: var(--primary); }
+    .copy-btn.copied { background: var(--accent-green); color: #ffffff; border-color: var(--accent-green); }
 
-    /* Навигационные чипсы */
-    .nav-scroll {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding: 10px 0 2px 0;
-      scrollbar-width: none;
-    }
-    .nav-scroll::-webkit-scrollbar {
-      display: none;
-    }
+    pre { padding: 12px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.45; color: #0f172a; }
 
-    .nav-chip {
-      white-space: nowrap;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 6px 12px;
-      border-radius: 20px;
-      background: var(--bg-code);
-      color: var(--text-muted);
-      text-decoration: none;
-      transition: all 0.2s;
-    }
+    .explanation-box { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .explanation-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); }
+    .line-breakdown { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .line-item { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 13px; }
+    .line-code { font-family: var(--font-mono); font-weight: 700; color: #1e293b; margin-bottom: 3px; display: block; }
+    .line-desc { color: var(--text-muted); line-height: 1.45; }
 
-    .nav-chip:hover, .nav-chip:active {
-      background: var(--primary);
-      color: #ffffff;
-    }
+    .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
+    .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
 
-    /* Основной контейнер */
-    main {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 28px;
-    }
-
-    .section-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .section-header {
-      border-bottom: 2px solid var(--border);
-      padding-bottom: 8px;
-      margin-top: 8px;
-    }
-
-    .section-tag {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      padding: 2px 8px;
-      border-radius: 4px;
-      display: inline-block;
-      margin-bottom: 4px;
-    }
-
-    .tag-sec1 { background: var(--primary-light); color: var(--primary); }
-    .tag-sec2 { background: var(--accent-purple-bg); color: var(--accent-purple); }
-    .tag-sec3 { background: var(--accent-green-bg); color: var(--accent-green); }
-
-    h2 {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--text-main);
-    }
-
-    /* Карточки задач */
-    .task-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-sm);
-      overflow: hidden;
-    }
-
-    .task-header {
-      padding: 12px 16px;
-      background: #fafbfc;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .task-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .task-path {
-      font-size: 11.5px;
-      font-family: var(--font-mono);
-      color: var(--text-subtle);
-      background: var(--bg-code);
-      padding: 3px 7px;
-      border-radius: 4px;
-    }
-
-    .task-body {
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    /* Контейнер кода */
-    .code-container {
-      position: relative;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--bg-code);
-      overflow: hidden;
-    }
-
-    .code-top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 6px 12px;
-      background: #e2e8f0;
-      border-bottom: 1px solid var(--border);
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: var(--text-subtle);
-    }
-
-    .copy-btn {
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 11.5px;
-      font-weight: 600;
-      cursor: pointer;
-      color: var(--text-main);
-      transition: all 0.2s;
-    }
-
-    .copy-btn:hover {
-      background: var(--primary);
-      color: #ffffff;
-      border-color: var(--primary);
-    }
-
-    .copy-btn.copied {
-      background: var(--accent-green);
-      color: #ffffff;
-      border-color: var(--accent-green);
-    }
-
-    pre {
-      padding: 12px;
-      overflow-x: auto;
-      font-family: var(--font-mono);
-      font-size: 12.5px;
-      line-height: 1.45;
-      color: #0f172a;
-    }
-
-    code {
-      font-family: var(--font-mono);
-    }
-
-    /* Блок подробных объяснений */
-    .explanation-box {
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      border-left: 4px solid var(--primary);
-      border-radius: var(--radius-sm);
-      padding: 12px 14px;
-      font-size: 13.5px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .explanation-title {
-      font-weight: 800;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--primary);
-      margin-bottom: 2px;
-    }
-
-    .line-breakdown {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    .line-item {
-      background: #f8fafc;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 8px 10px;
-      font-size: 13px;
-    }
-
-    .line-code {
-      font-family: var(--font-mono);
-      font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 3px;
-      display: block;
-    }
-
-    .line-desc {
-      color: var(--text-muted);
-      line-height: 1.45;
-    }
-
-    /* Выделения */
-    .callout-warn {
-      background: var(--accent-amber-bg);
-      border-left: 3px solid var(--accent-amber);
-      padding: 8px 12px;
-      border-radius: 4px;
-      font-size: 13px;
-      color: #92400e;
-    }
-
-    .callout-success {
-      background: var(--accent-green-bg);
-      border-left: 3px solid var(--accent-green);
-      padding: 8px 12px;
-      border-radius: 4px;
-      font-size: 13px;
-      color: #065f46;
-    }
-
-    footer {
-      text-align: center;
-      font-size: 12px;
-      color: var(--text-subtle);
-      margin-top: 30px;
-    }
+    footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
   </style>
 </head>
 <body>
 
-  <!-- ШАПКА ДЛЯ ТЕЛЕФОНА -->
   <header>
     <div class="header-content">
       <span class="badge-sub">Лабораторная работа №3</span>
-      <h1>C++ Win32: Асинхронный I/O, MFT и Память Ядра</h1>
+      <h1>Асинхронный I/O и структура NTFS MFT</h1>
       <div class="nav-scroll">
-        <a href="#sec-async-mft" class="nav-chip">1. Асинхронный I/O & MFT</a>
-        <a href="#sec-types-ptr" class="nav-chip">2. Типы & void* & Окно файла</a>
-        <a href="#sec-adv-io" class="nav-chip">3. Прямой ввод-вывод & TLB & Ядро</a>
+        <a href="#task1" class="nav-chip">1. Копирование 1 ГБ</a>
+        <a href="#task2" class="nav-chip">2. Теория MFT</a>
+        <a href="#task3" class="nav-chip">3. Физический размер</a>
+        <a href="#task4" class="nav-chip">4. Блокировка потока</a>
       </div>
     </div>
   </header>
 
   <main>
 
-    <!-- ======================================================== -->
-    <!-- РАЗДЕЛ 1: АСИНХРОННЫЙ ВВОД-ВЫВОД И MFT                   -->
-    <!-- ======================================================== -->
-    <section id="sec-async-mft" class="section-wrap">
-      <div class="section-header">
-        <span class="section-tag tag-sec1">Раздел 1: 1_async_and_mft/</span>
-        <h2>1. Асинхронный ввод-вывод и файловая система NTFS (MFT)</h2>
+    <!-- Задача 1 -->
+    <div id="task1" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задача 1: Асинхронное копирование 1 ГБ файла (OVERLAPPED + hEvent)</div>
+        <span class="task-path">task1_async_copy_overlapped.cpp</span>
       </div>
-
-      <!-- Задача 1: Копирование 1 ГБ -->
-      <div class="task-card">
-        <div class="task-header">
-          <div class="task-title">Задача 1: Асинхронное копирование 1 ГБ файла (OVERLAPPED + hEvent)</div>
-          <span class="task-path">task1_async_copy_overlapped.cpp</span>
-        </div>
-        <div class="task-body">
-          <div class="code-container">
-            <div class="code-top-bar">
-              <span>task1_async_copy_overlapped.cpp</span>
-              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
-            </div>
-            <pre><code>#include &lt;windows.h&gt;
+      <div class="task-body">
+        <div class="code-container">
+          <div class="code-top-bar">
+            <span>task1_async_copy_overlapped.cpp</span>
+            <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+          </div>
+          <pre><code>#include &lt;windows.h&gt;
 #include &lt;iostream&gt;
 #include &lt;iomanip&gt;
 
-const DWORD CHUNK_SIZE = 64 * 1024; // 64 КБ на один блок передачи
+const DWORD CHUNK_SIZE = 64 * 1024; // 64 КБ
 
 bool CreateDummyFile(const wchar_t* path, DWORD sizeMB) {
     HANDLE hFile = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -395,7 +131,7 @@ int main() {
     const wchar_t* srcPath = L"source_large.dat";
     const wchar_t* dstPath = L"destination_copy.dat";
 
-    CreateDummyFile(srcPath, 1024); // Создание 1 ГБ тестового файла
+    CreateDummyFile(srcPath, 1024);
 
     HANDLE hSrc = CreateFileW(srcPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
     HANDLE hDst = CreateFileW(dstPath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_FLAG_OVERLAPPED, NULL);
@@ -444,64 +180,64 @@ int main() {
     delete[] buffer;
     return 0;
 }</code></pre>
-          </div>
+        </div>
 
-          <div class="explanation-box">
-            <span class="explanation-title">Подробный построчный разбор команд</span>
-            <div class="line-breakdown">
-              <div class="line-item">
-                <span class="line-code">FILE_FLAG_OVERLAPPED</span>
-                <span class="line-desc">Системный флаг в <code>CreateFileW</code>. Указывает ядру, что операции I/O должны выполняться асинхронно контроллером диска в фоновом режиме через DMA, не усыпляя вызывающий поток.</span>
-              </div>
-              <div class="line-item">
-                <span class="line-code">ovRead.Offset = (DWORD)(currentOffset & 0xFFFFFFFF);</span>
-                <span class="line-desc">В асинхронном режиме скрытый файловый указатель не обновляется. Смещение обязано передаваться вручную для каждого 64 КБ блока через поля <code>Offset</code> и <code>OffsetHigh</code>.</span>
-              </div>
-              <div class="line-item">
-                <span class="line-code">WaitForSingleObject(hReadEvent, INFINITE);</span>
-                <span class="line-desc">Поток уступает управление планировщику Windows до момента, пока диск не сгенерирует аппаратное прерывание и драйвер не переведет событие <code>hEvent</code> в сигнальное состояние.</span>
-              </div>
-              <div class="line-item">
-                <span class="line-code">GetOverlappedResult(hSrc, &ovRead, &bytesTransferred, FALSE);</span>
-                <span class="line-desc">Получает точное число переданных байт от ядра и проверяет статус завершения фонового пакета ввода-вывода.</span>
-              </div>
+        <div class="explanation-box">
+          <span class="explanation-title">Подробный построчный разбор команд</span>
+          <div class="line-breakdown">
+            <div class="line-item">
+              <span class="line-code">FILE_FLAG_OVERLAPPED</span>
+              <span class="line-desc">Включает асинхронный (неблокирующий) режим работы ядра Windows. Чтение и запись выполняются контроллером диска в фоновом режиме по DMA.</span>
+            </div>
+            <div class="line-item">
+              <span class="line-code">ovRead.Offset = (DWORD)(currentOffset & 0xFFFFFFFF);</span>
+              <span class="line-desc">Поскольку системный скрытый указатель в асинхронном режиме не используется, точное 64-битное смещение блока обязано явно задаваться перед каждым пакетом.</span>
+            </div>
+            <div class="line-item">
+              <span class="line-code">WaitForSingleObject(hReadEvent, INFINITE);</span>
+              <span class="line-desc">Переводит вызывающий поток в режим ожидания аппаратного прерывания (CPU = 0%), пока контроллер накопителя не завершит считывание порции в память.</span>
+            </div>
+            <div class="line-item">
+              <span class="line-code">GetOverlappedResult(hSrc, &ovRead, &bytesTransferred, FALSE);</span>
+              <span class="line-desc">Запрашивает у ядра фактический результат операции и точное количество переданных байт (<code>bytesTransferred</code>).</span>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Задача 2: Теория MFT -->
-      <div class="task-card">
-        <div class="task-header">
-          <div class="task-title">Задача 2: Чтение MFT (Резидентные vs Нерезидентные атрибуты)</div>
-          <span class="task-path">task2_mft_resident_theory.cpp</span>
+    <!-- Задача 2 -->
+    <div id="task2" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задача 2: Чтение MFT (Резидентность vs Нерезидентность)</div>
+        <span class="task-path">task2_mft_resident_theory.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="callout-success">
+          <strong>Архитектура MFT NTFS:</strong> Запись MFT имеет фиксированный размер 1024 байта (1 КБ). Если файл меньше ~700 байт (например 200 байт), его данные хранятся прямо внутри записи MFT (резидентный). Если файл больше (2000 байт или 500 КБ), он выносится в кластеры на диске (нерезидентный), а MFT хранит цепочки адресов (Data Runs).
         </div>
-        <div class="task-body">
-          <div class="callout-success">
-            <strong>Правило MFT NTFS:</strong> Запись MFT имеет фиксированный размер 1024 байта (1 КБ). Если файл меньше ~700 байт (например 200 байт), его данные хранятся прямо внутри записи MFT (резидентный). Если файл больше (2000 байт или 500 КБ), он выносится в кластеры на диске (нерезидентный), а MFT хранит цепочки адресов (Data Runs / Extents).
-          </div>
-          <div class="explanation-box">
-            <span class="explanation-title">Разбор системного вызова FSCTL_GET_RETRIEVAL_POINTERS</span>
-            <p>1. <code>DeviceIoControl(hFile, FSCTL_GET_RETRIEVAL_POINTERS, ...)</code> запрашивает карту физических кластеров файла на диске.</p>
-            <p>2. Для резидентного файла вызов возвращает ошибку <code>ERROR_HANDLE_EOF (38)</code> — файл не имеет отдельных кластеров на томе, так как лежит в MFT.</p>
-            <p>3. Для нерезидентного файла возвращается структура <code>RETRIEVAL_POINTERS_BUFFER</code> со списком номеров логических кластеров (LCN).</p>
-          </div>
+        <div class="explanation-box">
+          <span class="explanation-title">Разбор системного вызова FSCTL_GET_RETRIEVAL_POINTERS</span>
+          <p>1. <code>DeviceIoControl(hFile, FSCTL_GET_RETRIEVAL_POINTERS, ...)</code> запрашивает физическую карту кластеров файла на накопителе.</p>
+          <p>2. Для резидентного файла вызов возвращает ошибку <code>ERROR_HANDLE_EOF (код 38)</code> — файл целиком лежит в MFT и не имеет кластеров на томе.</p>
+          <p>3. Для нерезидентного файла возвращается структура со списком экстентов и номеров физических кластеров (LCN).</p>
         </div>
       </div>
+    </div>
 
-      <!-- Задача 3: Исследование размера вне MFT -->
-      <div class="task-card">
-        <div class="task-header">
-          <div class="task-title">Задача 3: Реальный физический размер файлов вне таблицы MFT</div>
-          <span class="task-path">task3_mft_physical_size.cpp</span>
-        </div>
-        <div class="task-body">
-          <div class="code-container">
-            <div class="code-top-bar">
-              <span>task3_mft_physical_size.cpp</span>
-              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
-            </div>
-            <pre><code>#include &lt;windows.h&gt;
+    <!-- Задача 3 -->
+    <div id="task3" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задача 3: Реальный физический размер файлов вне таблицы MFT</div>
+        <span class="task-path">task3_mft_physical_size.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="code-container">
+          <div class="code-top-bar">
+            <span>task3_mft_physical_size.cpp</span>
+            <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+          </div>
+          <pre><code>#include &lt;windows.h&gt;
 #include &lt;iostream&gt;
 
 void investigateFile(const wchar_t* fileName, DWORD bytesToWrite) {
@@ -530,261 +266,40 @@ int main() {
     investigateFile(L"large_file.txt", 2000); // Кейс 2: 2000 байт
     return 0;
 }</code></pre>
-          </div>
+        </div>
 
-          <div class="explanation-box">
-            <span class="explanation-title">Построчный разбор результатов</span>
-            <div class="line-breakdown">
-              <div class="line-item">
-                <span class="line-code">GetCompressedFileSizeW(fileName, &highSize);</span>
-                <span class="line-desc">Опрашивает драйвер файловой системы о количестве физических байт, выделенных на диске под файл.</span>
-              </div>
-              <div class="line-item">
-                <span class="line-code">Кейс 1 (200 байт): Занято на диске = 0 байт!</span>
-                <span class="line-desc">Файл целиком размещен в 1024-байтной записи MFT. Вне таблицы MFT файловая система не выделила ни одного сектора.</span>
-              </div>
-              <div class="line-item">
-                <span class="line-code">Кейс 2 (2000 байт): Занято на диске = 4096 байт!</span>
-                <span class="line-desc">2000 байт не поместились в свободное место записи MFT. Файл стал нерезидентным, и NTFS выделила 1 физический кластер (4 КБ = 4096 байт).</span>
-              </div>
+        <div class="explanation-box">
+          <span class="explanation-title">Построчный разбор результатов</span>
+          <div class="line-breakdown">
+            <div class="line-item">
+              <span class="line-code">GetCompressedFileSizeW(fileName, &highSize);</span>
+              <span class="line-desc">Опрашивает драйвер файловой системы о количестве физических байт, выделенных на диске под файл вне MFT.</span>
+            </div>
+            <div class="line-item">
+              <span class="line-code">Кейс 1 (200 байт): Занято на диске = 0 байт!</span>
+              <span class="line-desc">Файл целиком размещен внутри 1024-байтной записи MFT. Кластеры дискового тома не расходовались.</span>
+            </div>
+            <div class="line-item">
+              <span class="line-code">Кейс 2 (2000 байт): Занято на диске = 4096 байт!</span>
+              <span class="line-desc">2000 байт превышают размер записи MFT. Файл стал нерезидентным, и файловая система выделила 1 физический кластер (4 КБ = 4096 байт).</span>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Задача 4: Блокировка потока при синхронном I/O -->
-      <div class="task-card">
-        <div class="task-header">
-          <div class="task-title">Задача 4: Эффект блокировки потока при синхронном I/O</div>
-          <span class="task-path">task4_sync_blocking_demo.cpp</span>
-        </div>
-        <div class="task-body">
-          <div class="callout-warn">
-            <strong>Физика блокировки:</strong> При вызове синхронного <code>ReadFile</code> без флага <code>FILE_FLAG_OVERLAPPED</code> планировщик ядра Windows переводит поток из состояния <code>Running</code> в состояние <code>Waiting (Blocked)</code>. Поток замирает, прекращая обработку очереди сообщений и таймеров, в результате чего пользовательский интерфейс программы зависает («Не отвечает»).
-          </div>
+    <!-- Задача 4 -->
+    <div id="task4" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задача 4: Эффект блокировки потока при синхронном I/O</div>
+        <span class="task-path">task4_sync_blocking_demo.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="callout-warn">
+          <strong>Физика блокировки:</strong> При вызове синхронного <code>ReadFile</code> без флага <code>FILE_FLAG_OVERLAPPED</code> планировщик ядра Windows переводит вызывающий поток из состояния <code>Running</code> в состояние <code>Waiting (Blocked)</code>. Поток замирает, прекращая обработку очереди сообщений и таймеров, в результате чего GUI-интерфейс программы зависает («Не отвечает»).
         </div>
       </div>
-    </section>
-
-
-    <!-- ======================================================== -->
-    <!-- РАЗДЕЛ 2: ТИПЫ ДАННЫХ И УКАЗАТЕЛИ                         -->
-    <!-- ======================================================== -->
-    <section id="sec-types-ptr" class="section-wrap">
-      <div class="section-header">
-        <span class="section-tag tag-sec2">Раздел 2: 2_types_and_pointers/</span>
-        <h2>2. Типы данных, универсальные указатели void* и окно проекции</h2>
-      </div>
-
-      <!-- Задача 1: static_cast -->
-      <div class="task-card">
-        <div class="task-header">
-          <div class="task-title">Задача 1 (Наизусть): Явное приведение через static_cast</div>
-          <span class="task-path">task1_explicit_casting.cpp</span>
-        </div>
-        <div class="task-body">
-          <div class="code-container">
-            <div class="code-top-bar">
-              <span>task1_explicit_casting.cpp</span>
-              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
-            </div>
-            <pre><code>#include &lt;iostream&gt;
-
-int main() {
-    long valLong = 100000L;
-    int valInt = 25000;
-    long resultLong = valLong - static_cast&lt;long&gt;(valInt);
-
-    double valDouble = 125.75;
-    float valFloat = 25.25f;
-    double resultDouble = valDouble - static_cast&lt;double&gt;(valFloat);
-
-    std::cout &lt;&lt; "resultLong: " &lt;&lt; resultLong &lt;&lt; std::endl;
-    std::cout &lt;&lt; "resultDouble: " &lt;&lt; resultDouble &lt;&lt; std::endl;
-    return 0;
-}</code></pre>
-          </div>
-          <div class="explanation-box">
-            <span class="explanation-title">Построчный разбор</span>
-            <p>1. <code>static_cast&lt;long&gt;(valInt)</code> — выполняет явное безопасное преобразование переменной <code>int</code> к типу <code>long</code> на этапе компиляции.</p>
-            <p>2. <code>static_cast&lt;double&gt;(valFloat)</code> — расширяет 32-битное вещественное число <code>float</code> до 64-битного <code>double</code> перед операцией вычитания.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Задача 2: void* в x64 -->
-      <div class="task-card">
-        <div class="task-header">
-          <div class="task-title">Задача 2 (Самостоятельно 1): Указатели void* и разрядность x64</div>
-          <span class="task-path">task2_void_pointers_x64.cpp</span>
-        </div>
-        <div class="task-body">
-          <div class="code-container">
-            <div class="code-top-bar">
-              <span>task2_void_pointers_x64.cpp</span>
-              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
-            </div>
-            <pre><code>#include &lt;iostream&gt;
-
-int main() {
-    int numInt = 42;
-    long numLong = 123456L;
-
-    void* ptrVoid1 = &numInt;
-    void* ptrVoid2 = &numLong;
-
-    int* ptrInt = static_cast&lt;int*&gt;(ptrVoid1);
-    long* ptrLong = static_cast&lt;long*&gt;(ptrVoid2);
-
-    std::cout &lt;&lt; "Из ptrInt: " &lt;&lt; *ptrInt &lt;&lt; std::endl;
-    std::cout &lt;&lt; "Из ptrLong: " &lt;&lt; *ptrLong &lt;&lt; std::endl;
-
-    std::cout &lt;&lt; "sizeof(void*): " &lt;&lt; sizeof(void*) &lt;&lt; " байт (8 байт в x64)" &lt;&lt; std::endl;
-    return 0;
-}</code></pre>
-          </div>
-          <div class="explanation-box">
-            <span class="explanation-title">Построчный разбор</span>
-            <p>1. <code>void*</code> — универсальный указатель, способный хранить адрес объекта любого типа без потери информации.</p>
-            <p>2. Напрямую разыменовать <code>void*</code> нельзя — требуется обратное приведение через <code>static_cast&lt;int*&gt;</code>.</p>
-            <p>3. В 64-битной архитектуре x64 абсолютно любой указатель (<code>void*</code>, <code>int*</code>, <code>char*</code>) занимает ровно <strong>8 байт</strong>.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Задача 3: MapViewOfFile со смещением -->
-      <div class="task-card">
-        <div class="task-header">
-          <div class="task-title">Задача 3 (Самостоятельно 2): Проецирование со смещением (Allocation Granularity)</div>
-          <span class="task-path">task3_memory_mapped_offset.cpp</span>
-        </div>
-        <div class="task-body">
-          <div class="code-container">
-            <div class="code-top-bar">
-              <span>task3_memory_mapped_offset.cpp</span>
-              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
-            </div>
-            <pre><code>#include &lt;windows.h&gt;
-#include &lt;iostream&gt;
-
-int main() {
-    SYSTEM_INFO sysInfo;
-    GetSystemInfo(&sysInfo);
-    DWORD allocGranularity = sysInfo.dwAllocationGranularity; // 64 КБ (65536)
-
-    HANDLE hFile = CreateFileW(L"mapped_test.txt", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    HANDLE hMapping = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-
-    // Смещение ОБЯЗАНО быть кратно allocGranularity (64 КБ)!
-    size_t targetOffset = 2 * allocGranularity; // 128 КБ
-    DWORD offsetLow = (DWORD)(targetOffset & 0xFFFFFFFF);
-    DWORD offsetHigh = (DWORD)(targetOffset &gt;&gt; 32);
-
-    const char* pView = (const char*)MapViewOfFile(hMapping, FILE_MAP_READ, offsetHigh, offsetLow, 1024);
-    if (pView) {
-        std::cout &lt;&lt; "Спроецировано по адресу: " &lt;&lt; (void*)pView &lt;&lt; std::endl;
-        UnmapViewOfFile(pView);
-    }
-
-    CloseHandle(hMapping);
-    CloseHandle(hFile);
-    return 0;
-}</code></pre>
-          </div>
-          <div class="explanation-box">
-            <span class="explanation-title">Почему смещение не может быть случайным?</span>
-            <p>Диспетчер виртуальной памяти Windows отображает файлы на уровне аппаратного MMU процессора. Системная гранулярность выделения памяти (<code>dwAllocationGranularity</code>) составляет <strong>64 КБ</strong>. Если передать некратное смещение (например 500 байт), функция завершится с ошибкой <strong>ERROR_MAPPED_ALIGNMENT (код 1132)</strong>.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-
-    <!-- ======================================================== -->
-    <!-- РАЗДЕЛ 3: ПРОДВИНУТЫЙ ВВОД-ВЫВОД, СУБД И ПАМЯТЬ ЯДРА       -->
-    <!-- ======================================================== -->
-    <section id="sec-adv-io" class="section-wrap">
-      <div class="section-header">
-        <span class="section-tag tag-sec3">Раздел 3: 3_advanced_io_memory/</span>
-        <h2>3. Прямой ввод-вывод, симуляция СУБД, сброс TLB и память ядра</h2>
-      </div>
-
-      <!-- Практика №1: NO_INTERMEDIATE_BUFFERING -->
-      <div class="task-card">
-        <div class="task-header">
-          <div class="task-title">Практика №1: Небуферизированный ввод-вывод (код 87 и VirtualAlloc)</div>
-          <span class="task-path">task1_no_buffering_bench.cpp</span>
-        </div>
-        <div class="task-body">
-          <div class="callout-warn">
-            <strong>Ошибка 87 (ERROR_INVALID_PARAMETER):</strong> При флаге <code>FILE_FLAG_NO_INTERMEDIATE_BUFFERING</code> данные идут в обход кэша Windows прямо в контроллер DMA. Адрес буфера, смещение и размер обязаны быть кратны размеру сектора диска (4096 байт). Чтение в обычный массив <code>char buf[1000]</code> возвращает ошибку 87!
-          </div>
-          <div class="explanation-box">
-            <span class="explanation-title">Исправление через VirtualAlloc</span>
-            <p>Функция <code>VirtualAlloc(NULL, 65536, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE)</code> выделяет память у ядра, гарантированно выравнивая базовый адрес по границе страницы 4096 байт, что устраняет ошибку 87.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Практика №2: Симуляция СУБД и TLB Flush -->
-      <div class="task-card">
-        <div class="task-header">
-          <div class="task-title">Практика №2: Симуляция СУБД (10 000 записей и сброс TLB)</div>
-          <span class="task-path">task2_dbms_sim_filemapping_tlb.cpp</span>
-        </div>
-        <div class="task-body">
-          <div class="callout-success">
-            <strong>Причина просадки Режима Б (TLB Flush):</strong> При частых повторных вызовах <code>MapViewOfFile</code> и <code>UnmapViewOfFile</code> ядро Windows вынуждено непрерывно перестраивать таблицу страниц (Page Table) и вызывать инструкцию процессора <code>INVLPG</code>, сбрасывая аппаратный кэш трансляции адресов (<strong>TLB Flush</strong>). Стандартный I/O с кэшем ОС удерживает страницы стабильно в RAM и работает быстрее.
-          </div>
-        </div>
-      </div>
-
-      <!-- Практика №3: Память ядра VirtualAlloc -->
-      <div class="task-card">
-        <div class="task-header">
-          <div class="task-title">Практика №3: Выделение памяти напрямую у ядра Windows</div>
-          <span class="task-path">task3_direct_kernel_memory.cpp</span>
-        </div>
-        <div class="task-body">
-          <div class="code-container">
-            <div class="code-top-bar">
-              <span>task3_direct_kernel_memory.cpp</span>
-              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
-            </div>
-            <pre><code>#include &lt;windows.h&gt;
-#include &lt;iostream&gt;
-
-int main() {
-    size_t count = 10000;
-    size_t sizeInBytes = count * sizeof(int);
-
-    // 1. Выделение памяти напрямую у ядра Windows
-    int* pArray = (int*)VirtualAlloc(NULL, sizeInBytes, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-
-    // 2. Заполнение квадратами индексов
-    for (size_t i = 0; i &lt; count; ++i) {
-        pArray[i] = (int)(i * i);
-    }
-
-    // 3. Вывод первых 10 элементов
-    for (size_t i = 0; i &lt; 10; ++i) {
-        std::cout &lt;&lt; "pArray[" &lt;&lt; i &lt;&lt; "] = " &lt;&lt; pArray[i] &lt;&lt; std::endl;
-    }
-
-    // 4. Освобождение памяти ядру (размер обязан быть 0!)
-    VirtualFree(pArray, 0, MEM_RELEASE);
-    return 0;
-}</code></pre>
-          </div>
-          <div class="explanation-box">
-            <span class="explanation-title">Построчный разбор параметров</span>
-            <p>1. <code>MEM_RESERVE</code> — резервирует непрерывный диапазон в виртуальном адресном пространстве процесса.</p>
-            <p>2. <code>MEM_COMMIT</code> — привязывает физические страницы ОЗУ к зарезервированному адресному диапазону.</p>
-            <p>3. <code>VirtualFree(pArray, 0, MEM_RELEASE)</code> — возвращает страницы обратно ядру. Параметр размера обязан быть равен 0.</p>
-          </div>
-        </div>
-      </div>
-    </section>
+    </div>
 
   </main>
 

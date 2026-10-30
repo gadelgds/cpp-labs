@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Лабораторная работа №4 — Приведение типов, void* и MapViewOfFile</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-page); color: var(--text-main); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; padding-bottom: 80px; }
+
+    header {
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-content { max-width: 760px; margin: 0 auto; }
+    .badge-sub { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    h1 { font-size: 19px; font-weight: 800; color: var(--text-main); line-height: 1.25; }
+
+    .nav-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px 0; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+    .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
+
+    main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+    .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .task-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .task-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .task-path { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-subtle); background: var(--bg-code); padding: 3px 7px; border-radius: 4px; }
+    .task-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+    .code-container { position: relative; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-code); overflow: hidden; }
+    .code-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: #e2e8f0; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); }
+    .copy-btn { background: #ffffff; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: var(--text-main); transition: all 0.2s; }
+    .copy-btn:hover { background: var(--primary); color: #ffffff; border-color: var(--primary); }
+    .copy-btn.copied { background: var(--accent-green); color: #ffffff; border-color: var(--accent-green); }
+
+    pre { padding: 12px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.45; color: #0f172a; }
+
+    .explanation-box { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .explanation-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); }
+    .line-breakdown { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .line-item { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 13px; }
+    .line-code { font-family: var(--font-mono); font-weight: 700; color: #1e293b; margin-bottom: 3px; display: block; }
+    .line-desc { color: var(--text-muted); line-height: 1.45; }
+
+    .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
+    .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
+
+    footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Лабораторная работа №4</span>
+      <h1>Приведение типов, void* и MapViewOfFile</h1>
+      <div class="nav-scroll">
+        <a href="#task1" class="nav-chip">1. static_cast</a>
+        <a href="#task2" class="nav-chip">2. void* в x64</a>
+        <a href="#task3" class="nav-chip">3. MapViewOfFile со смещением</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Задача 1 -->
+    <div id="task1" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задача 1 (Наизусть): Явное приведение типов через static_cast</div>
+        <span class="task-path">task1_explicit_casting.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="code-container">
+          <div class="code-top-bar">
+            <span>task1_explicit_casting.cpp</span>
+            <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+          </div>
+          <pre><code>#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 > nul");
+    #endif
+
+    // Часть 1: long - static_cast<long>(int)
+    long valLong = 100000L;
+    int valInt = 25000;
+    long resultLong = valLong - static_cast&lt;long&gt;(valInt);
+
+    // Часть 2: double - static_cast<double>(float)
+    double valDouble = 125.75;
+    float valFloat = 25.25f;
+    double resultDouble = valDouble - static_cast&lt;double&gt;(valFloat);
+
+    std::cout &lt;&lt; "resultLong: " &lt;&lt; resultLong &lt;&lt; std::endl;
+    std::cout &lt;&lt; std::fixed &lt;&lt; std::setprecision(4);
+    std::cout &lt;&lt; "resultDouble: " &lt;&lt; resultDouble &lt;&lt; std::endl;
+
+    return 0;
+}</code></pre>
+        </div>
+
+        <div class="explanation-box">
+          <span class="explanation-title">Подробный построчный разбор команд</span>
+          <div class="line-breakdown">
+            <div class="line-item">
+              <span class="line-code">static_cast&lt;long&gt;(valInt)</span>
+              <span class="line-desc">Явное приведение типов времени компиляции (Compile-Time Cast). Гарантирует приведение типа <code>int</code> к типу <code>long</code> перед вычитанием.</span>
+            </div>
+            <div class="line-item">
+              <span class="line-code">static_cast&lt;double&gt;(valFloat)</span>
+              <span class="line-desc">Расширяющее приведение 32-битного вещественного числа <code>float</code> к 64-битному представлению <code>double</code> стандарта IEEE 754.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Задача 2 -->
+    <div id="task2" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задача 2 (Самостоятельно): Указатели void* и разрядность x64</div>
+        <span class="task-path">task2_void_pointers_x64.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="code-container">
+          <div class="code-top-bar">
+            <span>task2_void_pointers_x64.cpp</span>
+            <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+          </div>
+          <pre><code>#include &lt;iostream&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 > nul");
+    #endif
+
+    int numInt = 42;
+    long numLong = 123456L;
+
+    // Универсальные указатели void*
+    void* ptrVoid1 = &numInt;
+    void* ptrVoid2 = &numLong;
+
+    // Обратное преобразование в типизированные указатели
+    int* ptrInt = static_cast&lt;int*&gt;(ptrVoid1);
+    long* ptrLong = static_cast&lt;long*&gt;(ptrVoid2);
+
+    std::cout &lt;&lt; "Значение numInt: " &lt;&lt; *ptrInt &lt;&lt; " (адрес: " &lt;&lt; ptrInt &lt;&lt; ")" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "Значение numLong: " &lt;&lt; *ptrLong &lt;&lt; " (адрес: " &lt;&lt; ptrLong &lt;&lt; ")" &lt;&lt; std::endl;
+
+    std::cout &lt;&lt; "\n[Размеры в x64]:" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(void*): " &lt;&lt; sizeof(void*) &lt;&lt; " байт (8 байт)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(int*):  " &lt;&lt; sizeof(int*) &lt;&lt; " байт (8 байт)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(int):   " &lt;&lt; sizeof(int) &lt;&lt; " байт (4 байта)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(long):  " &lt;&lt; sizeof(long) &lt;&lt; " байт (4 байта в Windows LLP64)" &lt;&lt; std::endl;
+
+    return 0;
+}</code></pre>
+        </div>
+
+        <div class="explanation-box">
+          <span class="explanation-title">Построчный разбор</span>
+          <div class="line-breakdown">
+            <div class="line-item">
+              <span class="line-code">void* ptrVoid1 = &numInt;</span>
+              <span class="line-desc">Универсальный указатель. Принимает адрес любого типа. Разыменование <code>*ptrVoid1</code> напрямую запрещено компилятором, так как размер типа <code>void</code> не определен.</span>
+            </div>
+            <div class="line-item">
+              <span class="line-code">static_cast&lt;int*&gt;(ptrVoid1)</span>
+              <span class="line-desc">Явное обратное приведение к <code>int*</code>, после которого становится доступен оператор разыменования <code>*ptrInt</code>.</span>
+            </div>
+            <div class="line-item">
+              <span class="line-code">sizeof(void*) == 8 байт</span>
+              <span class="line-desc">В 64-битной архитектуре (x64) любой указатель занимает ровно 8 байт (64 бита), независимо от типа данных, на которые он ссылается.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Задача 3 -->
+    <div id="task3" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задача 3 (Самостоятельно): Проецирование со смещением (Allocation Granularity)</div>
+        <span class="task-path">task3_memory_mapped_offset.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="code-container">
+          <div class="code-top-bar">
+            <span>task3_memory_mapped_offset.cpp</span>
+            <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+          </div>
+          <pre><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 > nul");
+    #endif
+
+    SYSTEM_INFO sysInfo;
+    GetSystemInfo(&sysInfo);
+    DWORD allocGranularity = sysInfo.dwAllocationGranularity; // 64 КБ (65536)
+
+    HANDLE hFile = CreateFileW(L"mapped_large_test.txt", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    HANDLE hMapping = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+
+    // Смещение ОБЯЗАНО быть строго кратно allocGranularity (64 КБ)!
+    size_t targetOffset = 2 * allocGranularity; // 128 КБ
+    DWORD offsetLow = (DWORD)(targetOffset & 0xFFFFFFFF);
+    DWORD offsetHigh = (DWORD)(targetOffset &gt;&gt; 32);
+
+    const char* pView = (const char*)MapViewOfFile(hMapping, FILE_MAP_READ, offsetHigh, offsetLow, 1024);
+    if (pView) {
+        std::cout &lt;&lt; "Спроецировано по виртуальному адресу: " &lt;&lt; (void*)pView &lt;&lt; std::endl;
+        UnmapViewOfFile(pView);
+    }
+
+    CloseHandle(hMapping);
+    CloseHandle(hFile);
+    return 0;
+}</code></pre>
+        </div>
+
+        <div class="explanation-box">
+          <span class="explanation-title">Почему смещение не может быть случайным?</span>
+          <div class="line-breakdown">
+            <div class="line-item">
+              <span class="line-code">Allocation Granularity = 64 КБ (65 536 байт)</span>
+              <span class="line-desc">Подсистема виртуальной памяти Windows отображает страницы файлов кратно аппаратной гранулярности распределения.</span>
+            </div>
+            <div class="line-item">
+              <span class="line-code">ERROR_MAPPED_ALIGNMENT (код 1132)</span>
+              <span class="line-desc">Ошибка, которая немедленно возвращается функцией <code>MapViewOfFile</code>, если смещение (<code>dwFileOffsetLow/High</code>) не кратно 64 КБ.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    Лабораторная работа №4 • Системное программирование C++ и Win32 API • 2026
+  </footer>
+
+  <script>
+    function copyCode(btn) {
+      const pre = btn.closest('.code-container').querySelector('pre');
+      const text = pre.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = 'Скопировано!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  </script>
+
+</body>
+</html>
