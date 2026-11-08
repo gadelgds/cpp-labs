@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Лабораторная №4 — Чистые решения (без комментариев) + разбор</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc; --bg-card: #ffffff; --bg-code: #0f172a; --bg-code-bar: #1e293b;
+      --text-code: #e2e8f0; --text-main: #0f172a; --text-muted: #334155; --text-subtle: #64748b;
+      --border: #e2e8f0; --primary: #2563eb; --primary-light: #eff6ff;
+      --accent-green: #059669; --accent-green-bg: #ecfdf5; --accent-amber: #d97706; --accent-amber-bg: #fffbeb;
+      --accent-red: #dc2626; --accent-red-bg: #fef2f2;
+      --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05); --radius-sm: 8px; --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-page); color: var(--text-main); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; padding-bottom: 70px; }
+    header { background: rgba(255,255,255,0.96); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(8px); padding: 12px 16px; box-shadow: var(--shadow-sm); }
+    .header-content { max-width: 760px; margin: 0 auto; }
+    .badge-sub { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    h1 { font-size: 19px; font-weight: 800; line-height: 1.25; }
+    .nav-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px 0; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: #f1f5f9; color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+    .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
+    main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 28px; }
+    .section-wrap { display: flex; flex-direction: column; gap: 16px; }
+    .section-header { border-bottom: 2px solid var(--border); padding-bottom: 8px; margin-top: 8px; }
+    .section-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 4px; background: var(--primary-light); color: var(--primary); }
+    h2 { font-size: 18px; font-weight: 800; }
+    h3 { font-size: 15.5px; font-weight: 800; margin-top: 4px; }
+    .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .task-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .task-title { font-size: 15px; font-weight: 700; }
+    .task-path { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-subtle); background: #f1f5f9; padding: 3px 7px; border-radius: 4px; }
+    .task-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .code-container { position: relative; border: 1px solid #1e293b; border-radius: var(--radius-sm); background: var(--bg-code); overflow: hidden; }
+    .code-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: var(--bg-code-bar); border-bottom: 1px solid #334155; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; font-family: var(--font-mono); }
+    .copy-btn { background: #334155; border: 1px solid #475569; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: #e2e8f0; transition: all 0.2s; }
+    .copy-btn:hover { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .copy-btn.copied { background: var(--accent-green); border-color: var(--accent-green); color: #fff; }
+    pre { padding: 12px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.5; color: var(--text-code); tab-size: 4; }
+    code { font-family: var(--font-mono); }
+    p code, li code, td code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 12.5px; color: #0f172a; }
+    .output-box { background: #0f172a; color: #a7f3d0; font-family: var(--font-mono); font-size: 12.5px; padding: 10px 12px; border-radius: var(--radius-sm); white-space: pre-wrap; line-height: 1.5; }
+    .explanation-box { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; }
+    .explanation-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); margin-bottom: 6px; display: block; }
+    .lines-list { display: flex; flex-direction: column; gap: 0; margin-top: 6px; }
+    .line-item { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px dashed #e2e8f0; font-size: 13px; color: var(--text-muted); align-items: flex-start; }
+    .line-item:last-child { border-bottom: none; }
+    .line-num { min-width: 34px; height: 20px; border-radius: 4px; background: #f1f5f9; color: var(--text-subtle); font-family: var(--font-mono); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 1px; flex-shrink: 0; }
+    .line-code { font-family: var(--font-mono); font-size: 12px; color: #1e293b; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 1px 6px; margin-bottom: 2px; display: inline-block; }
+    .table-responsive { width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-top: 6px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th { background: #f1f5f9; padding: 8px 10px; text-align: left; font-weight: 700; border-bottom: 1px solid var(--border); }
+    td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) { background-color: #f8fafc; }
+    .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
+    .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
+    .callout-danger { background: var(--accent-red-bg); border-left: 3px solid var(--accent-red); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #991b1b; }
+    footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Лабораторная №4 · Чистый код + разбор</span>
+      <h1>Лабораторная работа №4: решения без комментариев и разбор каждой строки</h1>
+      <div class="nav-scroll">
+        <a href="#task1" class="nav-chip">1. static_cast</a>
+        <a href="#task2" class="nav-chip">2. void* в x64</a>
+        <a href="#task3" class="nav-chip">3. Проецирование со смещением</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <div class="callout-success" style="max-width:760px;">
+      <strong>Проверено на практике:</strong> все три программы собраны MSVC 14.44 в <strong>x64 и x86</strong> с флагами <code>/EHsc /utf-8 /W3</code> без предупреждений. Вывод ниже — реальный, с этой машины.
+    </div>
+
+    <!-- ================= ЗАДАЧА 1 ================= -->
+    <section id="task1" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag">Задача 1 · Наизусть</span>
+        <h2>Задача 1. Явное приведение типов через <code>static_cast</code></h2>
+      </div>
+
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Чистое решение (без комментариев)</div>
+          <span class="task-path">task1_explicit_casting.cpp</span>
+        </div>
+        <div class="task-body">
+          <div class="code-container">
+            <div class="code-top-bar">
+              <span>task1_explicit_casting.cpp</span>
+              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+            </div>
+            <pre><code>#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    std::cout &lt;&lt; "=== НАИЗУСТЬ: ЯВНОЕ ПРИВЕДЕНИЕ ТИПОВ ЧЕРЕЗ static_cast ===" &lt;&lt; std::endl;
+
+    long valLong = 100000L;
+    int valInt = 25000;
+
+    long resultLong = valLong - static_cast&lt;long&gt;(valInt);
+
+    std::cout &lt;&lt; "\n[Целочисленное вычитание]:" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Переменная long:                 " &lt;&lt; valLong &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Переменная int:                  " &lt;&lt; valInt &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Результат (long - static_cast&lt;long&gt;(int)): " &lt;&lt; resultLong &lt;&lt; std::endl;
+
+    double valDouble = 125.75;
+    float valFloat = 25.25f;
+
+    double resultDouble = valDouble - static_cast&lt;double&gt;(valFloat);
+
+    std::cout &lt;&lt; "\n[Вещественное вычитание с плавающей точкой]:" &lt;&lt; std::endl;
+    std::cout &lt;&lt; std::fixed &lt;&lt; std::setprecision(4);
+    std::cout &lt;&lt; "  Переменная double:               " &lt;&lt; valDouble &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Переменная float:                " &lt;&lt; valFloat &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Результат (double - static_cast&lt;double&gt;(float)): " &lt;&lt; resultDouble &lt;&lt; std::endl;
+
+    return 0;
+}</code></pre>
+          </div>
+
+          <h3>Реальный вывод</h3>
+          <div class="output-box">=== НАИЗУСТЬ: ЯВНОЕ ПРИВЕДЕНИЕ ТИПОВ ЧЕРЕЗ static_cast ===
+
+[Целочисленное вычитание]:
+  Переменная long:                 100000
+  Переменная int:                  25000
+  Результат (long - static_cast&lt;long&gt;(int)): 75000
+
+[Вещественное вычитание с плавающей точкой]:
+  Переменная double:               125.7500
+  Переменная float:                25.2500
+  Результат (double - static_cast&lt;double&gt;(float)): 100.5000</div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Разбор каждой строки кода</span>
+            <div class="lines-list">
+              <div class="line-item"><span class="line-num">1-2</span><div><span class="line-code">#include &lt;iostream&gt; #include &lt;iomanip&gt;</span><br><code>iostream</code> — ввод/вывод, <code>iomanip</code> — <code>std::fixed</code> и <code>std::setprecision</code> для форматирования дробей.</div></div>
+              <div class="line-item"><span class="line-num">4</span><div><span class="line-code">int main() {</span><br>Точка входа программы.</div></div>
+              <div class="line-item"><span class="line-num">5-7</span><div><span class="line-code">#if defined(_WIN32) system("chcp 65001 &gt; nul"); #endif</span><br>Переключаем консоль Windows в UTF-8, чтобы кириллица не превращалась в «кракозябры». <code>&gt; nul</code> скрывает служебное сообщение <code>chcp</code>.</div></div>
+              <div class="line-item"><span class="line-num">9</span><div><span class="line-code">std::cout &lt;&lt; "=== ... ===" &lt;&lt; std::endl;</span><br>Заголовок программы. <code>std::endl</code> — перевод строки + сброс буфера.</div></div>
+              <div class="line-item"><span class="line-num">11-12</span><div><span class="line-code">long valLong = 100000L; int valInt = 25000;</span><br>Две целочисленные переменные разных типов. Суффикс <code>L</code> явно говорит, что литерал имеет тип <code>long</code>.</div></div>
+              <div class="line-item"><span class="line-num">14</span><div><span class="line-code">long resultLong = valLong - static_cast&lt;long&gt;(valInt);</span><br><strong>Суть задания.</strong> <code>static_cast&lt;long&gt;(valInt)</code> временно превращает <code>int</code> в <code>long</code>, поэтому вычитание идёт в типе <code>long</code> без неожиданного сужения результата. Итог: 100000 − 25000 = 75000.</div></div>
+              <div class="line-item"><span class="line-num">16-19</span><div><span class="line-code">std::cout &lt;&lt; ... valLong ... valInt ... resultLong ...</span><br>Печатаем исходные значения и результат, чтобы было видно, что приведение не изменило числа.</div></div>
+              <div class="line-item"><span class="line-num">21-22</span><div><span class="line-code">double valDouble = 125.75; float valFloat = 25.25f;</span><br>Вещественные переменные. Суффикс <code>f</code> обязателен: без него литерал был бы <code>double</code>.</div></div>
+              <div class="line-item"><span class="line-num">24</span><div><span class="line-code">double resultDouble = valDouble - static_cast&lt;double&gt;(valFloat);</span><br>Приводим <code>float</code> к <code>double</code>, чтобы вычитание шло в более точном типе. Результат: 125.75 − 25.25 = 100.5.</div></div>
+              <div class="line-item"><span class="line-num">26-27</span><div><span class="line-code">std::cout &lt;&lt; std::fixed &lt;&lt; std::setprecision(4);</span><br><code>std::fixed</code> — фиксированная запись дроби, <code>setprecision(4)</code> — 4 знака после точки. Так 100.5 печатается как 100.5000.</div></div>
+              <div class="line-item"><span class="line-num">28-30</span><div><span class="line-code">std::cout &lt;&lt; ... valDouble ... valFloat ... resultDouble ...</span><br>Выводим значения и результат вещественного вычитания.</div></div>
+              <div class="line-item"><span class="line-num">32-33</span><div><span class="line-code">return 0; }</span><br>Код 0 — программа завершилась успешно.</div></div>
+            </div>
+          </div>
+
+          <div class="callout-warn"><strong>Зачем вообще приведение?</strong> В выражении <code>valLong - valInt</code> компилятор и так повысил бы <code>int</code> до <code>long</code>. Явный <code>static_cast</code> нужен, чтобы:<br>1) показать намерение программиста;<br>2) избежать предупреждений компилятора при сужении;<br>3) зафиксировать тип вычисления, не полагаясь на неявные правила.</div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================= ЗАДАЧА 2 ================= -->
+    <section id="task2" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag">Задача 2 · Самостоятельно</span>
+        <h2>Задача 2. Указатели <code>void*</code> и размеры типов в x64</h2>
+      </div>
+
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Чистое решение (без комментариев)</div>
+          <span class="task-path">task2_void_pointers_x64.cpp</span>
+        </div>
+        <div class="task-body">
+          <div class="code-container">
+            <div class="code-top-bar">
+              <span>task2_void_pointers_x64.cpp</span>
+              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+            </div>
+            <pre><code>#include &lt;iostream&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    std::cout &lt;&lt; "=== САМОСТОЯТЕЛЬНО 1: УКАЗАТЕЛИ void* И РАЗМЕРЫ В x64 ===" &lt;&lt; std::endl;
+
+    int numInt = 42;
+    long numLong = 123456L;
+
+    void* ptrVoid1 = &amp;numInt;
+    void* ptrVoid2 = &amp;numLong;
+
+    int* ptrInt = static_cast&lt;int*&gt;(ptrVoid1);
+    long* ptrLong = static_cast&lt;long*&gt;(ptrVoid2);
+
+    std::cout &lt;&lt; "\n[Извлеченные значения]:" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Значение из ptrInt:  " &lt;&lt; *ptrInt &lt;&lt; " (адрес: " &lt;&lt; ptrInt &lt;&lt; ")" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Значение из ptrLong: " &lt;&lt; *ptrLong &lt;&lt; " (адрес: " &lt;&lt; ptrLong &lt;&lt; ")" &lt;&lt; std::endl;
+
+    std::cout &lt;&lt; "\n[Размеры типов и указателей в текущей системе]:" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Разрядность сборки:    " &lt;&lt; (sizeof(void*) * 8) &lt;&lt; "-бит" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  sizeof(int):           " &lt;&lt; sizeof(int) &lt;&lt; " байт (" &lt;&lt; sizeof(int) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  sizeof(long):          " &lt;&lt; sizeof(long) &lt;&lt; " байт (" &lt;&lt; sizeof(long) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  sizeof(long long):     " &lt;&lt; sizeof(long long) &lt;&lt; " байт (" &lt;&lt; sizeof(long long) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  sizeof(void*):         " &lt;&lt; sizeof(void*) &lt;&lt; " байт (" &lt;&lt; sizeof(void*) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  sizeof(int*):          " &lt;&lt; sizeof(int*) &lt;&lt; " байт (" &lt;&lt; sizeof(int*) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  sizeof(long*):         " &lt;&lt; sizeof(long*) &lt;&lt; " байт (" &lt;&lt; sizeof(long*) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+
+    return 0;
+}</code></pre>
+          </div>
+
+          <h3>Реальный вывод (x64)</h3>
+          <div class="output-box">=== САМОСТОЯТЕЛЬНО 1: УКАЗАТЕЛИ void* И РАЗМЕРЫ В x64 ===
+
+[Извлеченные значения]:
+  Значение из ptrInt:  42 (адрес: 000000227D8FF860)
+  Значение из ptrLong: 123456 (адрес: 000000227D8FF864)
+
+[Размеры типов и указателей в текущей системе]:
+  Разрядность сборки:    64-бит
+  sizeof(int):           4 байт (32 бит)
+  sizeof(long):          4 байт (32 бит)
+  sizeof(long long):     8 байт (64 бит)
+  sizeof(void*):         8 байт (64 бит)
+  sizeof(int*):          8 байт (64 бит)
+  sizeof(long*):         8 байт (64 бит)</div>
+
+          <h3>Тот же код, собранный в x86</h3>
+          <div class="output-box">[Извлеченные значения]:
+  Значение из ptrInt:  42 (адрес: 0053F95C)
+  Значение из ptrLong: 123456 (адрес: 0053F958)
+
+[Размеры типов и указателей в текущей системе]:
+  Разрядность сборки:    32-бит
+  sizeof(int):           4 байт (32 бит)
+  sizeof(long):          4 байт (32 бит)
+  sizeof(long long):     8 байт (64 бит)
+  sizeof(void*):         4 байт (32 бит)
+  sizeof(int*):          4 байт (32 бит)
+  sizeof(long*):         4 байт (32 бит)</div>
+
+          <div class="table-responsive">
+            <table>
+              <tr><th>Тип</th><th>x86 (32 бита)</th><th>x64 (64 бита)</th></tr>
+              <tr><td><code>int</code></td><td>4</td><td>4</td></tr>
+              <tr><td><code>long</code></td><td>4</td><td>4</td></tr>
+              <tr><td><code>long long</code></td><td>8</td><td>8</td></tr>
+              <tr><td><code>void*</code>, <code>int*</code>, <code>long*</code></td><td>4</td><td>8</td></tr>
+            </table>
+          </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Разбор каждой строки кода</span>
+            <div class="lines-list">
+              <div class="line-item"><span class="line-num">1</span><div><span class="line-code">#include &lt;iostream&gt;</span><br>Подключаем <code>std::cout</code>. Win32-заголовки здесь не нужны.</div></div>
+              <div class="line-item"><span class="line-num">3</span><div><span class="line-code">int main() {</span><br>Точка входа.</div></div>
+              <div class="line-item"><span class="line-num">4-6</span><div><span class="line-code">#if defined(_WIN32) system("chcp 65001 &gt; nul"); #endif</span><br>UTF-8 для консоли, чтобы русский текст выводился корректно.</div></div>
+              <div class="line-item"><span class="line-num">8</span><div><span class="line-code">std::cout &lt;&lt; "=== ... ===" &lt;&lt; std::endl;</span><br>Заголовок.</div></div>
+              <div class="line-item"><span class="line-num">10-11</span><div><span class="line-code">int numInt = 42; long numLong = 123456L;</span><br>Две переменные. В Windows <code>long</code> всегда 4 байта, даже в x64 (модель LLP64).</div></div>
+              <div class="line-item"><span class="line-num">13-14</span><div><span class="line-code">void* ptrVoid1 = &amp;numInt; void* ptrVoid2 = &amp;numLong;</span><br><code>void*</code> — «нетипизированный» указатель: может хранить адрес любого объекта. Присваивание <code>int*</code> → <code>void*</code> разрешено неявно.</div></div>
+              <div class="line-item"><span class="line-num">16-17</span><div><span class="line-code">int* ptrInt = static_cast&lt;int*&gt;(ptrVoid1); long* ptrLong = static_cast&lt;long*&gt;(ptrVoid2);</span><br><strong>Обратное приведение.</strong> Из <code>void*</code> в конкретный тип нужно явно, иначе компилятор не знает, сколько байт читать при разыменовании.</div></div>
+              <div class="line-item"><span class="line-num">19-21</span><div><span class="line-code">std::cout &lt;&lt; ... *ptrInt ... *ptrLong ...</span><br>Разыменовываем указатели и печатаем значения и адреса. <code>*ptrInt</code> читает 4 байта как <code>int</code>, <code>*ptrLong</code> — 4 байта как <code>long</code>.</div></div>
+              <div class="line-item"><span class="line-num">23</span><div><span class="line-code">std::cout &lt;&lt; "\n[Размеры типов ...]:";</span><br>Подзаголовок таблицы размеров.</div></div>
+              <div class="line-item"><span class="line-num">24</span><div><span class="line-code">(sizeof(void*) * 8)</span><br>Размер указателя в байтах × 8 = разрядность сборки. 8 байт → 64 бита, 4 байта → 32 бита.</div></div>
+              <div class="line-item"><span class="line-num">25-27</span><div><span class="line-code">sizeof(int) ... sizeof(long) ... sizeof(long long) ...</span><br>Печатаем размеры целых типов в байтах и битах. На Windows: <code>int</code> = 4, <code>long</code> = 4, <code>long long</code> = 8 — независимо от разрядности.</div></div>
+              <div class="line-item"><span class="line-num">28-30</span><div><span class="line-code">sizeof(void*) ... sizeof(int*) ... sizeof(long*) ...</span><br>Все указатели в одной сборке имеют одинаковый размер: 8 байт в x64 и 4 байта в x86. Тип данных на размер указателя не влияет.</div></div>
+              <div class="line-item"><span class="line-num">32-33</span><div><span class="line-code">return 0; }</span><br>Успешное завершение.</div></div>
+            </div>
+          </div>
+
+          <div class="callout-warn"><strong>Главная ловушка:</strong> в x64 указатель занимает 8 байт, а <code>int</code> — 4. Если хранить адрес в <code>int</code> или <code>DWORD</code>, старшие 32 бита «отрежутся» — это и есть ошибка усечения указателя. Для хранения адреса в целом числе используется <code>intptr_t</code>, <code>uintptr_t</code> или <code>DWORD_PTR</code>.</div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================= ЗАДАЧА 3 ================= -->
+    <section id="task3" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag">Задача 3 · Самостоятельно</span>
+        <h2>Задача 3. Проецирование файла с фиксированным смещением</h2>
+      </div>
+
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Чистое решение (без комментариев)</div>
+          <span class="task-path">task3_memory_mapped_offset.cpp</span>
+        </div>
+        <div class="task-body">
+          <div class="code-container">
+            <div class="code-top-bar">
+              <span>task3_memory_mapped_offset.cpp</span>
+              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+            </div>
+            <pre><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    std::cout &lt;&lt; "=== САМОСТОЯТЕЛЬНО 2: ПРОЕЦИРОВАНИЕ ФАЙЛА С ФИКСИРОВАННЫМ СМЕЩЕНИЕМ ===" &lt;&lt; std::endl;
+
+    const wchar_t* filename = L"mapped_large_test.txt";
+
+    SYSTEM_INFO sysInfo;
+    GetSystemInfo(&amp;sysInfo);
+    DWORD allocGranularity = sysInfo.dwAllocationGranularity;
+
+    std::cout &lt;&lt; "Системная гранулярность выделения памяти (Allocation Granularity): "
+              &lt;&lt; allocGranularity &lt;&lt; " байт (" &lt;&lt; (allocGranularity / 1024) &lt;&lt; " КБ)" &lt;&lt; std::endl;
+
+    HANDLE hFile = CreateFileW(
+        filename,
+        GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        std::cout &lt;&lt; "Ошибка создания файла: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return 1;
+    }
+
+    const DWORD totalFileSize = 4 * allocGranularity;
+    std::string fillData(totalFileSize, '.');
+
+    std::string secretMessage = "[СЕКРЕТНЫЙ ТЕКСТ НА СМЕЩЕНИИ 128 КБ]";
+    size_t targetOffset = 2 * allocGranularity;
+    memcpy(&amp;fillData[targetOffset], secretMessage.c_str(), secretMessage.length());
+
+    DWORD bytesWritten = 0;
+    WriteFile(hFile, fillData.data(), totalFileSize, &amp;bytesWritten, NULL);
+
+    HANDLE hMapping = CreateFileMappingW(
+        hFile,
+        NULL,
+        PAGE_READONLY,
+        0,
+        0,
+        NULL
+    );
+
+    if (hMapping == NULL) {
+        std::cout &lt;&lt; "Ошибка CreateFileMapping: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        CloseHandle(hFile);
+        return 1;
+    }
+
+    DWORD offsetLow = (DWORD)(targetOffset &amp; 0xFFFFFFFF);
+    DWORD offsetHigh = (DWORD)(((ULONGLONG)targetOffset &gt;&gt; 32) &amp; 0xFFFFFFFF);
+    SIZE_T viewSize = 1024;
+
+    std::cout &lt;&lt; "\nЗапрос проецирования участка файла:" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Смещение: " &lt;&lt; targetOffset &lt;&lt; " байт (кратно " &lt;&lt; allocGranularity &lt;&lt; ")" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Размер проецируемого окна: " &lt;&lt; viewSize &lt;&lt; " байт" &lt;&lt; std::endl;
+
+    const char* pView = static_cast&lt;const char*&gt;(MapViewOfFile(
+        hMapping,
+        FILE_MAP_READ,
+        offsetHigh,
+        offsetLow,
+        viewSize
+    ));
+
+    if (pView == NULL) {
+        std::cout &lt;&lt; "Ошибка MapViewOfFile: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+    } else {
+        std::cout &lt;&lt; "  Успешно спроецировано по виртуальному адресу: " &lt;&lt; (void*)pView &lt;&lt; std::endl;
+
+        std::string readChunk(pView, secretMessage.length());
+        std::cout &lt;&lt; "  Прочитанные данные: \"" &lt;&lt; readChunk &lt;&lt; "\"" &lt;&lt; std::endl;
+
+        UnmapViewOfFile(pView);
+        std::cout &lt;&lt; "Окно проекции успешно размонтировано (UnmapViewOfFile)." &lt;&lt; std::endl;
+    }
+
+    CloseHandle(hMapping);
+    CloseHandle(hFile);
+
+    return 0;
+}</code></pre>
+          </div>
+
+          <h3>Реальный вывод</h3>
+          <div class="output-box">=== САМОСТОЯТЕЛЬНО 2: ПРОЕЦИРОВАНИЕ ФАЙЛА С ФИКСИРОВАННЫМ СМЕЩЕНИЕМ ===
+Системная гранулярность выделения памяти (Allocation Granularity): 65536 байт (64 КБ)
+
+Запрос проецирования участка файла:
+  Смещение: 131072 байт (кратно 65536)
+  Размер проецируемого окна: 1024 байт
+  Успешно спроецировано по виртуальному адресу: 0000025474D20000
+  Прочитанные данные: "[СЕКРЕТНЫЙ ТЕКСТ НА СМЕЩЕНИИ 128 КБ]"
+Окно проекции успешно размонтировано (UnmapViewOfFile).</div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Разбор каждой строки кода</span>
+            <div class="lines-list">
+              <div class="line-item"><span class="line-num">1-3</span><div><span class="line-code">#include &lt;windows.h&gt; #include &lt;iostream&gt; #include &lt;string&gt;</span><br>Win32 API для файлов и проецирования, вывод и <code>std::string</code> для буфера данных.</div></div>
+              <div class="line-item"><span class="line-num">5</span><div><span class="line-code">int main() {</span><br>Точка входа.</div></div>
+              <div class="line-item"><span class="line-num">6-8</span><div><span class="line-code">#if defined(_WIN32) system("chcp 65001 &gt; nul"); #endif</span><br>UTF-8 для консоли.</div></div>
+              <div class="line-item"><span class="line-num">10</span><div><span class="line-code">std::cout &lt;&lt; "=== ... ===" &lt;&lt; std::endl;</span><br>Заголовок.</div></div>
+              <div class="line-item"><span class="line-num">12</span><div><span class="line-code">const wchar_t* filename = L"mapped_large_test.txt";</span><br>Имя файла в виде широкой строки — для <code>CreateFileW</code>.</div></div>
+              <div class="line-item"><span class="line-num">14-16</span><div><span class="line-code">SYSTEM_INFO sysInfo; GetSystemInfo(&amp;sysInfo); DWORD allocGranularity = sysInfo.dwAllocationGranularity;</span><br>Узнаём <strong>гранулярность распределения памяти</strong> — минимальный шаг смещения для <code>MapViewOfFile</code>. В Windows это обычно 64 КБ.</div></div>
+              <div class="line-item"><span class="line-num">18-19</span><div><span class="line-code">std::cout &lt;&lt; "Системная гранулярность ..." &lt;&lt; allocGranularity ...</span><br>Печатаем гранулярность в байтах и килобайтах.</div></div>
+              <div class="line-item"><span class="line-num">21-29</span><div><span class="line-code">HANDLE hFile = CreateFileW(filename, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);</span><br>Создаём/перезаписываем файл с правами чтения и записи.</div></div>
+              <div class="line-item"><span class="line-num">31-34</span><div><span class="line-code">if (hFile == INVALID_HANDLE_VALUE) { ... return 1; }</span><br>Обработка ошибки создания файла.</div></div>
+              <div class="line-item"><span class="line-num">36-37</span><div><span class="line-code">const DWORD totalFileSize = 4 * allocGranularity; std::string fillData(totalFileSize, '.');</span><br>Размер файла = 4 × 64 КБ = 256 КБ. Строка заполняется точками.</div></div>
+              <div class="line-item"><span class="line-num">39-41</span><div><span class="line-code">std::string secretMessage = "..."; size_t targetOffset = 2 * allocGranularity; memcpy(&amp;fillData[targetOffset], secretMessage.c_str(), secretMessage.length());</span><br>Кладём «секрет» ровно на смещение 2 × 64 КБ = 128 КБ. <code>memcpy</code> копирует байты сообщения в буфер.</div></div>
+              <div class="line-item"><span class="line-num">43-44</span><div><span class="line-code">DWORD bytesWritten = 0; WriteFile(hFile, fillData.data(), totalFileSize, &amp;bytesWritten, NULL);</span><br>Записываем 256 КБ в файл.</div></div>
+              <div class="line-item"><span class="line-num">46-53</span><div><span class="line-code">HANDLE hMapping = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL);</span><br>Создаём объект «проекция файла» (file mapping) только для чтения. Размер берётся из файла.</div></div>
+              <div class="line-item"><span class="line-num">55-59</span><div><span class="line-code">if (hMapping == NULL) { ... CloseHandle(hFile); return 1; }</span><br>При ошибке закрываем файл и выходим.</div></div>
+              <div class="line-item"><span class="line-num">61-62</span><div><span class="line-code">DWORD offsetLow = (DWORD)(targetOffset &amp; 0xFFFFFFFF); DWORD offsetHigh = (DWORD)(((ULONGLONG)targetOffset &gt;&gt; 32) &amp; 0xFFFFFFFF);</span><br>Смещение разбивается на младшие и старшие 32 бита. <strong>Важно:</strong> приводим к <code>ULONGLONG</code> перед сдвигом, иначе в x86 сдвиг 32-битного значения на 32 бита — неопределённое поведение.</div></div>
+              <div class="line-item"><span class="line-num">63</span><div><span class="line-code">SIZE_T viewSize = 1024;</span><br>Проецируем окно всего 1 КБ — ровно чтобы захватить сообщение.</div></div>
+              <div class="line-item"><span class="line-num">65-67</span><div><span class="line-code">std::cout &lt;&lt; ... Смещение ... Размер окна ...</span><br>Печатаем параметры будущей проекции.</div></div>
+              <div class="line-item"><span class="line-num">69-75</span><div><span class="line-code">const char* pView = static_cast&lt;const char*&gt;(MapViewOfFile(hMapping, FILE_MAP_READ, offsetHigh, offsetLow, viewSize));</span><br><strong>Ключевой вызов.</strong> <code>MapViewOfFile</code> отображает участок файла в адресное пространство процесса и возвращает указатель. Смещение обязано быть кратно гранулярности (64 КБ), поэтому 128 КБ подходит идеально.</div></div>
+              <div class="line-item"><span class="line-num">77-78</span><div><span class="line-code">if (pView == NULL) { ... Ошибка MapViewOfFile ... }</span><br>Проверка, что проецирование удалось.</div></div>
+              <div class="line-item"><span class="line-num">79-83</span><div><span class="line-code">} else { ... std::string readChunk(pView, secretMessage.length()); ... }</span><br>Читаем сообщение прямо из «памяти» (на самом деле — из файла через страничный механизм) и печатаем его.</div></div>
+              <div class="line-item"><span class="line-num">85-86</span><div><span class="line-code">UnmapViewOfFile(pView); std::cout &lt;&lt; "... размонтировано ...";</span><br>Освобождаем адресный диапазон. После этого <code>pView</code> использовать нельзя.</div></div>
+              <div class="line-item"><span class="line-num">89-90</span><div><span class="line-code">CloseHandle(hMapping); CloseHandle(hFile);</span><br>Закрываем объект проекции и файл.</div></div>
+              <div class="line-item"><span class="line-num">92-93</span><div><span class="line-code">return 0; }</span><br>Успешное завершение.</div></div>
+            </div>
+          </div>
+
+          <div class="callout-warn"><strong>Почему смещение должно быть кратно 64 КБ?</strong> <code>MapViewOfFile</code> проецирует память страницами, а не отдельными байтами. Начало окна обязано совпадать с границей <em>allocation granularity</em>. Если передать, например, 100 байт, функция вернёт <code>ERROR_MAPPED_ALIGNMENT (1132)</code>. Внутри окна уже можно адресовать любой байт: <code>pView + offsetWithinWindow</code>.</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>Лабораторная работа №4 · Чистые решения без комментариев + разбор строк · MSVC 14.44 (x64 и x86), /W3 без предупреждений</footer>
+
+  <script>
+    function copyCode(btn) {
+      const pre = btn.closest('.code-container').querySelector('pre');
+      const text = pre.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const original = btn.innerText;
+        btn.innerText = 'Скопировано!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.innerText = original; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+  </script>
+
+</body>
+</html>

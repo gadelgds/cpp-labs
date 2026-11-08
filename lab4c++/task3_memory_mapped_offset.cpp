@@ -66,7 +66,7 @@ int main() {
     // 4. Смещение для MapViewOfFile ОБЯЗАНО быть строго кратным allocGranularity!
     // Демонстрируем расчет смещения:
     DWORD offsetLow = (DWORD)(targetOffset & 0xFFFFFFFF);
-    DWORD offsetHigh = (DWORD)((targetOffset >> 32) & 0xFFFFFFFF);
+    DWORD offsetHigh = (DWORD)(((ULONGLONG)targetOffset >> 32) & 0xFFFFFFFF);
     SIZE_T viewSize = 1024; // Отображаем окно размером 1024 байта
 
     std::cout << "\nЗапрос проецирования участка файла:" << std::endl;

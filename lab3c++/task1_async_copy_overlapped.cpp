@@ -1,5 +1,7 @@
 #include <windows.h>
 #include <iostream>
+#include <io.h>
+#include <fcntl.h>
 #include <iomanip>
 
 const DWORD CHUNK_SIZE = 64 * 1024; // 64 КБ на один блок передачи
@@ -24,6 +26,7 @@ bool CreateDummyFile(const wchar_t* path, DWORD sizeMB) {
 int main() {
     #if defined(_WIN32)
     system("chcp 65001 > nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
     #endif
 
     const wchar_t* srcPath = L"source_large.dat";

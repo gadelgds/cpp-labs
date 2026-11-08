@@ -1,5 +1,7 @@
 #include <windows.h>
 #include <iostream>
+#include <io.h>
+#include <fcntl.h>
 #include <vector>
 
 // Функция анализа размещения файла в NTFS (резидентный в MFT vs нерезидентный с экстентами)
@@ -71,6 +73,7 @@ void AnalyzeNtfsFileAllocation(const wchar_t* filePath, DWORD sizeInBytes) {
 int main() {
     #if defined(_WIN32)
     system("chcp 65001 > nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
     #endif
 
     std::wcout << L"=== АНАЛИЗ ЧТЕНИЯ MFT: РЕЗИДЕНТНЫЕ И НЕРЕЗИДЕНТНЫЕ ДАННЫЕ ===" << std::endl;

@@ -1,5 +1,7 @@
 #include <windows.h>
 #include <iostream>
+#include <io.h>
+#include <fcntl.h>
 #include <vector>
 #include <random>
 
@@ -54,10 +56,11 @@ double BenchmarkReading(const wchar_t* path, DWORD flags, void* buffer, DWORD re
 int main() {
     #if defined(_WIN32)
     system("chcp 65001 > nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
     #endif
 
     const wchar_t* testFile = L"test_direct_io_10mb.dat";
-    std::wcout << L"=== ПРАКТИКА №1: НЕБУФЕРИЗИРОВАННЫЙ ВВОД-ВЫВОД (NO_INTERMEDIATE_BUFFERING) ===" << std::endl;
+    std::wcout << L"=== ПРАКТИКА №1: НЕБУФЕРИЗИРОВАННЫЙ ВВОД-ВЫВОД (NO_BUFFERING) ===" << std::endl;
 
     std::wcout << L"1. Создание тестового файла 10 МБ со случайными данными..." << std::endl;
     GenerateRandomFile(testFile, FILE_SIZE_10MB);
@@ -65,7 +68,7 @@ int main() {
     // 2. Демонстрация ошибки ERROR_INVALID_PARAMETER (код 87)
     std::wcout << L"\n2. Попытка чтения в невыровненный буфер (char unalignedBuf[1000])..." << std::endl;
     HANDLE hDirect = CreateFileW(testFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 
-                                 FILE_FLAG_NO_INTERMEDIATE_BUFFERING, NULL);
+                                 FILE_FLAG_NO_BUFFERING, NULL);
 
     if (hDirect != INVALID_HANDLE_VALUE) {
         char unalignedBuf[1000]; // Не выровнен по границе 4096 байт, размер не кратен 4096
@@ -100,8 +103,8 @@ int main() {
     double timeCached = BenchmarkReading(testFile, FILE_ATTRIBUTE_NORMAL, alignedBuffer, alignedChunkSize);
     std::wcout << L"   А) Стандартное чтение (с системным кэшем):  " << timeCached << L" мс" << std::endl;
 
-    // Тест Б: Небуферизированный ввод-вывод (FILE_FLAG_NO_INTERMEDIATE_BUFFERING)
-    double timeDirect = BenchmarkReading(testFile, FILE_FLAG_NO_INTERMEDIATE_BUFFERING, alignedBuffer, alignedChunkSize);
+    // Тест Б: Небуферизированный ввод-вывод (FILE_FLAG_NO_BUFFERING)
+    double timeDirect = BenchmarkReading(testFile, FILE_FLAG_NO_BUFFERING, alignedBuffer, alignedChunkSize);
     std::wcout << L"   Б) Прямое чтение (без промежуточного кэша): " << timeDirect << L" мс" << std::endl;
 
     // Освобождение памяти

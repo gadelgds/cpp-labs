@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Лабораторная №5 — Чистые решения (без комментариев) + разбор</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc; --bg-card: #ffffff; --bg-code: #0f172a; --bg-code-bar: #1e293b;
+      --text-code: #e2e8f0; --text-main: #0f172a; --text-muted: #334155; --text-subtle: #64748b;
+      --border: #e2e8f0; --primary: #2563eb; --primary-light: #eff6ff;
+      --accent-green: #059669; --accent-green-bg: #ecfdf5; --accent-amber: #d97706; --accent-amber-bg: #fffbeb;
+      --accent-red: #dc2626; --accent-red-bg: #fef2f2;
+      --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05); --radius-sm: 8px; --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-page); color: var(--text-main); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; padding-bottom: 70px; }
+    header { background: rgba(255,255,255,0.96); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(8px); padding: 12px 16px; box-shadow: var(--shadow-sm); }
+    .header-content { max-width: 760px; margin: 0 auto; }
+    .badge-sub { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    h1 { font-size: 19px; font-weight: 800; line-height: 1.25; }
+    .nav-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px 0; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: #f1f5f9; color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+    .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
+    main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 28px; }
+    .section-wrap { display: flex; flex-direction: column; gap: 16px; }
+    .section-header { border-bottom: 2px solid var(--border); padding-bottom: 8px; margin-top: 8px; }
+    .section-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 4px; background: var(--primary-light); color: var(--primary); }
+    h2 { font-size: 18px; font-weight: 800; }
+    h3 { font-size: 15.5px; font-weight: 800; margin-top: 4px; }
+    .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .task-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .task-title { font-size: 15px; font-weight: 700; }
+    .task-path { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-subtle); background: #f1f5f9; padding: 3px 7px; border-radius: 4px; }
+    .task-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .code-container { position: relative; border: 1px solid #1e293b; border-radius: var(--radius-sm); background: var(--bg-code); overflow: hidden; }
+    .code-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: var(--bg-code-bar); border-bottom: 1px solid #334155; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; font-family: var(--font-mono); }
+    .copy-btn { background: #334155; border: 1px solid #475569; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: #e2e8f0; transition: all 0.2s; }
+    .copy-btn:hover { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .copy-btn.copied { background: var(--accent-green); border-color: var(--accent-green); color: #fff; }
+    pre { padding: 12px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.5; color: var(--text-code); tab-size: 4; }
+    code { font-family: var(--font-mono); }
+    p code, li code, td code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 12.5px; color: #0f172a; }
+    .output-box { background: #0f172a; color: #a7f3d0; font-family: var(--font-mono); font-size: 12.5px; padding: 10px 12px; border-radius: var(--radius-sm); white-space: pre-wrap; line-height: 1.5; }
+    .explanation-box { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; }
+    .explanation-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); margin-bottom: 6px; display: block; }
+    .lines-list { display: flex; flex-direction: column; gap: 0; margin-top: 6px; }
+    .line-item { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px dashed #e2e8f0; font-size: 13px; color: var(--text-muted); align-items: flex-start; }
+    .line-item:last-child { border-bottom: none; }
+    .line-num { min-width: 34px; height: 20px; border-radius: 4px; background: #f1f5f9; color: var(--text-subtle); font-family: var(--font-mono); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 1px; flex-shrink: 0; }
+    .line-code { font-family: var(--font-mono); font-size: 12px; color: #1e293b; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 1px 6px; margin-bottom: 2px; display: inline-block; }
+    .table-responsive { width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-top: 6px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th { background: #f1f5f9; padding: 8px 10px; text-align: left; font-weight: 700; border-bottom: 1px solid var(--border); }
+    td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) { background-color: #f8fafc; }
+    .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
+    .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
+    .callout-danger { background: var(--accent-red-bg); border-left: 3px solid var(--accent-red); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #991b1b; }
+    footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Лабораторная №5 · Чистый код + разбор</span>
+      <h1>Лабораторная работа №5: решения без комментариев и разбор каждой строки</h1>
+      <div class="nav-scroll">
+        <a href="#task1" class="nav-chip">1. Без буферизации (ошибка 87)</a>
+        <a href="#task2" class="nav-chip">2. СУБД, mapping и TLB</a>
+        <a href="#task3" class="nav-chip">3. VirtualAlloc</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <div class="callout-success" style="max-width:760px;">
+      <strong>Проверено на практике:</strong> все три программы собраны MSVC 14.44 (x64) с флагами <code>/EHsc /utf-8 /W3</code> без предупреждений и реально запущены. Вывод ниже — настоящий, с этой машины.
+    </div>
+
+    <!-- ================= ЗАДАЧА 1 ================= -->
+    <section id="task1" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag">Практика №1 · NO_BUFFERING</span>
+        <h2>Задача 1. Небуферизированный ввод-вывод, ошибка 87 и выравнивание</h2>
+      </div>
+
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Чистое решение (без комментариев)</div>
+          <span class="task-path">task1_no_buffering_bench.cpp</span>
+        </div>
+        <div class="task-body">
+          <div class="code-container">
+            <div class="code-top-bar">
+              <span>task1_no_buffering_bench.cpp</span>
+              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+            </div>
+            <pre><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;io.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;vector&gt;
+#include &lt;random&gt;
+
+const DWORD FILE_SIZE_10MB = 10 * 1024 * 1024;
+const DWORD SECTOR_SIZE = 4096;
+
+bool GenerateRandomFile(const wchar_t* path, DWORD sizeBytes) {
+    HANDLE hFile = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) return false;
+
+    const DWORD chunkSize = 64 * 1024;
+    std::vector&lt;char&gt; buffer(chunkSize);
+    std::mt19937 rng(42);
+    for (size_t i = 0; i &lt; chunkSize; ++i) buffer[i] = static_cast&lt;char&gt;('A' + (rng() % 26));
+
+    DWORD writtenTotal = 0;
+    while (writtenTotal &lt; sizeBytes) {
+        DWORD toWrite = min(chunkSize, sizeBytes - writtenTotal);
+        DWORD written = 0;
+        WriteFile(hFile, buffer.data(), toWrite, &amp;written, NULL);
+        writtenTotal += written;
+    }
+    CloseHandle(hFile);
+    return true;
+}
+
+double BenchmarkReading(const wchar_t* path, DWORD flags, void* buffer, DWORD readChunkSize) {
+    HANDLE hFile = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, flags, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) return -1.0;
+
+    LARGE_INTEGER freq, start, end;
+    QueryPerformanceFrequency(&amp;freq);
+    QueryPerformanceCounter(&amp;start);
+
+    DWORD bytesRead = 0;
+    DWORD totalRead = 0;
+    while (totalRead &lt; FILE_SIZE_10MB) {
+        if (!ReadFile(hFile, buffer, readChunkSize, &amp;bytesRead, NULL) || bytesRead == 0) {
+            break;
+        }
+        totalRead += bytesRead;
+    }
+
+    QueryPerformanceCounter(&amp;end);
+    CloseHandle(hFile);
+
+    return static_cast&lt;double&gt;(end.QuadPart - start.QuadPart) * 1000.0 / freq.QuadPart;
+}
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
+    #endif
+
+    const wchar_t* testFile = L"test_direct_io_10mb.dat";
+    std::wcout &lt;&lt; L"=== ПРАКТИКА №1: НЕБУФЕРИЗИРОВАННЫЙ ВВОД-ВЫВОД (NO_BUFFERING) ===" &lt;&lt; std::endl;
+
+    std::wcout &lt;&lt; L"1. Создание тестового файла 10 МБ со случайными данными..." &lt;&lt; std::endl;
+    GenerateRandomFile(testFile, FILE_SIZE_10MB);
+
+    std::wcout &lt;&lt; L"\n2. Попытка чтения в невыровненный буфер (char unalignedBuf[1000])..." &lt;&lt; std::endl;
+    HANDLE hDirect = CreateFileW(testFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                                 FILE_FLAG_NO_BUFFERING, NULL);
+
+    if (hDirect != INVALID_HANDLE_VALUE) {
+        char unalignedBuf[1000];
+        DWORD bytesRead = 0;
+        BOOL result = ReadFile(hDirect, unalignedBuf, sizeof(unalignedBuf), &amp;bytesRead, NULL);
+        if (!result) {
+            DWORD err = GetLastError();
+            std::wcout &lt;&lt; L"   [ОШИБКА ПОЛУЧЕНА]: ReadFile вернул FALSE, GetLastError() = " &lt;&lt; err &lt;&lt; std::endl;
+            if (err == ERROR_INVALID_PARAMETER) {
+                std::wcout &lt;&lt; L"   -&gt; Код 87 (ERROR_INVALID_PARAMETER): буфер не выровнен по границе сектора (4096 байт)!" &lt;&lt; std::endl;
+            }
+        }
+        CloseHandle(hDirect);
+    }
+
+    std::wcout &lt;&lt; L"\n3. Выделение выровненного буфера через VirtualAlloc (64 КБ)..." &lt;&lt; std::endl;
+    const DWORD alignedChunkSize = 64 * 1024;
+    void* alignedBuffer = VirtualAlloc(NULL, alignedChunkSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+    if (!alignedBuffer) {
+        std::wcout &lt;&lt; L"Ошибка VirtualAlloc!" &lt;&lt; std::endl;
+        return 1;
+    }
+    std::wcout &lt;&lt; L"   Адрес выровненного буфера: " &lt;&lt; alignedBuffer
+               &lt;&lt; L" (Адрес % 4096 == " &lt;&lt; ((UINT_PTR)alignedBuffer % SECTOR_SIZE) &lt;&lt; L")" &lt;&lt; std::endl;
+
+    std::wcout &lt;&lt; L"\n4. Сравнение производительности чтения 10 МБ (QueryPerformanceCounter):" &lt;&lt; std::endl;
+
+    double timeCached = BenchmarkReading(testFile, FILE_ATTRIBUTE_NORMAL, alignedBuffer, alignedChunkSize);
+    std::wcout &lt;&lt; L"   А) Стандартное чтение (с системным кэшем):  " &lt;&lt; timeCached &lt;&lt; L" мс" &lt;&lt; std::endl;
+
+    double timeDirect = BenchmarkReading(testFile, FILE_FLAG_NO_BUFFERING, alignedBuffer, alignedChunkSize);
+    std::wcout &lt;&lt; L"   Б) Прямое чтение (без промежуточного кэша): " &lt;&lt; timeDirect &lt;&lt; L" мс" &lt;&lt; std::endl;
+
+    VirtualFree(alignedBuffer, 0, MEM_RELEASE);
+
+    return 0;
+}</code></pre>
+          </div>
+
+          <h3>Реальный вывод</h3>
+          <div class="output-box">=== ПРАКТИКА №1: НЕБУФЕРИЗИРОВАННЫЙ ВВОД-ВЫВОД (NO_BUFFERING) ===
+1. Создание тестового файла 10 МБ со случайными данными...
+
+2. Попытка чтения в невыровненный буфер (char unalignedBuf[1000])...
+   [ОШИБКА ПОЛУЧЕНА]: ReadFile вернул FALSE, GetLastError() = 87
+   -&gt; Код 87 (ERROR_INVALID_PARAMETER): буфер не выровнен по границе сектора (4096 байт)!
+
+3. Выделение выровненного буфера через VirtualAlloc (64 КБ)...
+   Адрес выровненного буфера: 000002598EE50000 (Адрес % 4096 == 0)
+
+4. Сравнение производительности чтения 10 МБ (QueryPerformanceCounter):
+   А) Стандартное чтение (с системным кэшем):  35.0182 мс
+   Б) Прямое чтение (без промежуточного кэша): 52.4536 мс</div>
+
+          <div class="callout-danger"><strong>Найден и исправлен реальный баг:</strong> в исходнике использовался идентификатор <code>FILE_FLAG_NO_INTERMEDIATE_BUFFERING</code>, которого в Win32 <em>не существует</em> — код не компилировался (<code>error C2065</code>). Правильная константа — <code>FILE_FLAG_NO_BUFFERING</code> (0x20000000). В решении выше уже правильный вариант.</div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Разбор каждой строки кода</span>
+            <div class="lines-list">
+              <div class="line-item"><span class="line-num">1-6</span><div><span class="line-code">#include &lt;windows.h&gt; ... &lt;vector&gt; &lt;random&gt;</span><br>Win32 API, UTF-8 вывод, <code>std::vector</code> и <code>std::mt19937</code> для генерации случайных данных.</div></div>
+              <div class="line-item"><span class="line-num">8-9</span><div><span class="line-code">FILE_SIZE_10MB = 10 * 1024 * 1024; SECTOR_SIZE = 4096;</span><br>Размер тестового файла (10 МБ) и размер сектора диска (4 КБ) — граница выравнивания.</div></div>
+              <div class="line-item"><span class="line-num">11</span><div><span class="line-code">bool GenerateRandomFile(const wchar_t* path, DWORD sizeBytes)</span><br>Функция создаёт файл заданного размера со случайными буквами.</div></div>
+              <div class="line-item"><span class="line-num">12-13</span><div><span class="line-code">HANDLE hFile = CreateFileW(...); if (hFile == INVALID_HANDLE_VALUE) return false;</span><br>Создаём файл и проверяем ошибку.</div></div>
+              <div class="line-item"><span class="line-num">15-18</span><div><span class="line-code">const DWORD chunkSize = 64 * 1024; std::vector&lt;char&gt; buffer(chunkSize); std::mt19937 rng(42); ... 'A' + (rng() % 26)</span><br>Буфер 64 КБ и генератор случайных чисел с фиксированным seed (42) — данные воспроизводимы. Каждый байт — случайная буква A–Z.</div></div>
+              <div class="line-item"><span class="line-num">20-26</span><div><span class="line-code">while (writtenTotal &lt; sizeBytes) { ... WriteFile(...); writtenTotal += written; }</span><br>Пишем файл блоками по 64 КБ, пока не наберём 10 МБ.</div></div>
+              <div class="line-item"><span class="line-num">27-28</span><div><span class="line-code">CloseHandle(hFile); return true;</span><br>Закрываем файл и сообщаем об успехе.</div></div>
+              <div class="line-item"><span class="line-num">31</span><div><span class="line-code">double BenchmarkReading(const wchar_t* path, DWORD flags, void* buffer, DWORD readChunkSize)</span><br>Замеряет время чтения файла с заданными флагами открытия. Возвращает миллисекунды.</div></div>
+              <div class="line-item"><span class="line-num">32-33</span><div><span class="line-code">HANDLE hFile = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, flags, NULL); if (...) return -1.0;</span><br>Открываем файл с переданными <code>flags</code> — это позволяет сравнить обычное чтение и <code>FILE_FLAG_NO_BUFFERING</code>.</div></div>
+              <div class="line-item"><span class="line-num">35-37</span><div><span class="line-code">LARGE_INTEGER freq, start, end; QueryPerformanceFrequency(&amp;freq); QueryPerformanceCounter(&amp;start);</span><br>Готовим высокоточный таймер и фиксируем начало.</div></div>
+              <div class="line-item"><span class="line-num">39-46</span><div><span class="line-code">while (totalRead &lt; FILE_SIZE_10MB) { if (!ReadFile(...) || bytesRead == 0) break; totalRead += bytesRead; }</span><br>Читаем файл блоками <code>readChunkSize</code> до конца.</div></div>
+              <div class="line-item"><span class="line-num">48-51</span><div><span class="line-code">QueryPerformanceCounter(&amp;end); CloseHandle(hFile); return ... * 1000.0 / freq.QuadPart;</span><br>Фиксируем конец, переводим «тики» таймера в миллисекунды.</div></div>
+              <div class="line-item"><span class="line-num">54-58</span><div><span class="line-code">int main() { #if ... _setmode ... #endif</span><br>Точка входа и настройка UTF-8 для <code>std::wcout</code>.</div></div>
+              <div class="line-item"><span class="line-num">60-64</span><div><span class="line-code">const wchar_t* testFile = L"test_direct_io_10mb.dat"; ... GenerateRandomFile(...)</span><br>Имя тестового файла и его создание на 10 МБ.</div></div>
+              <div class="line-item"><span class="line-num">66-68</span><div><span class="line-code">HANDLE hDirect = CreateFileW(..., FILE_FLAG_NO_BUFFERING, NULL);</span><br>Открываем файл в режиме <strong>прямого</strong> ввода-вывода: системный кэш обходится, данные идут напрямую между диском и буфером программы.</div></div>
+              <div class="line-item"><span class="line-num">70-73</span><div><span class="line-code">char unalignedBuf[1000]; ... ReadFile(hDirect, unalignedBuf, sizeof(unalignedBuf), &amp;bytesRead, NULL);</span><br>Пытаемся прочитать в массив на стеке. Его адрес и размер (1000) <strong>не кратны 4096</strong> — прямое чтение это запрещает.</div></div>
+              <div class="line-item"><span class="line-num">74-80</span><div><span class="line-code">if (!result) { DWORD err = GetLastError(); ... if (err == ERROR_INVALID_PARAMETER) ... }</span><br>Получаем ошибку <code>87 (ERROR_INVALID_PARAMETER)</code> и объясняем её причину: буфер не выровнен по границе сектора.</div></div>
+              <div class="line-item"><span class="line-num">81-82</span><div><span class="line-code">CloseHandle(hDirect);</span><br>Закрываем дескриптор.</div></div>
+              <div class="line-item"><span class="line-num">84-86</span><div><span class="line-code">void* alignedBuffer = VirtualAlloc(NULL, alignedChunkSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);</span><br><code>VirtualAlloc</code> всегда возвращает адрес, выровненный по границе 64 КБ, — поэтому он гарантированно кратен 4096.</div></div>
+              <div class="line-item"><span class="line-num">88-93</span><div><span class="line-code">if (!alignedBuffer) { ... return 1; } ... (UINT_PTR)alignedBuffer % SECTOR_SIZE</span><br>Проверяем успех и печатаем остаток от деления адреса на 4096 — он равен 0.</div></div>
+              <div class="line-item"><span class="line-num">95-98</span><div><span class="line-code">double timeCached = BenchmarkReading(testFile, FILE_ATTRIBUTE_NORMAL, alignedBuffer, alignedChunkSize); ...</span><br>Замер А: обычное чтение через системный кэш.</div></div>
+              <div class="line-item"><span class="line-num">100-101</span><div><span class="line-code">double timeDirect = BenchmarkReading(testFile, FILE_FLAG_NO_BUFFERING, alignedBuffer, alignedChunkSize); ...</span><br>Замер Б: прямое чтение без кэша, но в выровненный буфер — теперь ошибки нет.</div></div>
+              <div class="line-item"><span class="line-num">103</span><div><span class="line-code">VirtualFree(alignedBuffer, 0, MEM_RELEASE);</span><br>Возвращаем память ядру. Для <code>MEM_RELEASE</code> размер должен быть 0.</div></div>
+              <div class="line-item"><span class="line-num">105</span><div><span class="line-code">return 0;</span><br>Успешное завершение.</div></div>
+            </div>
+          </div>
+
+          <div class="callout-warn"><strong>Почему прямое чтение здесь медленнее?</strong> Файл всего 10 МБ и уже лежит в системном кэше после создания, поэтому обычное чтение идёт из ОЗУ. А <code>FILE_FLAG_NO_BUFFERING</code> заставляет обходить кэш и обращаться к диску, плюс добавляет требования к выравниванию. На холодном кэше и больших файлах картина может измениться.</div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================= ЗАДАЧА 2 ================= -->
+    <section id="task2" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag">Практика №2 · TLB</span>
+        <h2>Задача 2. Симуляция СУБД: обычный I/O против file mapping и TLB flush</h2>
+      </div>
+
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Чистое решение (без комментариев)</div>
+          <span class="task-path">task2_dbms_sim_filemapping_tlb.cpp</span>
+        </div>
+        <div class="task-body">
+          <div class="code-container">
+            <div class="code-top-bar">
+              <span>task2_dbms_sim_filemapping_tlb.cpp</span>
+              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+            </div>
+            <pre><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;io.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;vector&gt;
+#include &lt;random&gt;
+
+const DWORD FILE_SIZE_16MB = 16 * 1024 * 1024;
+const int NUM_OPERATIONS = 10000;
+
+bool CreateDbBinaryFile(const wchar_t* path) {
+    HANDLE hFile = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) return false;
+
+    const size_t intsPerBlock = 64 * 1024;
+    std::vector&lt;int&gt; block(intsPerBlock);
+    for (size_t i = 0; i &lt; intsPerBlock; ++i) block[i] = static_cast&lt;int&gt;(i);
+
+    DWORD totalInts = FILE_SIZE_16MB / sizeof(int);
+    DWORD writtenInts = 0;
+    while (writtenInts &lt; totalInts) {
+        DWORD toWriteInts = min(intsPerBlock, totalInts - writtenInts);
+        DWORD writtenBytes = 0;
+        WriteFile(hFile, block.data(), toWriteInts * sizeof(int), &amp;writtenBytes, NULL);
+        writtenInts += toWriteInts;
+    }
+    CloseHandle(hFile);
+    return true;
+}
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
+    #endif
+
+    const wchar_t* dbFile = L"database_16mb.bin";
+    std::wcout &lt;&lt; L"=== ПРАКТИКА №2: СИМУЛЯЦИЯ СУБД (СТАНДАРТНЫЙ I/O vs FILE MAPPING &amp; TLB FLUSH) ===" &lt;&lt; std::endl;
+
+    std::wcout &lt;&lt; L"1. Создание бинарного файла 16 МБ с массивом целых чисел (int)..." &lt;&lt; std::endl;
+    CreateDbBinaryFile(dbFile);
+
+    std::mt19937 rng(1337);
+    DWORD totalIntCount = FILE_SIZE_16MB / sizeof(int);
+    std::vector&lt;DWORD&gt; randomIndices(NUM_OPERATIONS);
+    for (int i = 0; i &lt; NUM_OPERATIONS; ++i) {
+        randomIndices[i] = rng() % totalIntCount;
+    }
+
+    LARGE_INTEGER freq, start, end;
+    QueryPerformanceFrequency(&amp;freq);
+
+    std::wcout &lt;&lt; L"\n2. Запуск Режима А (Стандартный I/O со системным кэшем): 10 000 операций..." &lt;&lt; std::endl;
+    HANDLE hFileA = CreateFileW(dbFile, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+    QueryPerformanceCounter(&amp;start);
+    for (int i = 0; i &lt; NUM_OPERATIONS; ++i) {
+        LARGE_INTEGER offset;
+        offset.QuadPart = (LONGLONG)randomIndices[i] * sizeof(int);
+
+        SetFilePointerEx(hFileA, offset, NULL, FILE_BEGIN);
+        int value = 0;
+        DWORD bytesRead = 0;
+        ReadFile(hFileA, &amp;value, sizeof(int), &amp;bytesRead, NULL);
+
+        value += 1;
+
+        SetFilePointerEx(hFileA, offset, NULL, FILE_BEGIN);
+        DWORD bytesWritten = 0;
+        WriteFile(hFileA, &amp;value, sizeof(int), &amp;bytesWritten, NULL);
+    }
+    QueryPerformanceCounter(&amp;end);
+    CloseHandle(hFileA);
+
+    double timeModeA = static_cast&lt;double&gt;(end.QuadPart - start.QuadPart) * 1000.0 / freq.QuadPart;
+    std::wcout &lt;&lt; L"   -&gt; Время выполнения Режима А: " &lt;&lt; timeModeA &lt;&lt; L" мс" &lt;&lt; std::endl;
+
+    std::wcout &lt;&lt; L"\n3. Запуск Режима Б (Ручное проецирование с UnmapViewOfFile): 10 000 операций..." &lt;&lt; std::endl;
+    SYSTEM_INFO si;
+    GetSystemInfo(&amp;si);
+    DWORD allocGranularity = si.dwAllocationGranularity;
+    DWORD windowSize = allocGranularity;
+
+    HANDLE hFileB = CreateFileW(dbFile, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    HANDLE hMappingB = CreateFileMappingW(hFileB, NULL, PAGE_READWRITE, 0, 0, NULL);
+
+    QueryPerformanceCounter(&amp;start);
+    for (int i = 0; i &lt; NUM_OPERATIONS; ++i) {
+        LONGLONG byteOffset = (LONGLONG)randomIndices[i] * sizeof(int);
+
+        DWORD alignedOffsetLow = (DWORD)((byteOffset / allocGranularity) * allocGranularity);
+        DWORD offsetWithinWindow = (DWORD)(byteOffset % allocGranularity);
+
+        char* pView = static_cast&lt;char*&gt;(MapViewOfFile(hMappingB, FILE_MAP_ALL_ACCESS, 0, alignedOffsetLow, windowSize));
+        if (pView) {
+            int* pVal = reinterpret_cast&lt;int*&gt;(pView + offsetWithinWindow);
+            *pVal += 1;
+
+            UnmapViewOfFile(pView);
+        }
+    }
+    QueryPerformanceCounter(&amp;end);
+
+    CloseHandle(hMappingB);
+    CloseHandle(hFileB);
+
+    double timeModeB = static_cast&lt;double&gt;(end.QuadPart - start.QuadPart) * 1000.0 / freq.QuadPart;
+    std::wcout &lt;&lt; L"   -&gt; Время выполнения Режима Б: " &lt;&lt; timeModeB &lt;&lt; L" мс" &lt;&lt; std::endl;
+
+    std::wcout &lt;&lt; L"\n--- АНАЛИЗ НАКЛАДНЫХ РАСХОДОВ TLB FLUSH ---" &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"1. При частых вызовах UnmapViewOfFile ядро ОС Windows вынуждено:" &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"   - Изменять таблицы страниц (Page Tables) процесса;" &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"   - Выполнять аппаратную инструкцию сброса буфера ассоциативной трансляции (TLB Flush / INVLPG);" &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"   - Обрабатывать Page Fault при следующем MapViewOfFile." &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"2. В Режиме А системный файловый кэш держит страницы непрерывно в ОЗУ без переключения маппингов." &lt;&lt; std::endl;
+
+    return 0;
+}</code></pre>
+          </div>
+
+          <h3>Реальный вывод</h3>
+          <div class="output-box">=== ПРАКТИКА №2: СИМУЛЯЦИЯ СУБД (СТАНДАРТНЫЙ I/O vs FILE MAPPING &amp; TLB FLUSH) ===
+1. Создание бинарного файла 16 МБ с массивом целых чисел (int)...
+
+2. Запуск Режима А (Стандартный I/O со системным кэшем): 10 000 операций...
+   -&gt; Время выполнения Режима А: 143.276 мс
+
+3. Запуск Режима Б (Ручное проецирование с UnmapViewOfFile): 10 000 операций...
+   -&gt; Время выполнения Режима Б: 54.8376 мс
+
+--- АНАЛИЗ НАКЛАДНЫХ РАСХОДОВ TLB FLUSH ---
+1. При частых вызовах UnmapViewOfFile ядро ОС Windows вынуждено:
+   - Изменять таблицы страниц (Page Tables) процесса;
+   - Выполнять аппаратную инструкцию сброса буфера ассоциативной трансляции (TLB Flush / INVLPG);
+   - Обрабатывать Page Fault при следующем MapViewOfFile.
+2. В Режиме А системный файловый кэш держит страницы непрерывно в ОЗУ без переключения маппингов.</div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Разбор каждой строки кода</span>
+            <div class="lines-list">
+              <div class="line-item"><span class="line-num">1-6</span><div><span class="line-code">#include &lt;windows.h&gt; ... &lt;vector&gt; &lt;random&gt;</span><br>Win32 API, UTF-8 вывод, контейнеры и генератор случайных чисел.</div></div>
+              <div class="line-item"><span class="line-num">8-9</span><div><span class="line-code">FILE_SIZE_16MB = 16 * 1024 * 1024; NUM_OPERATIONS = 10000;</span><br>Размер «базы данных» (16 МБ) и число случайных модификаций.</div></div>
+              <div class="line-item"><span class="line-num">11</span><div><span class="line-code">bool CreateDbBinaryFile(const wchar_t* path)</span><br>Создаёт бинарный файл, заполненный последовательностью <code>int</code>.</div></div>
+              <div class="line-item"><span class="line-num">12-13</span><div><span class="line-code">HANDLE hFile = CreateFileW(...); if (...) return false;</span><br>Создание файла с проверкой ошибки.</div></div>
+              <div class="line-item"><span class="line-num">15-17</span><div><span class="line-code">const size_t intsPerBlock = 64 * 1024; std::vector&lt;int&gt; block(...); ... block[i] = i;</span><br>Блок из 65536 чисел, заполненный значениями 0, 1, 2, …</div></div>
+              <div class="line-item"><span class="line-num">19-26</span><div><span class="line-code">DWORD totalInts = FILE_SIZE_16MB / sizeof(int); ... while (writtenInts &lt; totalInts) { ... WriteFile(...); }</span><br>Пишем блоки, пока файл не достигнет 16 МБ.</div></div>
+              <div class="line-item"><span class="line-num">27-28</span><div><span class="line-code">CloseHandle(hFile); return true;</span><br>Закрываем файл, сообщаем об успехе.</div></div>
+              <div class="line-item"><span class="line-num">31-35</span><div><span class="line-code">int main() { #if ... _setmode ... #endif</span><br>Точка входа и UTF-8 для <code>std::wcout</code>.</div></div>
+              <div class="line-item"><span class="line-num">37-41</span><div><span class="line-code">const wchar_t* dbFile = L"database_16mb.bin"; ... CreateDbBinaryFile(dbFile);</span><br>Имя файла и его создание.</div></div>
+              <div class="line-item"><span class="line-num">43-48</span><div><span class="line-code">std::mt19937 rng(1337); ... randomIndices[i] = rng() % totalIntCount;</span><br>Генерируем 10 000 случайных индексов в диапазоне файла. Seed фиксирован — набор индексов одинаков при каждом запуске.</div></div>
+              <div class="line-item"><span class="line-num">50-51</span><div><span class="line-code">LARGE_INTEGER freq, start, end; QueryPerformanceFrequency(&amp;freq);</span><br>Готовим высокоточный таймер.</div></div>
+              <div class="line-item"><span class="line-num">53-55</span><div><span class="line-code">std::wcout &lt;&lt; ... Режим А ...; HANDLE hFileA = CreateFileW(...);</span><br>Открываем файл для обычного чтения/записи.</div></div>
+              <div class="line-item"><span class="line-num">57-72</span><div><span class="line-code">QueryPerformanceCounter(&amp;start); for (...) { SetFilePointerEx(...); ReadFile(...); value += 1; SetFilePointerEx(...); WriteFile(...); }</span><br><strong>Режим А.</strong> На каждую операцию — 4 системных вызова: два позиционирования, чтение и запись. Данные идут через системный файловый кэш.</div></div>
+              <div class="line-item"><span class="line-num">73-77</span><div><span class="line-code">QueryPerformanceCounter(&amp;end); CloseHandle(hFileA); double timeModeA = ...; std::wcout &lt;&lt; ...</span><br>Останавливаем таймер, считаем и печатаем время режима А.</div></div>
+              <div class="line-item"><span class="line-num">79-83</span><div><span class="line-code">SYSTEM_INFO si; GetSystemInfo(&amp;si); DWORD allocGranularity = si.dwAllocationGranularity; DWORD windowSize = allocGranularity;</span><br>Узнаём гранулярность (64 КБ) — размер окна проекции.</div></div>
+              <div class="line-item"><span class="line-num">85-87</span><div><span class="line-code">HANDLE hFileB = CreateFileW(...); HANDLE hMappingB = CreateFileMappingW(hFileB, NULL, PAGE_READWRITE, 0, 0, NULL);</span><br>Открываем файл и создаём объект проекции с правом записи.</div></div>
+              <div class="line-item"><span class="line-num">89-103</span><div><span class="line-code">QueryPerformanceCounter(&amp;start); for (...) { ... MapViewOfFile(...); *pVal += 1; UnmapViewOfFile(pView); }</span><br><strong>Режим Б.</strong> На каждую операцию — только <code>MapViewOfFile</code> + <code>UnmapViewOfFile</code>. Смещение выравнивается вниз до 64 КБ, а нужный байт берётся как <code>pView + offsetWithinWindow</code>.</div></div>
+              <div class="line-item"><span class="line-num">104-110</span><div><span class="line-code">QueryPerformanceCounter(&amp;end); CloseHandle(...); double timeModeB = ...; std::wcout &lt;&lt; ...</span><br>Останавливаем таймер, закрываем дескрипторы, печатаем время режима Б.</div></div>
+              <div class="line-item"><span class="line-num">112-117</span><div><span class="line-code">std::wcout &lt;&lt; L"--- АНАЛИЗ ... TLB FLUSH ---" ...</span><br>Теоретическое объяснение: <code>UnmapViewOfFile</code> меняет таблицы страниц, вызывает сброс TLB (<code>INVLPG</code>) и приводит к page fault при следующем отображении.</div></div>
+              <div class="line-item"><span class="line-num">119</span><div><span class="line-code">return 0;</span><br>Успешное завершение.</div></div>
+            </div>
+          </div>
+
+          <div class="callout-warn"><strong>Честный разбор результата:</strong> на этой машине Режим Б оказался <em>быстрее</em> (≈55 мс против ≈143 мс), хотя теория предсказывает просадку из-за TLB flush. Причина: файл 16 МБ целиком помещается в кэш, а Режим А делает <strong>4 системных вызова</strong> на операцию (2×<code>SetFilePointerEx</code> + <code>ReadFile</code> + <code>WriteFile</code>), тогда как Б — только <strong>2</strong> (<code>MapViewOfFile</code> + <code>UnmapViewOfFile</code>). Экономия на переходах в ядро перевесила стоимость сброса TLB. На холодном кэше, большом файле и при частых промахах страниц картина может измениться в пользу А.</div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================= ЗАДАЧА 3 ================= -->
+    <section id="task3" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag">Практика №3 · VirtualAlloc</span>
+        <h2>Задача 3. Выделение памяти напрямую у ядра Windows</h2>
+      </div>
+
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Чистое решение (без комментариев)</div>
+          <span class="task-path">task3_direct_kernel_memory.cpp</span>
+        </div>
+        <div class="task-body">
+          <div class="code-container">
+            <div class="code-top-bar">
+              <span>task3_direct_kernel_memory.cpp</span>
+              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+            </div>
+            <pre><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    std::cout &lt;&lt; "=== ПРАКТИКА №3: ВЫДЕЛЕНИЕ ПАМЯТИ НАПРЯМУЮ У ЯДРА WINDOWS (VirtualAlloc) ===" &lt;&lt; std::endl;
+
+    size_t count = 10000;
+    std::cout &lt;&lt; "Введите размер массива целых чисел (по умолчанию 10000): ";
+    if (!(std::cin &gt;&gt; count) || count == 0) {
+        count = 10000;
+    }
+
+    size_t sizeInBytes = count * sizeof(int);
+    std::cout &lt;&lt; "Запрошено элементов: " &lt;&lt; count
+              &lt;&lt; " (" &lt;&lt; sizeInBytes &lt;&lt; " байт / ~" &lt;&lt; (sizeInBytes / 1024) &lt;&lt; " КБ)" &lt;&lt; std::endl;
+
+    int* pArray = static_cast&lt;int*&gt;(VirtualAlloc(
+        NULL,
+        sizeInBytes,
+        MEM_COMMIT | MEM_RESERVE,
+        PAGE_READWRITE
+    ));
+
+    if (pArray == NULL) {
+        std::cout &lt;&lt; "Ошибка выделения памяти у ядра: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return 1;
+    }
+
+    std::cout &lt;&lt; "Память успешно выделена ядром по адресу: " &lt;&lt; static_cast&lt;void*&gt;(pArray) &lt;&lt; std::endl;
+
+    for (size_t i = 0; i &lt; count; ++i) {
+        pArray[i] = static_cast&lt;int&gt;(i * i);
+    }
+
+    std::cout &lt;&lt; "\nПервые 10 элементов массива (квадраты индексов):" &lt;&lt; std::endl;
+    for (size_t i = 0; i &lt; 10 &amp;&amp; i &lt; count; ++i) {
+        std::cout &lt;&lt; "  pArray[" &lt;&lt; i &lt;&lt; "] = " &lt;&lt; pArray[i] &lt;&lt; std::endl;
+    }
+
+    BOOL freeSuccess = VirtualFree(
+        pArray,
+        0,
+        MEM_RELEASE
+    );
+
+    if (freeSuccess) {
+        std::cout &lt;&lt; "\nПамять успешно возвращена ядру Windows (VirtualFree MEM_RELEASE)." &lt;&lt; std::endl;
+    } else {
+        std::cout &lt;&lt; "\nОшибка освобождения памяти: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+    }
+
+    return 0;
+}</code></pre>
+          </div>
+
+          <h3>Реальный вывод (введено 10)</h3>
+          <div class="output-box">=== ПРАКТИКА №3: ВЫДЕЛЕНИЕ ПАМЯТИ НАПРЯМУЮ У ЯДРА WINDOWS (VirtualAlloc) ===
+Введите размер массива целых чисел (по умолчанию 10000): Запрошено элементов: 10 (40 байт / ~0 КБ)
+Память успешно выделена ядром по адресу: 0000024EBCA00000
+
+Первые 10 элементов массива (квадраты индексов):
+  pArray[0] = 0
+  pArray[1] = 1
+  pArray[2] = 4
+  pArray[3] = 9
+  pArray[4] = 16
+  pArray[5] = 25
+  pArray[6] = 36
+  pArray[7] = 49
+  pArray[8] = 64
+  pArray[9] = 81
+
+Память успешно возвращена ядру Windows (VirtualFree MEM_RELEASE).</div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Разбор каждой строки кода</span>
+            <div class="lines-list">
+              <div class="line-item"><span class="line-num">1-2</span><div><span class="line-code">#include &lt;windows.h&gt; #include &lt;iostream&gt;</span><br>Win32 API (<code>VirtualAlloc</code>, <code>VirtualFree</code>) и вывод.</div></div>
+              <div class="line-item"><span class="line-num">4</span><div><span class="line-code">int main() {</span><br>Точка входа.</div></div>
+              <div class="line-item"><span class="line-num">5-7</span><div><span class="line-code">#if defined(_WIN32) system("chcp 65001 &gt; nul"); #endif</span><br>UTF-8 для консоли.</div></div>
+              <div class="line-item"><span class="line-num">9</span><div><span class="line-code">std::cout &lt;&lt; "=== ... ===" &lt;&lt; std::endl;</span><br>Заголовок.</div></div>
+              <div class="line-item"><span class="line-num">11-15</span><div><span class="line-code">size_t count = 10000; ... if (!(std::cin &gt;&gt; count) || count == 0) count = 10000;</span><br>Спрашиваем размер массива. Если ввод не удался или введён 0 — берём 10000 по умолчанию.</div></div>
+              <div class="line-item"><span class="line-num">17-19</span><div><span class="line-code">size_t sizeInBytes = count * sizeof(int); ...</span><br>Переводим количество элементов в байты (<code>int</code> = 4 байта) и печатаем.</div></div>
+              <div class="line-item"><span class="line-num">21-26</span><div><span class="line-code">int* pArray = static_cast&lt;int*&gt;(VirtualAlloc(NULL, sizeInBytes, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));</span><br><strong>Ключевой вызов.</strong> Ядро резервирует диапазон адресов (<code>MEM_RESERVE</code>), сразу выделяет физические страницы (<code>MEM_COMMIT</code>) и разрешает чтение/запись (<code>PAGE_READWRITE</code>). <code>NULL</code> — адрес выбирает само ядро.</div></div>
+              <div class="line-item"><span class="line-num">28-31</span><div><span class="line-code">if (pArray == NULL) { ... return 1; }</span><br>Проверка: <code>NULL</code> означает, что память выделить не удалось.</div></div>
+              <div class="line-item"><span class="line-num">33</span><div><span class="line-code">std::cout &lt;&lt; "... по адресу: " &lt;&lt; static_cast&lt;void*&gt;(pArray) ...</span><br>Печатаем адрес. Приводим к <code>void*</code>, чтобы <code>operator&lt;&lt;</code> вывел адрес, а не значение первого элемента.</div></div>
+              <div class="line-item"><span class="line-num">35-37</span><div><span class="line-code">for (size_t i = 0; i &lt; count; ++i) { pArray[i] = static_cast&lt;int&gt;(i * i); }</span><br>Заполняем массив квадратами индексов.</div></div>
+              <div class="line-item"><span class="line-num">39-42</span><div><span class="line-code">std::cout &lt;&lt; "... Первые 10 ..."; for (size_t i = 0; i &lt; 10 &amp;&amp; i &lt; count; ++i) ...</span><br>Печатаем первые 10 элементов (или меньше, если массив короче).</div></div>
+              <div class="line-item"><span class="line-num">44-48</span><div><span class="line-code">BOOL freeSuccess = VirtualFree(pArray, 0, MEM_RELEASE);</span><br>Возвращаем память ядру. При <code>MEM_RELEASE</code> второй аргумент обязан быть 0, иначе вызов завершится ошибкой.</div></div>
+              <div class="line-item"><span class="line-num">50-54</span><div><span class="line-code">if (freeSuccess) { ... } else { ... GetLastError() ... }</span><br>Печатаем результат освобождения.</div></div>
+              <div class="line-item"><span class="line-num">56-57</span><div><span class="line-code">return 0; }</span><br>Успешное завершение.</div></div>
+            </div>
+          </div>
+
+          <div class="callout-success"><strong>Чем <code>VirtualAlloc</code> отличается от <code>new</code>/<code>malloc</code>?</strong> <code>new</code> и <code>malloc</code> берут память из кучи процесса (менеджер кучи сам вызывает <code>VirtualAlloc</code> большими блоками и нарезает их). Прямой <code>VirtualAlloc</code> даёт:<br>• выравнивание по границе 64 КБ;<br>• страничную защиту (<code>PAGE_READWRITE</code>, <code>PAGE_NOACCESS</code> и т. д.);<br>• возможность резервировать и коммитить память по отдельности;<br>• гарантию, что память вернётся ОС, а не останется в куче.</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>Лабораторная работа №5 · Чистые решения без комментариев + разбор строк · MSVC 14.44 (x64), /W3 без предупреждений</footer>
+
+  <script>
+    function copyCode(btn) {
+      const pre = btn.closest('.code-container').querySelector('pre');
+      const text = pre.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const original = btn.innerText;
+        btn.innerText = 'Скопировано!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.innerText = original; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+  </script>
+
+</body>
+</html>

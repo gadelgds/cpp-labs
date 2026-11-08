@@ -1,5 +1,7 @@
 #include <windows.h>
 #include <iostream>
+#include <io.h>
+#include <fcntl.h>
 #include <vector>
 #include <random>
 
@@ -30,6 +32,7 @@ bool CreateDbBinaryFile(const wchar_t* path) {
 int main() {
     #if defined(_WIN32)
     system("chcp 65001 > nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
     #endif
 
     const wchar_t* dbFile = L"database_16mb.bin";

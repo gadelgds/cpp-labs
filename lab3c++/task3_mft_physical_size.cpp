@@ -1,5 +1,7 @@
 #include <windows.h>
 #include <iostream>
+#include <io.h>
+#include <fcntl.h>
 
 void investigateFile(const wchar_t* fileName, DWORD bytesToWrite) {
     HANDLE hFile = CreateFileW(
@@ -38,6 +40,7 @@ void investigateFile(const wchar_t* fileName, DWORD bytesToWrite) {
 int main() {
     #if defined(_WIN32)
     system("chcp 65001 > nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
     #endif
 
     std::wcout << L"=== ИССЛЕДОВАНИЕ ФИЗИЧЕСКОГО РАЗМЕРА ФАЙЛА ВНЕ ТАБЛИЦЫ MFT ===" << std::endl;
