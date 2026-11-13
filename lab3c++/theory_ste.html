@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Лабораторная работа №3 — Теория: асинхронный I/O и NTFS MFT — версия STE</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-page); color: var(--text-main); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; padding-bottom: 80px; }
+
+    header {
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-content { max-width: 760px; margin: 0 auto; }
+    .badge-sub { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    h1 { font-size: 19px; font-weight: 800; color: var(--text-main); line-height: 1.25; }
+
+    .nav-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px 0; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+    .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
+
+    main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+    .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .task-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .task-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .task-path { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-subtle); background: var(--bg-code); padding: 3px 7px; border-radius: 4px; }
+    .task-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+    .code-container { position: relative; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-code); overflow: hidden; }
+    .code-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: #e2e8f0; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); }
+    .copy-btn { background: #ffffff; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: var(--text-main); transition: all 0.2s; }
+    .copy-btn:hover { background: var(--primary); color: #ffffff; border-color: var(--primary); }
+    .copy-btn.copied { background: var(--accent-green); color: #ffffff; border-color: var(--accent-green); }
+
+    pre { padding: 12px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.45; color: #0f172a; }
+
+    .explanation-box { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .explanation-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); }
+    .line-breakdown { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .line-item { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 13px; }
+    .line-code { font-family: var(--font-mono); font-weight: 700; color: #1e293b; margin-bottom: 3px; display: block; }
+    .line-desc { color: var(--text-muted); line-height: 1.45; }
+
+    .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
+    .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
+
+    footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
+  
+    .break-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+    .break-table th, .break-table td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; line-height: 1.45; }
+    .break-table th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    .break-table td.ln { white-space: nowrap; font-family: var(--font-mono); font-weight: 700; color: var(--primary); font-size: 12px; }
+    .break-table td.code { font-family: var(--font-mono); font-size: 12px; color: #1e293b; word-break: break-word; }
+    .break-table tr:nth-child(even) td { background: #f8fafc; }
+    .run-box { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .run-box h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent-green); }
+    .run-box code, .theory-body code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-code); padding: 1px 5px; border-radius: 4px; }
+    .run-box pre.cmd { background: #0f172a; color: #e2e8f0; padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
+    .run-box pre.cmd code { background: none; padding: 0; color: inherit; }
+    .theory-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; font-size: 14px; color: var(--text-muted); }
+    .theory-body h2 { font-size: 16px; color: var(--text-main); margin-top: 6px; }
+    .theory-body h3 { font-size: 14px; color: var(--text-main); margin-top: 4px; }
+    .theory-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .theory-body th, .theory-body td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; line-height: 1.45; }
+    .theory-body th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    .theory-body ul, .theory-body ol { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+    .toc { display: flex; flex-direction: column; gap: 6px; }
+    .toc a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+  
+    .break-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+    .break-table th, .break-table td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; line-height: 1.45; }
+    .break-table th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    .break-table td.ln { white-space: nowrap; font-family: var(--font-mono); font-weight: 700; color: var(--primary); font-size: 12px; }
+    .break-table td.code { font-family: var(--font-mono); font-size: 12px; color: #1e293b; word-break: break-word; }
+    .break-table tr:nth-child(even) td { background: #f8fafc; }
+    .run-box { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .run-box h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent-green); }
+    .run-box code, .theory-body code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-code); padding: 1px 5px; border-radius: 4px; }
+    .run-box pre.cmd { background: #0f172a; color: #e2e8f0; padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
+    .run-box pre.cmd code { background: none; padding: 0; color: inherit; }
+    .theory-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; font-size: 14px; color: var(--text-muted); }
+    .theory-body h2 { font-size: 16px; color: var(--text-main); margin-top: 6px; }
+    .theory-body h3 { font-size: 14px; color: var(--text-main); margin-top: 4px; }
+    .theory-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .theory-body th, .theory-body td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; line-height: 1.45; }
+    .theory-body th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    .theory-body ul, .theory-body ol { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+    .toc { display: flex; flex-direction: column; gap: 6px; }
+    .toc a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Лабораторная работа №3</span>
+      <h1>Асинхронный I/O и структура NTFS MFT</h1>
+      <div class="nav-scroll"><a href="index_ste.html" class="nav-chip">← Код и разбор (STE)</a><a href="theory.html" class="nav-chip">Обычная теория</a><a href="glossary_ste.html" class="nav-chip">Словарь (STE)</a><a href="#t1" class="nav-chip">1. Асинхронный I/O</a><a href="#t2" class="nav-chip">2. MFT и $DATA</a><a href="#t3" class="nav-chip">3. Физический размер</a><a href="#t4" class="nav-chip">4. Блокировка потока</a><a href="#run" class="nav-chip">5. Условия запуска</a></div>
+    </div>
+  </header>
+<div style="max-width:760px;margin:16px auto 0;padding:12px 16px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;font-size:14px;line-height:1.6;color:#0f172a;"><strong>Версия STE.</strong> Правила ASD-STE100 действуют на объяснения: одно предложение — одна мысль; описание — не больше 25 слов; инструкция — не больше 20 слов; действительный залог; один термин — одно слово; сначала ответ, потом подробности. Код, названия файлов и заголовки — как в обычной версии. Термины — как в словаре <a href="glossary_ste.html">glossary_ste.html</a>.</div>
+
+  <main>
+
+<div class="task-card"><div class="task-body theory-body">
+<p>Это отдельная теоретическая шпаргалка к лабораторной работе №3. Код и построчный разбор каждой программы лежат в <a href="index_ste.html">index_ste.html</a>. Здесь — только теория за задачами: что это, зачем это нужно, ключевые правила и типичные ошибки.</p>
+<div class="toc"><strong>Содержание:</strong>
+<a href="#t1">1. Асинхронный I/O, OVERLAPPED и события</a>
+<a href="#t2">2. NTFS MFT и атрибуты $DATA: резидентные и нерезидентные</a>
+<a href="#t3">3. Физический размер файла: кластеры и slack</a>
+<a href="#t4">4. Синхронный и асинхронный вызовы, блокировка потока</a>
+<a href="#run">5. Общие условия запуска всех программ</a>
+</div></div></div>
+
+<div class="task-card" id="t1"><div class="task-header"><div class="task-title">1. Асинхронный I/O, OVERLAPPED и события (hEvent)</div></div>
+<div class="task-body theory-body">
+<h2>Что это</h2>
+<p>Синхронный вызов <code>ReadFile</code> возвращает управление только после того, как данные уже лежат в памяти. Асинхронный вызов возвращает управление сразу. Данные дочитываются в фоне: контроллер диска передаёт их по DMA. Поток в это время свободен. Поток делает другую работу или спит в ожидании события.</p>
+<p>В Win32 программа включает асинхронность на уровне дескриптора. Программа передаёт флаг <code>FILE_FLAG_OVERLAPPED</code> в <code>CreateFileW</code>. Без флага Windows игнорирует <code>OVERLAPPED</code>, и все операции идут синхронно. Программа включает флаг при открытии файла. Позже добавить флаг нельзя.</p>
+<h2>Структура OVERLAPPED — поля</h2>
+<table><thead><tr><th>Поле</th><th>Назначение</th></tr></thead><tbody>
+<tr><td><code>Offset / OffsetHigh</code></td><td>Два поля задают 64-битное смещение операции в файле. Первое поле хранит младшие 32 бита. Второе поле хранит старшие 32 бита. В асинхронном режиме файл не имеет текущего указателя. Программа задаёт смещение явно при каждой операции.</td></tr>
+<tr><td><code>hEvent</code></td><td>Событие ядра — это <code>hEvent</code>. Драйвер переводит событие в сигнальное состояние, когда операция завершается. Событие может быть NULL. Тогда программа узнаёт о завершении только через <code>GetOverlappedResult</code>.</td></tr>
+<tr><td><code>Internal / InternalHigh</code></td><td>Поля <code>Internal</code> и <code>InternalHigh</code> — служебные поля ядра. <code>Internal</code> хранит код завершения операции. <code>InternalHigh</code> хранит число переданных байт. Программа не заполняет эти поля. Их пишет драйвер.</td></tr>
+<tr><td><code>Pointer</code></td><td>Система резервирует это поле. Программа не использует это поле.</td></tr>
+</tbody></table>
+<h2>Как узнать, что операция завершена</h2>
+<table><thead><tr><th>Способ</th><th>Как работает</th><th>Когда удобен</th></tr></thead><tbody>
+<tr><td><code>WaitForSingleObject(hEvent, INFINITE)</code></td><td>Поток засыпает до сигнала события. Поток не тратит CPU. Загрузка CPU — 0%.</td><td>Этот способ подходит для одной операции и простого ожидания. Задача 1 использует этот способ.</td></tr>
+<tr><td><code>GetOverlappedResult(hFile, &amp;ov, &amp;bytes, TRUE)</code></td><td>Вызов сам ждёт завершения операции. Последний аргумент TRUE включает ожидание. Вызов возвращает число переданных байт.</td><td>Этот способ подходит, когда программа не создавала событие.</td></tr>
+<tr><td><code>GetOverlappedResult(…, FALSE)</code></td><td>Вызов не ждёт завершения операции. Вызов возвращает результат уже завершённой операции.</td><td>Программа вызывает этот вариант после ожидания события. Задача 1 использует этот вариант.</td></tr>
+<tr><td><code>WaitForMultipleObjects</code></td><td>Вызов ждёт сразу несколько событий.</td><td>Этот способ подходит для многих параллельных операций.</td></tr>
+<tr><td>Completion Port (IOCP)</td><td>Ядро само складывает завершённые операции в очередь.</td><td>Этот способ подходит для серверов с тысячами операций. Он даёт высшую производительность.</td></tr>
+</tbody></table>
+<h2>События: ручной и автоматический сброс</h2>
+<p><code>CreateEventW(NULL, TRUE, FALSE, NULL)</code> создаёт событие с <strong>ручным сбросом</strong> (manual-reset). После срабатывания событие остаётся сигнальным до явного вызова <code>ResetEvent</code>. Поэтому задача 1 вызывает <code>ResetEvent</code> перед каждым чтением и записью. Без сброса <code>WaitForSingleObject</code> сразу вернулся бы по старому сигналу. Событие с автоматическим сбросом гаснет само, когда один ожидающий поток просыпается. Автоматический сброс включает <code>FALSE</code> вторым аргументом.</p>
+<h2>Ключевые правила</h2>
+<ul>
+<li><strong>Всегда обнуляйте OVERLAPPED</strong> (<code>memset</code>) перед первым использованием. Мусор в полях смещения даёт чтение не оттуда или сбой.</li>
+<li><strong>FALSE от асинхронного ReadFile/WriteFile — норма.</strong> Ошибка возникает только при <code>GetLastError() != ERROR_IO_PENDING</code> (997). Читайте код ошибки сразу после вызова.</li>
+<li><strong>Буфер нельзя трогать до завершения операции.</strong> Пока драйвер пишет в буфер по DMA, чтение из буфера или повторная запись дают гонку данных. Поэтому задача 1 выполняет чтение и запись строго по очереди.</li>
+<li><strong>Четвёртый аргумент ReadFile/WriteFile — NULL</strong> при OVERLAPPED. Программа забирает число байт только через <code>GetOverlappedResult</code>.</li>
+<li><strong>Один OVERLAPPED — одна операция.</strong> Не переиспользуйте структуру, пока операция не завершена.</li>
+</ul>
+<h2>Типичные ошибки</h2>
+<ul>
+<li>Программа забыла <code>FILE_FLAG_OVERLAPPED</code> при открытии. Операции стали синхронными. <code>ERROR_IO_PENDING</code> никогда не возникает.</li>
+<li>Программа забыла <code>ResetEvent</code> перед операцией. Ожидание мгновенно «проходит». Данные ещё не готовы.</li>
+<li>Программа забыла задать <code>Offset/OffsetHigh</code>. Чтение идёт с нулевого или мусорного смещения.</li>
+<li>Программа проверила только <code>readRet == FALSE</code> и решила, что это ошибка. Программа «падает» на первом же нормальном чтении.</li>
+<li>Программа не проверила возвращаемое значение <code>GetOverlappedResult</code>. При сбое чтения <code>bytesTransferred</code> может содержать старое значение. Программа этого не заметит. Задача 1 показывает этот случай.</li>
+</ul>
+<h2>Мини-пример: чтение одного блока</h2>
+<p><code>HANDLE hEvent = CreateEventW(NULL, TRUE, FALSE, NULL); OVERLAPPED ov = {}; ov.hEvent = hEvent; ov.Offset = 0; ReadFile(h, buf, 4096, NULL, &amp;ov); // FALSE + ERROR_IO_PENDING — нормально. WaitForSingleObject(hEvent, INFINITE); DWORD n = 0; GetOverlappedResult(h, &amp;ov, &amp;n, FALSE); // n — реально прочитано</code></p>
+</div></div>
+
+<div class="task-card" id="t2"><div class="task-header"><div class="task-title">2. NTFS MFT и атрибуты $DATA: резидентные и нерезидентные</div></div>
+<div class="task-body theory-body">
+<h2>Что это</h2>
+<p><strong>MFT (Master File Table)</strong> — главная таблица файлов NTFS. MFT — массив записей фиксированного размера <strong>1024 байта (1 КБ)</strong>. MFT хранит одну запись на каждый файл и каталог тома. Запись MFT — не сами данные, а «паспорт» файла. Запись хранит заголовок и набор атрибутов.</p>
+<h2>Основные атрибуты записи MFT</h2>
+<table><thead><tr><th>Атрибут</th><th>Что хранит</th></tr></thead><tbody>
+<tr><td><code>$STANDARD_INFORMATION</code></td><td>Атрибут хранит время создания файла и время изменения файла. Атрибут хранит флаги файла: скрытый, системный и другие.</td></tr>
+<tr><td><code>$FILE_NAME</code></td><td>Атрибут хранит имя файла. Атрибут хранит ссылку на родительский каталог.</td></tr>
+<tr><td><code>$DATA</code></td><td>Атрибут хранит содержимое файла. Содержимое лежит резидентно или нерезидентно. Подробности — ниже.</td></tr>
+<tr><td><code>$SECURITY_DESCRIPTOR</code></td><td>Атрибут хранит права доступа (ACL).</td></tr>
+<tr><td><code>$ATTRIBUTE_LIST</code></td><td>Атрибут хранит список продолжений. Продолжения нужны, если атрибуты не влезли в одну запись MFT.</td></tr>
+</tbody></table>
+<h2>Резидентный и нерезидентный $DATA</h2>
+<table><thead><tr><th></th><th>Резидентный (Resident)</th><th>Нерезидентный (Non-Resident)</th></tr></thead><tbody>
+<tr><td>Где данные</td><td>Данные файла лежат прямо внутри 1024-байтной записи MFT.</td><td>Данные файла лежат в отдельных кластерах тома. Кластеры лежат вне MFT.</td></tr>
+<tr><td>Что в MFT</td><td>Запись MFT хранит сами байты файла.</td><td>Запись MFT хранит список Data Runs. Data Runs — это цепочки кластеров (экстенты).</td></tr>
+<tr><td>Когда</td><td>Файл маленький. Заголовок и служебные атрибуты оставляют свободное место в записи. На практике порог — около 700 байт. Порог зависит от длины имени и других атрибутов.</td><td>Файл не помещается в свободное место записи.</td></tr>
+<tr><td>Кластеры на диске</td><td>Windows не выделяет кластеры. Проводник показывает размер на диске 0 байт.</td><td>Windows выделяет кластеры целиком.</td></tr>
+<tr><td>Пример из задачи 2</td><td>200 байт.</td><td>2500 байт и 500 КБ.</td></tr>
+</tbody></table>
+<p><strong>Важно:</strong> порог резидентности — не ровно 1024 и не ровно 700 байт. Запись MFT занята заголовком, $STANDARD_INFORMATION, $FILE_NAME и заголовком самого $DATA. Поэтому свободного места обычно около 700 байт. Точное значение зависит от длины имени файла и наличия других атрибутов. Поэтому файл 200 байт — заведомо резидентный, а файл 2500 байт — заведомо нерезидентный.</p>
+<h2>Data Runs и экстенты: VCN и LCN</h2>
+<p>Нерезидентный файл описывается цепочками непрерывных кластеров — <strong>экстентами (Data Runs)</strong>. Каждый экстент имеет два номера. <strong>LCN</strong> (Logical Cluster Number) — номер первого физического кластера цепочки на томе. <strong>NextVCN</strong> (Virtual Cluster Number) — логический номер кластера внутри файла, с которого начинается следующая цепочка. Один экстент означает: файл лежит подряд. Много экстентов означает: файл фрагментирован.</p>
+<h2>Как это проверяется в задаче 2</h2>
+<p><code>DeviceIoControl(hFile, FSCTL_GET_RETRIEVAL_POINTERS, …)</code> просит драйвер NTFS вернуть карту кластеров файла. Драйвер возвращает карту в структуру <code>RETRIEVAL_POINTERS_BUFFER</code>. Структура хранит поле <code>ExtentCount</code> и массив <code>Extents[]</code> с <code>Lcn</code> и <code>NextVcn</code>. Для резидентного файла карты нет. Драйвер возвращает ошибку <code>ERROR_HANDLE_EOF</code> (код 38). Программа использует этот код как признак резидентности, а не как сбой: это диагностический сигнал.</p>
+<h2>Типичные ошибки и заблуждения</h2>
+<ul>
+<li>Не считайте порог резидентности ровно 1024 байта. Часть записи занята служебными данными. Порог ниже и плавает.</li>
+<li>Не считайте <code>ERROR_HANDLE_EOF</code> сбоем программы. В этом контексте код — ожидаемый ответ «кластеров нет».</li>
+<li>Не запускайте программу на FAT32/exFAT и не ждите того же поведения. Там нет MFT и нет резидентных атрибутов. Коды ошибок там будут другими.</li>
+<li>Не думайте, что резидентный файл «не занимает места вообще». Файл занимает место в самой MFT. Запись 1 КБ выделяется под файл в любом случае.</li>
+<li>Выходной буфер <code>outBuf[1024]</code> в задаче 2 вмещает лишь несколько экстентов. У сильно фрагментированного файла <code>DeviceIoControl</code> вернёт <code>ERROR_MORE_DATA</code>. Код этот случай не обрабатывает.</li>
+</ul>
+</div></div>
+
+<div class="task-card" id="t3"><div class="task-header"><div class="task-title">3. Физический размер файла: кластеры и slack</div></div>
+<div class="task-body theory-body">
+<h2>Что это</h2>
+<p>У файла два размера. <strong>Логический размер</strong> — сколько байт данных записано. Это число показывают <code>GetFileSizeEx</code> и проводник в графе «Размер». <strong>Физический размер («размер на диске»)</strong> — сколько байт реально выделено на томе под данные файла вне MFT. Это число возвращают проводник в графе «Размер на диске» и <code>AllocationSize</code> из <code>FILE_STANDARD_INFO</code>. Два размера почти никогда не равны.</p>
+<h2>Кластер — минимальная единица выделения</h2>
+<p>NTFS выделяет место кластерами. Кластер — блок обычно по <strong>4096 байт (4 КБ)</strong> при стандартном форматировании. Файл занимает целое число кластеров, даже если его данные меньше одного кластера. Неиспользованный остаток последнего кластера называется <strong>slack</strong> (хвост). Хвост принадлежит файлу, но данных в хвосте нет.</p>
+<table><thead><tr><th>Логический размер</th><th>Резидентность</th><th>Физический размер (кластер 4 КБ)</th><th>Пояснение</th></tr></thead><tbody>
+<tr><td>200 байт</td><td>Резидентный</td><td>0 байт</td><td>Данные лежат внутри записи MFT. Кластеры не выделялись. Это кейс 1 задачи 3.</td></tr>
+<tr><td>2000 байт</td><td>Нерезидентный</td><td>4096 байт</td><td>Файл занимает один кластер 4 КБ. Slack равен 2096 байт. Это кейс 2 задачи 3.</td></tr>
+<tr><td>4096 байт</td><td>Нерезидентный</td><td>4096 байт</td><td>Файл занимает ровно один кластер. Slack равен 0.</td></tr>
+<tr><td>4097 байт</td><td>Нерезидентный</td><td>8192 байт</td><td>Файл занимает два кластера. Один байт переполнил первый кластер. Slack равен 4095 байт.</td></tr>
+<tr><td>0 байт (пустой файл)</td><td>Резидентный</td><td>0 байт</td><td>Данных нет. Кластеры не нужны.</td></tr>
+</tbody></table>
+<h2>Ловушка GetCompressedFileSizeW — почему старый код врал</h2>
+<p>Несмотря на слово Compressed в имени, <code>GetCompressedFileSizeW</code> для обычного файла возвращает <strong>логический размер</strong>. Обычный файл — это несжатый и не разреженный файл. Функция возвращает то же значение, что и <code>GetFileSize</code>. Документация Microsoft подтверждает это: для несжатого и не разреженного файла функция возвращает фактический размер файла, как <code>GetFileSize</code>. Реальный размер на диске функция даёт только для сжатых и разреженных файлов. Поэтому старый вариант задачи 3 печатал 200 и 2000 вместо правильных 0 и 4096.</p><p>Это не баг Windows, а задокументированное поведение функции с вводящим в заблуждение именем. Проводник поступает так же. <code>GetCompressedFileSizeW</code> проводник вызывает только для сжатых и разреженных файлов. Для обычных файлов проводник округляет логический размер вверх до кластера. Так описано у Raymond Chen в статье «Just What Is 'Size on Disk?'».</p>
+<h2>Прямой путь: AllocationSize</h2>
+<p>Правильный замер — спросить у самой NTFS, сколько места выделено. Программа вызывает <code>GetFileInformationByHandleEx(hFile, FileStandardInfo, &amp;stdInfo, sizeof(stdInfo))</code> по открытому дескриптору до <code>CloseHandle</code>. Поле <code>FILE_STANDARD_INFO.AllocationSize</code> хранит выделенный размер. Для резидентного файла поле равно 0. Для нерезидентного файла поле равно числу кластеров, умноженному на размер кластера. Пример: 2000 байт дают 4096 при кластере 4 КБ.</p><p>Альтернативный прямой путь повторяет путь проводника. Программа узнаёт размер кластера через <code>GetDiskFreeSpace</code>. Программа округляет логический размер вверх до кластера. Программа проверяет резидентность через <code>FSCTL_GET_RETRIEVAL_POINTERS</code>, как в задаче 2. Ошибка <code>ERROR_HANDLE_EOF</code> означает «резидентный», то есть 0 байт.</p><p>Функция возвращает младшие 32 бита размера. Старшие 32 бита функция возвращает через второй параметр (<code>highSize</code>). При ошибке функция возвращает <code>INVALID_FILE_SIZE</code> (0xFFFFFFFF). Тогда программа проверяет <code>GetLastError()</code>. Задача 3 теперь содержит эту проверку.</p>
+<h2>Почему «размер на диске» зависит от тома</h2>
+<ul>
+<li><strong>Размер кластера</strong> задаётся при форматировании. 4 КБ — стандарт, но бывает 512 байт, 8 КБ, 64 КБ. Файл 2000 байт на томе с кластером 8 КБ займёт 8192 байта.</li>
+<li><strong>Сжатие NTFS:</strong> на сжатом томе физический размер меньше логического.</li>
+<li><strong>Разреженные файлы (sparse):</strong> нулевые области не занимают кластеры. Физический размер может быть много меньше логического.</li>
+<li><strong>Резидентность:</strong> маленькие файлы на NTFS занимают 0 байт вне MFT. На FAT32 маленький файл занимает целый кластер.</li>
+</ul>
+<h2>Типичные ошибки</h2>
+<ul>
+<li>Не путайте логический и физический размеры. Фраза «файл 2000 байт» не означает «2000 байт на диске».</li>
+<li>Не верьте имени <code>GetCompressedFileSizeW</code>. Для обычных файлов функция возвращает логический размер, а не размер на диске.</li>
+<li>Не забывайте про старшую часть размера (<code>highSize</code>). Для файлов больше 4 ГБ младших 32 бит недостаточно.</li>
+<li>Не сравнивайте «размер на диске» между разными томами без учёта размера кластера.</li>
+<li>Не ожидайте 0 байт для маленького файла на любом диске. Это свойство только NTFS.</li>
+</ul>
+</div></div>
+
+<div class="task-card" id="t4"><div class="task-header"><div class="task-title">4. Синхронный и асинхронный вызовы, блокировка потока</div></div>
+<div class="task-body theory-body">
+<h2>Что это</h2>
+<p><strong>Синхронный вызов</strong> (<code>ReadFile</code> без <code>FILE_FLAG_OVERLAPPED</code>) не возвращает управление, пока операция не завершена. <strong>Асинхронный</strong> вызов возвращает управление сразу. Программа отслеживает завершение отдельно: событие, <code>GetOverlappedResult</code>, IOCP.</p>
+<h2>Что происходит с потоком при синхронном чтении</h2>
+<ol>
+<li>Поток вызывает <code>ReadFile</code> и уходит в ядро. Это системный вызов.</li>
+<li>Ядро формирует пакет <strong>IRP</strong> (I/O Request Packet). Ядро передаёт пакет драйверу диска.</li>
+<li>Драйвер ставит запрос в очередь устройства. Данных ещё нет. Поток ждёт.</li>
+<li>Планировщик переводит поток из состояния <code>Running</code> в <code>Waiting (Blocked)</code>. Поток не получает квантов CPU. Поток не выполняет ни одной инструкции.</li>
+<li>Контроллер диска по DMA кладёт данные в память. Контроллер генерирует прерывание.</li>
+<li>Драйвер завершает IRP. Планировщик переводит поток в <code>Ready</code>, затем в <code>Running</code>. <code>ReadFile</code> возвращает управление.</li>
+</ol>
+<h2>Таблица состояний потока</h2>
+<table><thead><tr><th>Состояние</th><th>Что делает поток</th><th>Пример из задачи 4</th></tr></thead><tbody>
+<tr><td><code>Running</code></td><td>Поток выполняется на ядре CPU.</td><td>Поток печатает тики 1–4.</td></tr>
+<tr><td><code>Ready</code></td><td>Поток готов к выполнению. Поток ждёт свободного ядра.</td><td>Поток кратко проходит это состояние после завершения чтения.</td></tr>
+<tr><td><code>Waiting (Blocked)</code></td><td>Поток спит. Поток не получает CPU, пока не наступит событие.</td><td>Пауза длится от тика 5 до сообщения о завершении чтения.</td></tr>
+</tbody></table>
+<h2>Почему зависает GUI</h2>
+<p>Классическое однопоточное GUI-приложение обрабатывает сообщения в том же потоке, где вызывается чтение. Сообщения — это клики, перерисовка и таймеры. Пока поток находится в <code>Waiting</code>, очередь сообщений не разбирается. Окно не перерисовывается. Кнопки не нажимаются. Windows помечает окно как «Не отвечает».</p><p>Именно это имитирует задача 4. Тики — это «пульс» потока интерфейса. Замер тиков на 5-м шаге — это момент зависания.</p>
+<h2>Синхронный vs асинхронный — сравнение</h2>
+<table><thead><tr><th></th><th>Синхронный</th><th>Асинхронный (OVERLAPPED)</th></tr></thead><tbody>
+<tr><td>Поведение вызова</td><td>Синхронный вызов блокирует поток до конца операции.</td><td>Асинхронный вызов возвращается сразу. Операция идёт в фоне.</td></tr>
+<tr><td>Код</td><td>Синхронный код проще. Один вызов даёт результат сразу.</td><td>Асинхронный код сложнее. Он требует OVERLAPPED, событие, ожидание и проверку результата.</td></tr>
+<tr><td>Поток во время I/O</td><td>Поток спит в <code>Waiting</code>. CPU свободен, но поток занят.</td><td>Поток свободен для другой работы. Поток может тоже спать в <code>WaitForSingleObject</code>, но по своему выбору.</td></tr>
+<tr><td>Риск</td><td>Синхронный вызов грозит зависанием интерфейса в однопоточном приложении.</td><td>Асинхронный вызов грозит гонками за буфер, забытыми ResetEvent и смещениями.</td></tr>
+<tr><td>Где уместен</td><td>Синхронный вызов уместен для консольных утилит, фоновых потоков и коротких операций.</td><td>Асинхронный вызов уместен для GUI, серверов и копирования больших файлов.</td></tr>
+</tbody></table>
+<h2>Как решают проблему блокировки на практике</h2>
+<ul>
+<li><strong>Асинхронный I/O</strong> (задача 1) не блокирует тот же поток чтением.</li>
+<li><strong>Отдельный рабочий поток:</strong> тяжёлое чтение уходит в фоновый поток. GUI-поток остаётся свободным.</li>
+<li><strong>Пул потоков / IOCP:</strong> много операций идут без привязки потока к каждой.</li>
+<li><strong>Чтение порциями:</strong> программа заменяет один вызов ReadFile на 64 МБ циклом по маленьким блокам. Программа проверяет между блоками, не пора ли обработать сообщения.</li>
+</ul>
+<h2>Типичные ошибки</h2>
+<ul>
+<li>Не думайте, что «поток завис» означает «программа сломалась». Поток в <code>Waiting</code> находится в нормальном состоянии. Поток проснётся сам, когда данные будут готовы.</li>
+<li>Не делайте синхронное чтение в потоке GUI «на чуть-чуть». На HDD или при холодном кэше «чуть-чуть» превращается в секунды зависания.</li>
+<li>Программа не проверила возвращаемое значение <code>ReadFile</code>. В задаче 4 при ошибке чтения <code>bytesRead</code> останется 0. Программа напечатает «Прочитано 0 МБ» как успех.</li>
+<li>Не ожидайте видимую паузу на любом диске. На NVMe SSD с тёплым кэшем чтение 64 МБ нулей занимает миллисекунды. Пауза почти незаметна.</li>
+</ul>
+</div></div>
+
+<div class="task-card" id="run"><div class="task-header"><div class="task-title">5. Общие условия запуска всех программ</div></div>
+<div class="task-body theory-body">
+<h2>Что нужно для запуска любой из четырёх программ</h2>
+<ul>
+<li><strong>Только Windows</strong> (Windows 10/11, x64): все программы используют Win32 API (<code>windows.h</code>). На Linux/macOS программы не компилируются.</li>
+<li><strong>Компилятор:</strong> MSVC или MinGW-w64. MSVC: <code>cl /EHsc /W4 файл.cpp</code> в Developer Command Prompt for VS. MinGW-w64: <code>g++ -O2 -o файл.exe файл.cpp</code>. Флаги и библиотеки действуют по умолчанию. Дополнительных <code>.lib</code> не требуется. Все вызовы лежат в <code>kernel32</code>.</li>
+<li><strong>Рабочая папка:</strong> все пути в программах относительные. Программа создаёт файлы в текущей папке, откуда запущен exe. Запускайте программу из папки с exe в cmd или PowerShell, а не двойным кликом. При двойном клике окно консоли закроется сразу после завершения. Вывод прочитать не получится.</li>
+<li><strong>Том NTFS:</strong> обязателен для задач 2 и 3. Задачи 2 и 3 используют MFT и резидентные атрибуты. Задачи 1 и 4 работают на любом томе. Файлы разумно держать на NTFS.</li>
+<li><strong>Русский вывод:</strong> программы сами переключают консоль в UTF-8. Программы вызывают <code>chcp 65001</code> и <code>_setmode</code>. Шрифт консоли должен поддерживать кириллицу. Обычно подходит Consolas.</li>
+</ul>
+<h2>Сводная таблица: файлы и место на диске</h2>
+<table><thead><tr><th>Программа</th><th>Создаёт сама (в текущей папке)</th><th>Место</th><th>Нужен ли файл заранее</th></tr></thead><tbody>
+<tr><td><code>task1_async_copy_overlapped.cpp</code></td><td><code>source_large.dat</code> (1024 МБ, если его нет), <code>destination_copy.dat</code> (копия)</td><td>от 2 ГБ свободно</td><td>Нет</td></tr>
+<tr><td><code>task2_mft_resident_theory.cpp</code></td><td><code>test_resident_200b.dat</code> (200 Б), <code>test_nonresident_2500b.dat</code> (2500 Б), <code>test_large_500kb.dat</code> (500 КБ)</td><td>около 500 КБ</td><td>Нет</td></tr>
+<tr><td><code>task3_mft_physical_size.cpp</code></td><td><code>small_file.txt</code> (200 Б), <code>large_file.txt</code> (2000 Б)</td><td>несколько КБ</td><td>Нет</td></tr>
+<tr><td><code>task4_sync_blocking_demo.cpp</code></td><td><code>heavy_test_file.tmp</code> (256 МБ, если его нет); буфер 64 МБ в памяти</td><td>256 МБ на диске + 64 МБ RAM</td><td>Нет, но требует нажать Enter в начале</td></tr>
+</tbody></table>
+<p>Ни одна программа не требует файла, подготовленного заранее вручную. Каждая программа создаёт свои тестовые файлы сама при первом запуске. Каждая программа переиспользует файлы при повторных запусках. Подробности по каждой программе — в разделе «Как запустить» в <a href="index_ste.html">index_ste.html</a>.</p>
+</div></div>
+
+  </main>
+
+  <footer>
+    Лабораторная работа №3 • Системное программирование C++ и Win32 API • 2026
+  </footer>
+
+</body>
+</html>

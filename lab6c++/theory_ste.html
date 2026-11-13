@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Лабораторная работа №6 — Теория: процессы Windows и Environment Block</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --accent-red: #dc2626;
+      --accent-red-bg: #fef2f2;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-page); color: var(--text-main); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; padding-bottom: 80px; }
+
+    header {
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-content { max-width: 760px; margin: 0 auto; }
+    .badge-sub { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    h1 { font-size: 19px; font-weight: 800; color: var(--text-main); line-height: 1.25; }
+
+    .nav-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px 0; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+    .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
+
+    main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+    .section-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .section-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); }
+    .section-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .section-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; font-size: 14px; color: var(--text-muted); }
+    .section-body p { line-height: 1.6; }
+    .section-body code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-code); padding: 1px 5px; border-radius: 4px; color: #1e293b; }
+    .section-body ul, .section-body ol { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+    .section-body strong { color: var(--text-main); }
+
+    .sub-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); margin-top: 4px; }
+    .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
+    .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
+    .callout-danger { background: var(--accent-red-bg); border-left: 3px solid var(--accent-red); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #991b1b; }
+    .callout-info { background: var(--primary-light); border-left: 3px solid var(--primary); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #1e40af; }
+
+    table.theory { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.theory th { text-align: left; background: var(--primary-light); color: var(--primary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding: 7px 8px; border: 1px solid var(--border); }
+    table.theory td { padding: 7px 8px; border: 1px solid var(--border); vertical-align: top; color: var(--text-muted); line-height: 1.45; }
+    table.theory td code { font-family: var(--font-mono); font-size: 12px; color: #1e293b; font-weight: 700; }
+
+    footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Лабораторная работа №6</span>
+      <h1>Теория: процессы Windows и Environment Block</h1>
+      <div class="nav-scroll">
+        <a href="#proc" class="nav-chip">1. Процессы и дескрипторы</a>
+        <a href="#createprocess" class="nav-chip">2. CreateProcess</a>
+        <a href="#wait" class="nav-chip">3. WaitForSingleObject</a>
+        <a href="#handles" class="nav-chip">4. Утечка дескрипторов</a>
+        <a href="#envblock" class="nav-chip">5. Environment Block</a>
+        <a href="#setenv" class="nav-chip">6. SetEnvironmentVariable</a>
+        <a href="index_ste.html" class="nav-chip">Шпаргалка с кодом (STE) →</a>
+        <a href="glossary.html" class="nav-chip">Словарь →</a>
+        <a href="glossary_ste.html" class="nav-chip">Словарь (STE) →</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <div class="callout-info">
+      <p><strong>STE-версия.</strong> Этот файл переписывает теорию по правилам ASD-STE100. Правила: одно предложение — одна мысль. Инструкция — не больше 20 слов. Описание — не больше 25 слов. Текст использует действительный залог. Одно понятие — одно слово. Сначала ответ, потом подробности.</p>
+      <p>Термины в файле всегда одни и те же. Список терминов: программа, процесс, поток, родитель, потомок, дескриптор, объект ядра, ядро, блок окружения, переменная окружения, структура, консоль, значение, код ошибки, снимок, утечка. Словарь терминов: <a href="glossary_ste.html">glossary_ste.html</a>. Обычная версия: <a href="theory.html">theory.html</a>.</p>
+    </div>
+
+        <!-- 1. Процессы -->
+    <div id="proc" class="section-card">
+      <div class="section-header"><div class="section-title">1. Процессы в Windows: дескрипторы, ядро, таблица хэндлов</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> Процесс — экземпляр выполняющейся программы. Процесс имеет собственное виртуальное адресное пространство, набор потоков, открытые ресурсы и блок окружения. Процессы в Windows полностью изолированы друг от друга. Один процесс не читает и не меняет память другого процесса напрямую. Внутри процесса работает минимум один поток. Поток — единица выполнения кода на процессоре.</p>
+        <p><strong>Зачем это знать.</strong> Вся лабораторная работа №6 построена на изоляции процессов. Родитель и потомок — отдельные процессы. Изменение переменной у родителя не затрагивает потомка. Завершение родителя не завершает потомка.</p>
+        <p><strong>Объекты ядра и дескрипторы.</strong> Процесс, поток, файл, событие и мьютекс — объекты ядра (kernel objects). Объекты ядра — структуры данных в памяти ядра. Пользовательский код не обращается к ним напрямую. Программа обращается к объектам только через дескриптор (handle, HANDLE). Дескриптор — целое число. Дескриптор — индекс в таблице дескрипторов процесса. Дескриптор — не указатель на объект. Дескриптор — «пропуск» к объекту. Ядро находит объект по дескриптору. Ядро проверяет права доступа по дескриптору.</p>
+        <p><strong>Таблица дескрипторов.</strong> У каждого процесса своя таблица хэндлов. Один и тот же числовой дескриптор в разных процессах означает разные объекты или ничего. Дескриптор процесса-потомка из структуры <code>PROCESS_INFORMATION</code> действителен только в процессе-родителе. Закрывать дескриптор должен тоже родитель.</p>
+        <p><strong>Счётчик ссылок.</strong> У каждого объекта ядра есть счётчик использований. Счётчик растёт при открытии нового дескриптора. Счётчик падает при вызове <code>CloseHandle</code>. Ядро уничтожает объект только при счётчике, равном нулю. Завершённый процесс продолжает «жить» в ядре как объект, пока хоть кто-то держит его дескриптор открытым.</p>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li>Процессы изолированы. Память, дескрипторы и окружение у каждого процесса свои.</li>
+          <li>Дескриптор — это индекс в таблице процесса, а не адрес объекта.</li>
+          <li>Завершение процесса не уничтожает объект ядра. Объект живёт, пока открыт хоть один дескриптор.</li>
+          <li>Завершение родителя не завершает потомка. У потомка своя жизнь.</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Не используйте дескриптор из одного процесса в другом процессе. Наследование или дублирование через <code>DuplicateHandle</code> — единственные исключения.</li>
+          <li>Не ждите, что дескриптор исчезнет сам после завершения процесса. Объект ядра остаётся до вызова <code>CloseHandle</code>.</li>
+          <li>Не путайте PID и HANDLE. PID — число для поиска процесса. HANDLE — дескриптор для операций с процессом: ожидание, завершение, закрытие.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 2. CreateProcess -->
+    <div id="createprocess" class="section-card">
+      <div class="section-header"><div class="section-title">2. CreateProcess и структуры STARTUPINFO / PROCESS_INFORMATION</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> <code>CreateProcess</code> — главная функция Win32 API для создания нового процесса. Функция загружает исполняемый файл. Функция создаёт адресное пространство, объект процесса и главный поток. Функция запускает главный поток. Функция возвращает <code>TRUE</code> при успехе и <code>FALSE</code> при ошибке. Код ошибки даёт функция <code>GetLastError()</code>.</p>
+        <p><strong>Зачем.</strong> Без функции <code>CreateProcess</code> программа не запускает другую программу. Это единственный штатный путь программного запуска в Win32 API. Обёртки вроде <code>system()</code> внутри сами вызывают ту же функцию. Обёртки не дают контроля над дескрипторами и окружением.</p>
+        <div class="sub-title">STARTUPINFO — «как запускать»</div>
+        <p>Структура описывает внешний вид и начальные условия нового процесса: заголовок окна, его положение и размер, дескрипторы стандартных потоков ввода, вывода и ошибок, рабочий стол. Выполните обязательные шаги: вызовите <code>ZeroMemory(&amp;si, sizeof(si))</code>, затем задайте <code>si.cb = sizeof(si)</code>. Система определяет версию структуры по полю <code>cb</code>. В наших программах остальные поля остаются нулевыми. Окно показывается обычным образом. Потоки наследуются по умолчанию.</p>
+        <div class="sub-title">PROCESS_INFORMATION — «что получилось»</div>
+        <p>Система записывает результат запуска сюда. Структура имеет четыре поля:</p>
+        <table class="theory"><tr><th>Поле</th><th>Что это</th><th>Зачем нужно</th></tr><tr><td><code>hProcess</code></td><td>Дескриптор объекта процесса-потомка.</td><td>Программа ждёт завершение через <code>WaitForSingleObject</code>. Программа получает код выхода. Программа завершает процесс.</td></tr><tr><td><code>hThread</code></td><td>Дескриптор главного потока потомка.</td><td>Программа управляет потоком. Программа закрывает дескриптор вместе с <code>hProcess</code>.</td></tr><tr><td><code>dwProcessId</code></td><td>PID процесса (число).</td><td>PID идентифицирует процесс. Пользователь находит процесс в Диспетчере задач по PID.</td></tr><tr><td><code>dwThreadId</code></td><td>ID главного потока (число).</td><td>ID идентифицирует поток.</td></tr></table>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li>Всегда обнуляйте обе структуры через <code>ZeroMemory</code> перед вызовом. Всегда задавайте <code>si.cb = sizeof(si)</code>.</li>
+          <li>Держите командную строку (<code>lpCommandLine</code>) в изменяемом буфере (<code>wchar_t cmdLine[]</code>). Не передавайте строковый литерал. Функция имеет право менять строку на месте.</li>
+          <li>Всегда проверяйте возвращаемое значение. Значение <code>FALSE</code> означает: процесс не создан. Полей <code>pi</code> нет. Закрывать нечего.</li>
+          <li>При <code>lpApplicationName = NULL</code> имя программы берётся из командной строки. Относительное имя ищется в каталоге приложения, в системных каталогах и в PATH.</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Не оставляйте структуру <code>STARTUPINFO</code> без инициализации. Мусор в полях даёт непредсказуемые сбои запуска.</li>
+          <li>Не передавайте строковый литерал как <code>lpCommandLine</code>. Литерал лежит в памяти только для чтения. Вызов даёт нарушение доступа.</li>
+          <li>Не забывайте проверку результата. Программа продолжает работу с пустым <code>pi</code>. Программа падает на <code>WaitForSingleObject</code> или <code>CloseHandle</code> по мусорному дескриптору.</li>
+          <li>Не ждите, что функция <code>CreateProcess</code> найдёт файл exe «где-то». Относительное имя ищется по строгим правилам. Файл exe лежит рядом или находится в PATH.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 3. WaitForSingleObject -->
+    <div id="wait" class="section-card">
+      <div class="section-header"><div class="section-title">3. Ожидание завершения: WaitForSingleObject</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> Функция <code>WaitForSingleObject(hHandle, dwMilliseconds)</code> останавливает вызвавший поток. Поток ждёт, пока объект не перейдёт в сигнальное состояние (signaled). Поток ждёт до истечения тайм-аута. Дескриптор процесса становится сигнальным ровно при завершении процесса.</p>
+        <p><strong>Зачем.</strong> Это способ синхронизации жизненного цикла. Родитель узнаёт: потомок закончил работу. Только потом родитель продолжает сценарий. Например, родитель читает результаты или освобождает ресурсы. В задании 1 без ожидания программа завершилась бы сразу. Программа не дождалась бы закрытия Блокнота.</p>
+        <div class="sub-title">Возвращаемые значения</div>
+        <table class="theory"><tr><th>Код</th><th>Значение</th></tr><tr><td><code>WAIT_OBJECT_0</code></td><td>Объект стал сигнальным. Процесс завершился. Это нормальный исход.</td></tr><tr><td><code>WAIT_TIMEOUT</code></td><td>Тайм-аут истёк. Процесс всё ещё работает. Код бывает только при конечном тайм-ауте.</td></tr><tr><td><code>WAIT_FAILED</code></td><td>Ожидание дало ошибку. Пример: неверный дескриптор. Код ошибки даёт функция <code>GetLastError()</code>.</td></tr></table>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li><code>INFINITE</code> означает: ждать без ограничения времени. <code>INFINITE</code> подходит, когда момент завершения заранее неизвестен. Пример: пользователь сам закрывает Блокнот.</li>
+          <li>Всегда проверяйте результат ожидания. Только код <code>WAIT_OBJECT_0</code> означает «процесс завершён».</li>
+          <li>Ждите только по действительному дескриптору. Дескриптор даёт функция <code>CreateProcess</code> или функция <code>OpenProcess</code>.</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Не ждите по <code>hThread</code> вместо <code>hProcess</code>. Поток завершается раньше процесса. Процесс порождает другие потоки. Ожидание даёт ложный сигнал.</li>
+          <li>Не используйте <code>INFINITE</code> там, где процесс может зависнуть навсегда. Программа тоже зависнет без возможности отмены. Используйте конечный тайм-аут в цикле с проверкой.</li>
+          <li>Не ждите завершения потомка после закрытия дескриптора. Родитель уже «отпустил» потомка. Ждать не по чему.</li>
+        </ul>
+        <div class="callout-info">В задании 2 родитель намеренно не вызывает <code>WaitForSingleObject</code>. Родитель завершается сразу. Потомок продолжает работу. Ожидание — выбор родителя, а не обязанность. Жизнь потомка от ожидания не зависит.</div>
+      </div>
+    </div>
+
+    <!-- 4. Утечка дескрипторов -->
+    <div id="handles" class="section-card">
+      <div class="section-header"><div class="section-title">4. Утечка дескрипторов и зачем нужен CloseHandle</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> Функция <code>CloseHandle(h)</code> закрывает дескриптор. Функция удаляет запись из таблицы дескрипторов процесса. Функция уменьшает счётчик ссылок объекта ядра. При счётчике, равном нулю, ядро уничтожает объект. Ядро освобождает память объекта.</p>
+        <p><strong>Зачем.</strong> Функция <code>CreateProcess</code> возвращает сразу два дескриптора: дескриптор процесса и дескриптор потока. Пока хоть один дескриптор открыт, ядро хранит объект завершённого процесса в памяти. Ядро хранит и код завершения процесса. Без закрытия дескрипторы копятся. В короткой программе накопление незаметно. В долгоживущем сервисе таблица дескрипторов переполняется. Сервис запускает тысячи процессов. Новые вызовы <code>CreateProcess</code> завершаются ошибкой. Это и есть утечка дескрипторов (handle leak). Утечка дескрипторов — аналог утечки памяти, но на уровне ядра.</p>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li>Закрывайте оба дескриптора из структуры <code>PROCESS_INFORMATION</code>: <code>hProcess</code> и <code>hThread</code>. Забытый дескриптор <code>hThread</code> — та же утечка.</li>
+          <li>Порядок закрытия значения не имеет.</li>
+          <li>Закрывайте дескрипторы, даже если родитель не ждал потомка (задание 2). Ожидание и закрытие — независимые действия.</li>
+          <li>Закрытие дескриптора не завершает процесс. Закрытие дескриптора не убивает поток. Закрытие лишь отпускает ссылку родителя на объект ядра.</li>
+          <li>Закрывайте дескриптор ровно один раз. Повторный вызов <code>CloseHandle</code> по тому же значению закрывает уже другой объект. Система успела выдать тот же номер другому объекту.</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Не закрывайте только <code>hProcess</code> и не забывайте <code>hThread</code> (или наоборот).</li>
+          <li>Не пропускайте вызов <code>CloseHandle</code> в ветке ошибки после удачного вызова <code>CreateProcess</code>. Пример: при ошибке <code>WaitForSingleObject</code> программа выходит без закрытия дескрипторов.</li>
+          <li>Не надейтесь, что завершение родителя «само всё закроет». Да, при завершении процесса система закрывает все его дескрипторы. Но пока родитель живёт и запускает процессы в цикле, утечка копится при его жизни.</li>
+        </ul>
+        <div class="callout-danger">Правило на защиту. Функция <code>CreateProcess</code> вернула два дескриптора. Значит, в программе должно быть два вызова <code>CloseHandle</code>. Один вызов <code>CloseHandle</code> в коде — ошибка, даже если программа «работает».</div>
+      </div>
+    </div>
+
+    <!-- 5. Environment Block -->
+    <div id="envblock" class="section-card">
+      <div class="section-header"><div class="section-title">5. Environment Block: как устроен и почему потомок получает копию</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> Environment Block (блок окружения) — область памяти процесса. Блок хранит переменные окружения как строки ИМЯ=ЗНАЧЕНИЕ. Строки разделяются нулевыми символами. Блок завершается двойным нулём. Блок создаётся для каждого процесса при его запуске. Блок живёт только в собственном адресном пространстве процесса.</p>
+        <p><strong>Зачем.</strong> Переменные окружения — простейший механизм передачи конфигурации процессу на старте. Примеры: пути <code>PATH</code> и <code>TEMP</code>, настройки программ, в нашем случае — <code>STUDENT_ID</code>. Процесс читает переменные через функцию <code>GetEnvironmentVariable</code>. Процесс не знает, кто и как задал переменные.</p>
+        <p><strong>Копирование при создании процесса.</strong> Родитель вызывает функцию <code>CreateProcess</code> с параметром <code>lpEnvironment = NULL</code>. Система берёт блок окружения родителя. Система копирует блок байт в байт. Система передаёт копию новому процессу. Копия — это главное слово. После копирования у родителя и потомка два независимых блока в двух независимых адресных пространствах. Общей памяти между ними нет.</p>
+        <p><strong>Почему изменение у родителя не влияет на потомка.</strong> Функция <code>SetEnvironmentVariable</code> меняет строку только в блоке текущего процесса. Родитель меняет свою копию. Потомок свою копию не трогает. Потомок о копии родителя даже не знает. Порядок операций решает всё. То, что родитель установил до вызова <code>CreateProcess</code>, попадает в снимок потомка. То, что родитель поменял после вызова, уже не попадает. Задание 2 показывает это: родитель ставит 19045, запускает потомка, меняет у себя на 99999. Потомок видит 19045.</p>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li>Блок окружения принадлежит процессу. Блок копируется при создании процесса. Копия — снимок «на момент старта».</li>
+          <li>Передача конфигурации через окружение работает только в одну сторону. Передача работает только в момент запуска. Потомок не возвращает значение родителю через окружение.</li>
+          <li>При <code>lpEnvironment</code> не <code>NULL</code> потомок получает ваш собственный блок. Потомок не получает копию родительского блока. Это механизм явного задания окружения.</li>
+          <li>Изменения окружения действуют только на текущий процесс и его будущих потомков. Изменения не действуют на уже запущенные процессы. Изменения не действуют на систему в целом.</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Не ждите, что <code>SetEnvironmentVariable</code> у родителя изменит переменную у уже запущенного потомка. Общей памяти нет. Это копия.</li>
+          <li>Не устанавливайте переменную после вызова <code>CreateProcess</code> с надеждой, что потомок её увидит. Потомок уже получил снимок без неё.</li>
+          <li>Не запускайте потомка из среды, где переменная уже задана иначе. Пример: переменная задана глобально в системе. Потомок видит другое значение.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 6. SetEnvironmentVariable -->
+    <div id="setenv" class="section-card">
+      <div class="section-header"><div class="section-title">6. SetEnvironmentVariable и GetEnvironmentVariable: переменная против блока</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> Функция <code>SetEnvironmentVariable(имя, значение)</code> устанавливает, изменяет или удаляет переменную окружения в блоке текущего процесса. Значение <code>NULL</code> удаляет переменную. Функция <code>GetEnvironmentVariable(имя, буфер, размер)</code> читает переменную из блока текущего процесса в буфер. Функция возвращает длину значения. Значение 0 означает «не найдена» или пустое значение. При коде «не найдена» функция <code>GetLastError()</code> возвращает <code>ERROR_ENVVAR_NOT_FOUND</code> (код 203).</p>
+        <p><strong>Переменная против блока.</strong> Переменная — одна строка ИМЯ=ЗНАЧЕНИЕ. Блок — весь набор таких строк процесса. Функция <code>SetEnvironmentVariable</code> правит одну строку в своём блоке. Функция <code>CreateProcess</code> с параметром <code>lpEnvironment = NULL</code> копирует весь блок целиком. Вывод: установка переменной касается одного процесса. Запуск потомка передаёт весь блок снимком.</p>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li>Функция <code>SetEnvironmentVariable</code> влияет только на текущий процесс. Функция влияет и на его будущих потомков через копирование блока.</li>
+          <li>Функция не меняет системные переменные. Функция не видна другим уже запущенным программам. Переменная «для всей системы» требует записи в реестр и рассылки сообщения <code>WM_SETTINGCHANGE</code>. Это другой механизм.</li>
+          <li>Функция <code>GetEnvironmentVariable</code> задаёт размер буфера в символах, а не в байтах. Для <code>wchar_t buffer[256]</code> размер равен <code>sizeof(buffer) / sizeof(buffer[0])</code> = 256.</li>
+          <li>Читайте код ошибки <code>GetLastError()</code> сразу после неудачного вызова. Следующий вызов API перезаписывает код.</li>
+          <li>Если значение не помещается в буфер, функция <code>GetEnvironmentVariable</code> возвращает требуемую длину. Это не ошибка «не найдено». Это сигнал: дайте буфер больше.</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Не путайте функцию <code>SetEnvironmentVariable</code> с системными переменными среды Windows. Функция работает локально, в процессе. Системные переменные живут в реестре («Свойства системы»). Функция не видна другим программам.</li>
+          <li>Не передавайте размер буфера в байтах вместо символов для широкой версии функции. Буфер «обрезается» в два раза.</li>
+          <li>Не игнорируйте возврат 0 без проверки <code>GetLastError()</code>. Ноль означает и «переменная не задана», и «значение пустое».</li>
+          <li>Не сравнивайте широкие строки через <code>strcmp</code>. Используйте функцию <code>wcscmp</code>. Функция <code>strcmp</code> сравнивает по байтам и даёт неверный результат.</li>
+        </ul>
+        <div class="callout-success">Итог лабораторной. Задание 1 показывает жизненный цикл процесса. Процесс рождается, ожидается и аккуратно «убирается» из ядра: <code>CreateProcess</code>, затем <code>WaitForSingleObject</code>, затем два вызова <code>CloseHandle</code>. Задание 2 показывает автономность процессов. Конфигурация передаётся только снимком блока окружения в момент старта. Дальше каждый процесс живёт своей жизнью.</div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    Лабораторная работа №6 • Системное программирование C++ и Win32 API • 2026<br>
+    Код и построчный разбор (STE): <a href="index_ste.html">index_ste.html</a> • Обычная версия: <a href="theory.html">theory.html</a>
+  </footer>
+
+</body>
+</html>

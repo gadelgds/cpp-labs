@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Лабораторная работа №3 — Асинхронный I/O и MFT в Windows — версия STE</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-page); color: var(--text-main); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; padding-bottom: 80px; }
+
+    header {
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-content { max-width: 760px; margin: 0 auto; }
+    .badge-sub { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    h1 { font-size: 19px; font-weight: 800; color: var(--text-main); line-height: 1.25; }
+
+    .nav-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px 0; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+    .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
+
+    main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+    .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .task-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .task-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .task-path { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-subtle); background: var(--bg-code); padding: 3px 7px; border-radius: 4px; }
+    .task-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+    .code-container { position: relative; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-code); overflow: hidden; }
+    .code-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: #e2e8f0; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); }
+    .copy-btn { background: #ffffff; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: var(--text-main); transition: all 0.2s; }
+    .copy-btn:hover { background: var(--primary); color: #ffffff; border-color: var(--primary); }
+    .copy-btn.copied { background: var(--accent-green); color: #ffffff; border-color: var(--accent-green); }
+
+    pre { padding: 12px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.45; color: #0f172a; }
+
+    .explanation-box { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .explanation-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); }
+    .line-breakdown { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .line-item { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 13px; }
+    .line-code { font-family: var(--font-mono); font-weight: 700; color: #1e293b; margin-bottom: 3px; display: block; }
+    .line-desc { color: var(--text-muted); line-height: 1.45; }
+
+    .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
+    .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
+
+    footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
+  
+    .break-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+    .break-table th, .break-table td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; line-height: 1.45; }
+    .break-table th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    .break-table td.ln { white-space: nowrap; font-family: var(--font-mono); font-weight: 700; color: var(--primary); font-size: 12px; }
+    .break-table td.code { font-family: var(--font-mono); font-size: 12px; color: #1e293b; word-break: break-word; }
+    .break-table tr:nth-child(even) td { background: #f8fafc; }
+    .run-box { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .run-box h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent-green); }
+    .run-box code, .theory-body code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-code); padding: 1px 5px; border-radius: 4px; }
+    .run-box pre.cmd { background: #0f172a; color: #e2e8f0; padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
+    .run-box pre.cmd code { background: none; padding: 0; color: inherit; }
+    .theory-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; font-size: 14px; color: var(--text-muted); }
+    .theory-body h2 { font-size: 16px; color: var(--text-main); margin-top: 6px; }
+    .theory-body h3 { font-size: 14px; color: var(--text-main); margin-top: 4px; }
+    .theory-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .theory-body th, .theory-body td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; line-height: 1.45; }
+    .theory-body th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    .theory-body ul, .theory-body ol { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+    .toc { display: flex; flex-direction: column; gap: 6px; }
+    .toc a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+  
+    .break-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+    .break-table th, .break-table td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; line-height: 1.45; }
+    .break-table th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    .break-table td.ln { white-space: nowrap; font-family: var(--font-mono); font-weight: 700; color: var(--primary); font-size: 12px; }
+    .break-table td.code { font-family: var(--font-mono); font-size: 12px; color: #1e293b; word-break: break-word; }
+    .break-table tr:nth-child(even) td { background: #f8fafc; }
+    .run-box { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .run-box h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent-green); }
+    .run-box code, .theory-body code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-code); padding: 1px 5px; border-radius: 4px; }
+    .run-box pre.cmd { background: #0f172a; color: #e2e8f0; padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
+    .run-box pre.cmd code { background: none; padding: 0; color: inherit; }
+    .theory-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; font-size: 14px; color: var(--text-muted); }
+    .theory-body h2 { font-size: 16px; color: var(--text-main); margin-top: 6px; }
+    .theory-body h3 { font-size: 14px; color: var(--text-main); margin-top: 4px; }
+    .theory-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .theory-body th, .theory-body td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; line-height: 1.45; }
+    .theory-body th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    .theory-body ul, .theory-body ol { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+    .toc { display: flex; flex-direction: column; gap: 6px; }
+    .toc a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Лабораторная работа №3</span>
+      <h1>Асинхронный I/O и структура NTFS MFT</h1>
+      <div class="nav-scroll"><a href="#task1" class="nav-chip">1. Копирование 1 ГБ</a><a href="#task2" class="nav-chip">2. MFT: резидентность</a><a href="#task3" class="nav-chip">3. Физический размер</a><a href="#task4" class="nav-chip">4. Блокировка потока</a><a href="theory_ste.html" class="nav-chip">Теория (STE) →</a><a href="index.html" class="nav-chip">Обычная версия</a><a href="glossary.html" class="nav-chip">Словарь</a><a href="glossary_ste.html" class="nav-chip">Словарь (STE)</a></div>
+    </div>
+  </header>
+<div style="max-width:760px;margin:16px auto 0;padding:12px 16px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;font-size:14px;line-height:1.6;color:#0f172a;"><strong>Версия STE.</strong> Правила ASD-STE100 действуют на объяснения: одно предложение — одна мысль; описание — не больше 25 слов; инструкция — не больше 20 слов; действительный залог; один термин — одно слово; сначала ответ, потом подробности. Код, названия файлов и заголовки — как в обычной версии. Термины — как в словаре <a href="glossary_ste.html">glossary_ste.html</a>.</div>
+
+  <main>
+    <div class="task-card"><div class="task-body">
+      <div class="callout-success"><strong>Что здесь:</strong> Страница даёт полный код четырёх программ. Код совпадает с файлами .cpp. Страница даёт построчный разбор каждой строки. Страница даёт условия запуска каждой программы. Отдельная теория по всем темам находится в <a href="theory_ste.html">theory_ste.html</a>.</div>
+    </div></div>
+
+    <div id="task1" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задача 1: Асинхронное копирование 1 ГБ файла (OVERLAPPED + hEvent)</div>
+        <span class="task-path">task1_async_copy_overlapped.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="callout-success">Программа копирует файл асинхронно, блоками по 64 КБ. Программа читает и пишет файл через OVERLAPPED. События hReadEvent и hWriteEvent сообщают о завершении операций.</div>
+        <div class="code-container"><div class="code-top-bar"><span>task1_async_copy_overlapped.cpp</span><button class="copy-btn" onclick="copyCode(this)">Скопировать</button></div><pre><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;io.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;iomanip&gt;
+
+const DWORD CHUNK_SIZE = 64 * 1024; // 64 КБ на один блок передачи
+
+// Функция создания тестового файла заданного размера (в мегабайтах)
+bool CreateDummyFile(const wchar_t* path, DWORD sizeMB) {
+    HANDLE hFile = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) return false;
+
+    LARGE_INTEGER liSize;
+    liSize.QuadPart = (LONGLONG)sizeMB * 1024 * 1024;
+    
+    // Быстрое задание размера файла через SetFilePointerEx и SetEndOfFile
+    if (!SetFilePointerEx(hFile, liSize, NULL, FILE_BEGIN) || !SetEndOfFile(hFile)) {
+        CloseHandle(hFile);
+        return false;
+    }
+    CloseHandle(hFile);
+    return true;
+}
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
+    #endif
+
+    const wchar_t* srcPath = L"source_large.dat";
+    const wchar_t* dstPath = L"destination_copy.dat";
+
+    std::wcout &lt;&lt; L"=== АСИНХРОННОЕ КОПИРОВАНИЕ ФАЙЛА (OVERLAPPED + hEvent) ===" &lt;&lt; std::endl;
+
+    // Проверяем наличие исходного файла. Если нет — создаем демонстрационный файл 1024 МБ (1 ГБ)
+    WIN32_FIND_DATAW findData;
+    HANDLE hFind = FindFirstFileW(srcPath, &amp;findData);
+    if (hFind == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Создание тестового файла на 1024 МБ (1 ГБ)..." &lt;&lt; std::endl;
+        if (!CreateDummyFile(srcPath, 1024)) {
+            std::wcout &lt;&lt; L"Ошибка при создании тестового файла: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+            return 1;
+        }
+        std::wcout &lt;&lt; L"Тестовый файл успешно создан." &lt;&lt; std::endl;
+    } else {
+        FindClose(hFind);
+    }
+
+    // 1. Открытие исходного файла с флагом FILE_FLAG_OVERLAPPED
+    HANDLE hSrc = CreateFileW(
+        srcPath,
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        NULL,
+        OPEN_EXISTING,
+        FILE_FLAG_OVERLAPPED,
+        NULL
+    );
+    if (hSrc == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Не удалось открыть исходный файл: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return 1;
+    }
+
+    // 2. Создание целевого файла с флагом FILE_FLAG_OVERLAPPED
+    HANDLE hDst = CreateFileW(
+        dstPath,
+        GENERIC_WRITE,
+        0,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_FLAG_OVERLAPPED,
+        NULL
+    );
+    if (hDst == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Не удалось создать целевой файл: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        CloseHandle(hSrc);
+        return 1;
+    }
+
+    // Получаем полный размер файла
+    LARGE_INTEGER fileSize;
+    GetFileSizeEx(hSrc, &amp;fileSize);
+    std::wcout &lt;&lt; L"Размер исходного файла: " &lt;&lt; (fileSize.QuadPart / (1024 * 1024)) &lt;&lt; L" МБ" &lt;&lt; std::endl;
+
+    // 3. Создание событий для контроля завершения операций чтения и записи
+    HANDLE hReadEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    HANDLE hWriteEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    char* buffer = new char[CHUNK_SIZE];
+
+    OVERLAPPED ovRead;
+    OVERLAPPED ovWrite;
+    memset(&amp;ovRead, 0, sizeof(ovRead));
+    memset(&amp;ovWrite, 0, sizeof(ovWrite));
+
+    ovRead.hEvent = hReadEvent;
+    ovWrite.hEvent = hWriteEvent;
+
+    ULONGLONG currentOffset = 0;
+    DWORD bytesTransferred = 0;
+
+    std::wcout &lt;&lt; L"Запуск асинхронного копирования блоками по " &lt;&lt; (CHUNK_SIZE / 1024) &lt;&lt; L" КБ..." &lt;&lt; std::endl;
+
+    while (currentOffset &lt; (ULONGLONG)fileSize.QuadPart) {
+        DWORD bytesToRead = CHUNK_SIZE;
+        if (currentOffset + bytesToRead &gt; (ULONGLONG)fileSize.QuadPart) {
+            bytesToRead = (DWORD)(fileSize.QuadPart - currentOffset);
+        }
+
+        // Задаем смещение для чтения
+        ovRead.Offset = (DWORD)(currentOffset &amp; 0xFFFFFFFF);
+        ovRead.OffsetHigh = (DWORD)(currentOffset &gt;&gt; 32);
+        ResetEvent(hReadEvent);
+
+        // Асинхронный вызов ReadFile
+        BOOL readRet = ReadFile(hSrc, buffer, bytesToRead, NULL, &amp;ovRead);
+        if (!readRet &amp;&amp; GetLastError() != ERROR_IO_PENDING) {
+            std::wcout &lt;&lt; L"Ошибка при асинхронном чтении: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+            break;
+        }
+
+        // Ожидаем завершения чтения через событие hEvent
+        WaitForSingleObject(hReadEvent, INFINITE);
+        GetOverlappedResult(hSrc, &amp;ovRead, &amp;bytesTransferred, FALSE);
+
+        if (bytesTransferred == 0) break;
+
+        // Задаем смещение для записи
+        ovWrite.Offset = ovRead.Offset;
+        ovWrite.OffsetHigh = ovRead.OffsetHigh;
+        ResetEvent(hWriteEvent);
+
+        // Асинхронный вызов WriteFile
+        BOOL writeRet = WriteFile(hDst, buffer, bytesTransferred, NULL, &amp;ovWrite);
+        if (!writeRet &amp;&amp; GetLastError() != ERROR_IO_PENDING) {
+            std::wcout &lt;&lt; L"Ошибка при асинхронной записи: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+            break;
+        }
+
+        // Ожидаем завершения записи через событие hEvent
+        WaitForSingleObject(hWriteEvent, INFINITE);
+        GetOverlappedResult(hDst, &amp;ovWrite, &amp;bytesTransferred, FALSE);
+
+        currentOffset += bytesTransferred;
+
+        // Вывод прогресса в консоль
+        double percent = ((double)currentOffset / fileSize.QuadPart) * 100.0;
+        std::wcout &lt;&lt; L"\rПрогресс копирования: " &lt;&lt; std::fixed &lt;&lt; std::setprecision(1) &lt;&lt; percent &lt;&lt; L"% ("
+                   &lt;&lt; (currentOffset / (1024 * 1024)) &lt;&lt; L" / " &lt;&lt; (fileSize.QuadPart / (1024 * 1024)) &lt;&lt; L" МБ)" &lt;&lt; std::flush;
+    }
+
+    std::wcout &lt;&lt; L"\nКопирование успешно завершено!" &lt;&lt; std::endl;
+
+    // Освобождение ресурсов и закрытие дескрипторов
+    CloseHandle(hReadEvent);
+    CloseHandle(hWriteEvent);
+    CloseHandle(hSrc);
+    CloseHandle(hDst);
+    delete[] buffer;
+
+    return 0;
+}
+</code></pre></div>
+        <div class="explanation-box">
+          <span class="explanation-title">Полный построчный разбор — каждая строка кода</span>
+          <p>Номера строк относятся к файлу <code>task1_async_copy_overlapped.cpp</code>. Таблица покрывает все строки файла в 44 блоках. Код выше совпадает с файлом .cpp полностью.</p>
+          <table class="break-table"><thead><tr><th style="width:64px">Строки</th><th style="width:34%">Код / блок</th><th>Что делает</th><th>Зачем / почему так</th></tr></thead><tbody>
+<tr><td class="ln">1–5</td><td class="code">#include &lt;windows.h&gt; … &lt;iomanip&gt;</td><td>Строки подключают заголовки программы. Заголовок windows.h даёт весь Win32 API: HANDLE, CreateFileW и OVERLAPPED. Заголовок iostream даёт std::wcout. Заголовки io.h и fcntl.h дают _fileno и _setmode для UTF-8. Заголовок iomanip даёт std::fixed и std::setprecision. Программа выводит прогресс с одним знаком после запятой.</td><td>Без windows.h программа не вызывает ни один вызов Win32 API. Программа выводит русский текст через wcout. Консоль Windows по умолчанию не использует UTF-8. Функция _setmode переводит консоль в UTF-8.</td></tr>
+<tr><td class="ln">6–7</td><td class="code">const DWORD CHUNK_SIZE = 64 * 1024; // 64 КБ</td><td>Константа задаёт один блок копирования: 65 536 байт (64 КБ). Программа использует константу как размер буфера. Программа использует константу как размер одной операции чтения и записи.</td><td>Размер 64 КБ кратен странице памяти 4 КБ. Размер 64 КБ кратен кластеру диска. Буфер помещается в кэш. Файл 1 ГБ требует 16 384 операций.</td></tr>
+<tr><td class="ln">8–11</td><td class="code">bool CreateDummyFile(const wchar_t* path, DWORD sizeMB) { HANDLE hFile = CreateFileW(…)</td><td>Функция создаёт тестовый файл заданного размера в мегабайтах. Функция открывает файл по широкому пути path только на запись. Функция запрещает совместный доступ к файлу: третий аргумент равен 0. Флаг CREATE_ALWAYS стирает старый файл при каждом вызове.</td><td>Отдельная функция держит создание файла вне main. Флаг CREATE_ALWAYS стирает содержимое файла, если файл уже есть. Аргумент 0 запрещает совместный доступ. Никто другой не открывает файл, пока функция создаёт файл.</td></tr>
+<tr><td class="ln">12</td><td class="code">if (hFile == INVALID_HANDLE_VALUE) return false;</td><td>Функция проверяет результат CreateFileW. CreateFileW не создаёт файл без прав, по неверному пути или при переполненном диске. Тогда функция сразу возвращает false.</td><td>При ошибке HANDLE равен INVALID_HANDLE_VALUE, а не NULL. Без проверки следующие вызовы используют битый дескриптор.</td></tr>
+<tr><td class="ln">13–16</td><td class="code">LARGE_INTEGER liSize; liSize.QuadPart = (LONGLONG)sizeMB * 1024 * 1024;</td><td>Строки считают размер файла в байтах. Программа умножает мегабайты на 1024 и на 1024. Программа кладёт результат в 64-битное поле QuadPart структуры LARGE_INTEGER.</td><td>Размер 1024 МБ равен 1 073 741 824 байт. Размер не влезает в 32-битный DWORD. Максимум DWORD равен примерно 4 ГБ. Функция SetFilePointerEx требует 64-битный тип. Приведение к LONGLONG защищает умножение от переполнения в 32 битах.</td></tr>
+<tr><td class="ln">17–18</td><td class="code">if (!SetFilePointerEx(hFile, liSize, NULL, FILE_BEGIN) || !SetEndOfFile(hFile)) {</td><td>SetFilePointerEx переставляет указатель файла на позицию liSize от начала файла. Начало задаёт флаг FILE_BEGIN. SetEndOfFile обрезает или расширяет файл до текущей позиции. Файл сразу получает нужный размер.</td><td>Приём создаёт файл 1 ГБ за доли секунды. Программа не записывает байты по одному. NTFS помечает размер в MFT. Содержимое файла остаётся нулями. Запись 1 ГБ нулей циклом заняла бы в сотни раз больше времени.</td></tr>
+<tr><td class="ln">19–21</td><td class="code">CloseHandle(hFile); return false; }</td><td>Ветка обрабатывает ошибку. Если SetFilePointerEx или SetEndOfFile не работает, функция закрывает дескриптор и возвращает false.</td><td>Функция не бросает открытый дескриптор. Незакрытый HANDLE даёт утечку ресурса ядра. Файл остаётся заблокированным.</td></tr>
+<tr><td class="ln">22–24</td><td class="code">CloseHandle(hFile); return true; }</td><td>Успешный путь закрывает дескриптор. Функция возвращает true. Файл создан.</td><td>Функция создаёт файл и сразу закрывает файл. Затем main открывает файл на чтение. Разделение «создал — закрыл — открыл заново» упрощает логику.</td></tr>
+<tr><td class="ln">25–26</td><td class="code">int main() {</td><td>Функция main служит точкой входа консольной программы.</td><td>Значение int задаёт код завершения процесса. Код 0 означает успех. Код 1 означает ошибку.</td></tr>
+<tr><td class="ln">27–30</td><td class="code">#if defined(_WIN32) system("chcp 65001 &gt; nul"); _setmode(_fileno(stdout), _O_U8TEXT); #endif</td><td>Строки настраивают UTF-8 для консоли. Команда chcp 65001 переключает кодовую страницу консоли в UTF-8. Функция _setmode переводит stdout в текстовый UTF-8-режим. Тогда wcout печатает русские буквы, а не кракозябры.</td><td>Программа выводит весь текст через std::wcout с широкими строками L"…". Без этих двух строк консоль Windows показывает русский текст неверно. Директива #if defined(_WIN32) защищает код. На другой системе эти вызовы не компилируются.</td></tr>
+<tr><td class="ln">31–35</td><td class="code">const wchar_t* srcPath = L"source_large.dat"; const wchar_t* dstPath = L"destination_copy.dat"; std::wcout &lt;&lt; L"=== АСИНХРОННОЕ КОПИРОВАНИЕ…" …</td><td>Имена файлов относительные, без пути. Оба файла лежат в текущей рабочей папке. Программа запускается из этой папки. Затем программа печатает заголовок.</td><td>Относительный путь зависит от папки запуска. Запуск из другой папки создаёт файлы в другой папке. Файлы не появляются рядом с exe.</td></tr>
+<tr><td class="ln">36–40</td><td class="code">WIN32_FIND_DATAW findData; HANDLE hFind = FindFirstFileW(srcPath, &amp;findData); if (hFind == INVALID_HANDLE_VALUE) {</td><td>Программа проверяет существование исходника. FindFirstFileW ищет файл source_large.dat. Если дескриптор поиска равен INVALID_HANDLE_VALUE, файла нет. Тогда программа заходит в ветку создания.</td><td>Программа создаёт файл 1 ГБ только при первом запуске. При повторном запуске программа переиспользует готовый файл. Программа не тратит время и место заново. Структура WIN32_FIND_DATAW принимает данные о найденном файле. Программа не использует содержимое структуры здесь.</td></tr>
+<tr><td class="ln">41–46</td><td class="code">std::wcout &lt;&lt; L"Создание тестового файла на 1024 МБ…"; if (!CreateDummyFile(srcPath, 1024)) { … return 1; } std::wcout &lt;&lt; L"Тестовый файл успешно создан.";</td><td>Если исходника нет, программа печатает сообщение. Программа вызывает CreateDummyFile на 1024 МБ. При неудаче программа печатает код ошибки GetLastError(). Программа выходит с кодом 1. При успехе программа печатает подтверждение.</td><td>Код return 1 сообщает оболочке или скрипту об ошибке. Программа завершилась ошибкой. GetLastError() сразу после неудачного вызова даёт код ошибки Win32. Например, код 112 означает: нет места на диске.</td></tr>
+<tr><td class="ln">47–49</td><td class="code">} else { FindClose(hFind); }</td><td>Ветка «файл уже есть» закрывает дескриптор поиска FindFirstFileW.</td><td>Программа обязательно вызывает FindClose. Без FindClose дескриптор поиска остаётся открытым до конца процесса. Программа не проверяет содержимое найденного файла. Программа копирует файл любого размера и содержимого как есть.</td></tr>
+<tr><td class="ln">50–52</td><td class="code">// 1. Открытие исходного файла … HANDLE hSrc = CreateFileW(</td><td>Программа начинает открывать исходник на чтение. Комментарий «1.» нумерует шаги алгоритма.</td><td>Порядок важен. Программа открывает сначала источник, потом приёмник. Если источник не открывается, приёмник создавать бессмысленно.</td></tr>
+<tr><td class="ln">53–60</td><td class="code">srcPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL</td><td>CreateFileW принимает путь и только чтение. CreateFileW разрешает другим процессам совместный доступ на чтение. CreateFileW принимает NULL вместо атрибутов безопасности. CreateFileW открывает существующий файл: флаг OPEN_EXISTING не создаёт файл. Главный флаг FILE_FLAG_OVERLAPPED включает асинхронный режим. CreateFileW принимает NULL вместо шаблона.</td><td>Флаг FILE_FLAG_OVERLAPPED задаёт суть задачи. Без флага ReadFile и WriteFile на этом дескрипторе всегда выполняют синхронный вызов. Механизм OVERLAPPED ниже не работает без флага. Флаг OPEN_EXISTING защищает от случайного создания пустого файла вместо настоящего исходника. Флаг FILE_SHARE_READ разрешает другим процессам читать файл параллельно. Например, антивирус читает файл параллельно.</td></tr>
+<tr><td class="ln">61–64</td><td class="code">if (hSrc == INVALID_HANDLE_VALUE) { … return 1; }</td><td>Программа проверяет открытие исходника. При ошибке программа печатает сообщение с кодом GetLastError(). Программа выходит с кодом 1.</td><td>Программа попадает сюда в двух случаях. Кто-то удалил файл между проверкой FindFirstFileW и открытием. У программы нет прав на чтение файла.</td></tr>
+<tr><td class="ln">65–67</td><td class="code">// 2. Создание целевого файла … HANDLE hDst = CreateFileW(</td><td>Программа начинает создавать файл-приёмник на запись.</td><td>Шаг «2.» следует после открытия источника. Оба дескриптора нужны до начала копирования.</td></tr>
+<tr><td class="ln">68–75</td><td class="code">dstPath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_FLAG_OVERLAPPED, NULL</td><td>CreateFileW принимает путь приёмника и только запись. CreateFileW запрещает совместный доступ: аргумент равен 0. Никто не открывает файл, пока идёт запись. Флаг CREATE_ALWAYS создаёт новый файл или стирает существующий файл. CreateFileW принимает тот же флаг FILE_FLAG_OVERLAPPED.</td><td>Флаг CREATE_ALWAYS стирает старый файл destination_copy.dat при каждом запуске. Копия всегда остаётся свежей. Запрет совместного доступа защищает недописанную копию от чтения извне.</td></tr>
+<tr><td class="ln">76–80</td><td class="code">if (hDst == INVALID_HANDLE_VALUE) { … CloseHandle(hSrc); return 1; }</td><td>При ошибке создания приёмника программа печатает сообщение. Программа закрывает уже открытый исходник. Программа выходит с кодом 1.</td><td>Здесь программа впервые аккуратно освобождает ресурс. Дескриптор hSrc уже открыт. Программа не бросает дескриптор при выходе по ошибке. Это единственный return, где программа закрывает ранее открытый дескриптор.</td></tr>
+<tr><td class="ln">81–85</td><td class="code">LARGE_INTEGER fileSize; GetFileSizeEx(hSrc, &amp;fileSize); std::wcout &lt;&lt; L"Размер исходного файла: " &lt;&lt; (fileSize.QuadPart / (1024 * 1024)) &lt;&lt; L" МБ" …</td><td>GetFileSizeEx узнаёт точный 64-битный размер исходника. Программа печатает размер в мегабайтах. Программа делит размер на 1024×1024. Деление целочисленное: дробная часть отбрасывается.</td><td>Цикл копирования использует размер как условие остановки. GetFileSizeEx возвращает размер через структуру, а не через DWORD. Поэтому размер корректен для файлов больше 4 ГБ.</td></tr>
+<tr><td class="ln">86–89</td><td class="code">HANDLE hReadEvent = CreateEventW(NULL, TRUE, FALSE, NULL); HANDLE hWriteEvent = CreateEventW(NULL, TRUE, FALSE, NULL);</td><td>Программа создаёт два события ядра. Одно событие служит для чтения, другое — для записи. CreateEventW принимает NULL вместо атрибутов безопасности. Аргумент TRUE задаёт событие с ручным сбросом (manual-reset). Аргумент FALSE задаёт начальное несигнальное состояние. CreateEventW принимает NULL вместо имени.</td><td>Событие — это флажок в ядре. Драйвер диска переводит событие в сигнальное состояние, когда операция завершается. Ручной сброс (TRUE) означает: событие само не гаснет после срабатывания. Только явный ResetEvent гасит событие перед следующей операцией. Два отдельных события разделяют сигналы чтения и записи. Чтение и запись не путают сигналы друг друга.</td></tr>
+<tr><td class="ln">90–91</td><td class="code">char* buffer = new char[CHUNK_SIZE];</td><td>Программа выделяет буфер на 64 КБ. Один буфер служит для чтения и записи по очереди.</td><td>Один общий буфер заставляет чтение и запись идти строго по очереди. Пока идёт запись, программа не читает в тот же буфер. Иначе запись перезапишет данные. Параллельная работа требует два буфера (конвейер).</td></tr>
+<tr><td class="ln">92–96</td><td class="code">OVERLAPPED ovRead; OVERLAPPED ovWrite; memset(&amp;ovRead, 0, sizeof(ovRead)); memset(&amp;ovWrite, 0, sizeof(ovWrite));</td><td>Программа создаёт две структуры OVERLAPPED: для чтения и для записи. Программа обнуляет структуры через memset.</td><td>Обнуление критично. Структура OVERLAPPED содержит служебные поля Internal и InternalHigh. Ядро само заполняет эти поля. Структура содержит поля смещения Offset и OffsetHigh. Мусор со стека в этих полях даёт чтение с неверного смещения или сбой операции.</td></tr>
+<tr><td class="ln">97–99</td><td class="code">ovRead.hEvent = hReadEvent; ovWrite.hEvent = hWriteEvent;</td><td>Программа привязывает каждой структуре OVERLAPPED своё событие.</td><td>Поле hEvent связывает операцию и событие. Драйвер завершает чтение и сигналит hReadEvent. Драйвер завершает запись и сигналит hWriteEvent. Без привязки WaitForSingleObject не узнаёт о завершении.</td></tr>
+<tr><td class="ln">100–102</td><td class="code">ULONGLONG currentOffset = 0; DWORD bytesTransferred = 0;</td><td>Переменная currentOffset хранит 64-битное смещение текущего блока от начала файла. Смещение начинается с 0. GetOverlappedResult записывает в bytesTransferred число байт, реально переданных за операцию.</td><td>64-битное смещение обязательно. Смещение 32 бит не даёт запаса на будущее. Структура OVERLAPPED хранит смещение двумя DWORD: Offset и OffsetHigh.</td></tr>
+<tr><td class="ln">103–104</td><td class="code">std::wcout &lt;&lt; L"Запуск асинхронного копирования блоками по " &lt;&lt; (CHUNK_SIZE / 1024) &lt;&lt; L" КБ..." …</td><td>Программа печатает начало копирования с размером блока 64 КБ.</td><td>Вывод носит информационный характер. Пользователь видит: программа перешла к работе. Программа не зависла на создании файла.</td></tr>
+<tr><td class="ln">105–106</td><td class="code">while (currentOffset &lt; (ULONGLONG)fileSize.QuadPart) {</td><td>Главный цикл повторяется, пока скопировано меньше размера файла.</td><td>Цикл идёт по смещению, а не по счётчику блоков. Тот же код обрабатывает последний неполный блок — хвост файла.</td></tr>
+<tr><td class="ln">107–110</td><td class="code">DWORD bytesToRead = CHUNK_SIZE; if (currentOffset + bytesToRead &gt; (ULONGLONG)fileSize.QuadPart) { bytesToRead = (DWORD)(fileSize.QuadPart - currentOffset); }</td><td>Очередное чтение обычно берёт полный блок 64 КБ. Если до конца файла осталось меньше, чтение берёт только остаток.</td><td>Без проверки последний ReadFile запросил бы байты за концом файла. Приведение к DWORD безопасно. Остаток здесь заведомо меньше CHUNK_SIZE.</td></tr>
+<tr><td class="ln">111–115</td><td class="code">ovRead.Offset = (DWORD)(currentOffset &amp; 0xFFFFFFFF); ovRead.OffsetHigh = (DWORD)(currentOffset &gt;&gt; 32); ResetEvent(hReadEvent);</td><td>Программа разбирает 64-битное смещение на младшие 32 бита и старшие 32 бита. Младшие биты попадают в Offset. Старшие биты попадают в OffsetHigh. Программа записывает смещение в ovRead. Затем программа переводит событие чтения в несигнальное состояние.</td><td>В асинхронном режиме файл не имеет текущего указателя. Каждая операция читает строго по смещению из OVERLAPPED. Маска 0xFFFFFFFF отрезает младшие биты, а сдвиг &gt;&gt; 32 даёт старшие биты. ResetEvent обязателен перед операцией. Событие с ручным сбросом само не гаснет. Без сброса WaitForSingleObject сразу решает, что чтение уже готово по старому сигналу.</td></tr>
+<tr><td class="ln">116–119</td><td class="code">BOOL readRet = ReadFile(hSrc, buffer, bytesToRead, NULL, &amp;ovRead);</td><td>ReadFile выполняет асинхронный вызов чтения. ReadFile читает bytesToRead байт из hSrc по смещению из ovRead в buffer. Четвёртый аргумент равен NULL. При OVERLAPPED сюда нельзя передавать указатель на счётчик байт. Результат даёт GetOverlappedResult.</td><td>Вызов возвращает управление почти сразу. Вызов не ждёт диск. Контроллер копирует данные в фоне по DMA. Поток остаётся свободным. Это и есть асинхронность.</td></tr>
+<tr><td class="ln">120–122</td><td class="code">if (!readRet &amp;&amp; GetLastError() != ERROR_IO_PENDING) { … break; }</td><td>Программа проверяет результат ReadFile. При асинхронном запуске ReadFile почти всегда возвращает FALSE. FALSE не означает ошибку. Код ERROR_IO_PENDING (997) означает: операция принята и выполняется. Любой другой код означает настоящую ошибку. Тогда программа печатает ошибку и выходит из цикла через break.</td><td>FALSE от асинхронного ReadFile — это норма. Это главная ловушка для новичка. Программа проверяет именно GetLastError() == ERROR_IO_PENDING. Программа вызывает GetLastError() сразу. Любой следующий вызов Win32 API перезаписывает код.</td></tr>
+<tr><td class="ln">123–126</td><td class="code">WaitForSingleObject(hReadEvent, INFINITE); GetOverlappedResult(hSrc, &amp;ovRead, &amp;bytesTransferred, FALSE);</td><td>Программа ждёт завершения чтения. Поток засыпает до сигнала hReadEvent. Таймаут INFINITE означает: без таймаута. Затем GetOverlappedResult забирает у ядра фактическое число прочитанных байт. Число попадает в bytesTransferred. Последний аргумент FALSE означает: не ждать повторно, операция уже завершена.</td><td>Пока поток спит в WaitForSingleObject, поток не тратит CPU: загрузка равна 0%. GetOverlappedResult — обязательный шаг. Только GetOverlappedResult даёт точное число байт. Для последнего блока число меньше CHUNK_SIZE. Программа не проверяет возвращаемое значение GetOverlappedResult здесь. Это слабое место программы (см. теорию).</td></tr>
+<tr><td class="ln">127–128</td><td class="code">if (bytesTransferred == 0) break;</td><td>Если программа прочитала 0 байт, файл закончился или произошёл сбой. Цикл прерывается.</td><td>Проверка защищает от бесконечного цикла. Если диск вернул 0 байт, currentOffset не продвигается. Без break цикл крутился бы вечно.</td></tr>
+<tr><td class="ln">129–133</td><td class="code">ovWrite.Offset = ovRead.Offset; ovWrite.OffsetHigh = ovRead.OffsetHigh; ResetEvent(hWriteEvent);</td><td>Программа берёт смещение для записи из только что выполненного чтения. Запись пишет тот же блок файла. Программа сбрасывает событие записи в несигнальное состояние.</td><td>Копия пишется ровно на то же смещение, что и читалась. Иначе файл-приёмник получился бы перемешанным. Программа копирует поля из ovRead, а не пересчитывает смещение из currentOffset. Копирование гарантирует совпадение.</td></tr>
+<tr><td class="ln">134–136</td><td class="code">BOOL writeRet = WriteFile(hDst, buffer, bytesTransferred, NULL, &amp;ovWrite);</td><td>WriteFile выполняет асинхронную запись прочитанных байт в приёмник по тому же смещению. Программа пишет именно bytesTransferred, а не bytesToRead.</td><td>Программа пишет столько, сколько реально прочитано. В последнем блоке это меньше 64 КБ. Запись лишних байт из буфера испортила бы хвост файла мусором.</td></tr>
+<tr><td class="ln">137–140</td><td class="code">if (!writeRet &amp;&amp; GetLastError() != ERROR_IO_PENDING) { … break; }</td><td>Программа выполняет ту же проверку, что и у чтения. FALSE без ERROR_IO_PENDING означает настоящую ошибку записи. Например, на диске кончилось место. Тогда программа печатает ошибку и выходит из цикла.</td><td>Ошибка записи чаще всего означает нехватку места под destination_copy.dat. Приёмнику нужен ещё 1 ГБ рядом с исходником.</td></tr>
+<tr><td class="ln">141–144</td><td class="code">WaitForSingleObject(hWriteEvent, INFINITE); GetOverlappedResult(hDst, &amp;ovWrite, &amp;bytesTransferred, FALSE);</td><td>Программа ждёт завершения записи. Программа получает число реально записанных байт.</td><td>Только после этого следующее чтение перезаписывает буфер. Запись в фоне ещё могла бы идти. Раннее чтение испортило бы данные. Здесь программа работает сознательно последовательно: чтение, ожидание, запись, ожидание.</td></tr>
+<tr><td class="ln">145–146</td><td class="code">currentOffset += bytesTransferred;</td><td>Программа продвигает смещение на число записанных байт.</td><td>Программа продвигает смещение именно на записанное количество, а не на запрошенное. Продвижение защищает от потери данных при короткой записи. Следующий блок начинается ровно там, где закончился предыдущий.</td></tr>
+<tr><td class="ln">147–151</td><td class="code">double percent = ((double)currentOffset / fileSize.QuadPart) * 100.0; std::wcout &lt;&lt; L"\rПрогресс копирования: " &lt;&lt; std::fixed &lt;&lt; std::setprecision(1) &lt;&lt; percent &lt;&lt; L"% (" &lt;&lt; (currentOffset / (1024 * 1024)) &lt;&lt; L" / " &lt;&lt; (fileSize.QuadPart / (1024 * 1024)) &lt;&lt; L" МБ)" &lt;&lt; std::flush;</td><td>Программа выводит прогресс в одну строку. Символ \r возвращает каретку в начало строки. Строка переписывается. Программа показывает процент с одним знаком после запятой: fixed и setprecision(1). Программа показывает скопировано и всего в МБ. std::flush принудительно выталкивает вывод без ожидания endl.</td><td>Без \r консоль заполнилась бы 16 384 строками. Без flush пользователь не видит прогресс в реальном времени. Поток wcout буферизуется. Текст появляется только при переполнении буфера.</td></tr>
+<tr><td class="ln">152</td><td class="code">} // конец while</td><td>Строка закрывает цикл копирования.</td><td>Цикл останавливается, когда currentOffset достигает размера файла.</td></tr>
+<tr><td class="ln">153–154</td><td class="code">std::wcout &lt;&lt; L"\nКопирование успешно завершено!" &lt;&lt; std::endl;</td><td>Программа печатает финальное сообщение. Символ \n в начале переводит вывод на новую строку. Строка прогресса заканчивалась без перевода строки.</td><td>Внимание: программа печатает сообщение всегда. Сообщение появляется, даже если цикл прервался через break по ошибке. Программа не различает успех и обрыв. После цикла нет флага ошибки.</td></tr>
+<tr><td class="ln">155–161</td><td class="code">CloseHandle(hReadEvent); CloseHandle(hWriteEvent); CloseHandle(hSrc); CloseHandle(hDst); delete[] buffer;</td><td>Программа освобождает все ресурсы. Программа закрывает оба события и оба дескриптора файлов. Программа возвращает буфер в кучу через delete[]. Оператор delete[] парный к new[].</td><td>Порядок освобождения не критичен. Важно ничего не забыть. Незакрытый дескриптор держит файл заблокированным. Оператор delete без [] для массива даёт неопределённое поведение.</td></tr>
+<tr><td class="ln">162–164</td><td class="code">return 0; }</td><td>Программа успешно завершается с кодом 0.</td><td>Код 0 означает «всё хорошо» для командной строки и скриптов.</td></tr>
+</tbody></table>
+        </div>
+        
+<div class="run-box"><h3>Как запустить — задача 1</h3>
+<p><strong>Только Windows.</strong> Программа использует Win32 API: <code>windows.h</code>, <code>CreateFileW</code> и <code>OVERLAPPED</code>. На Linux и macOS программа не компилируется и не запускается.</p>
+<pre class="cmd"><code>rem MSVC (Developer Command Prompt for VS):
+cl /EHsc /W4 task1_async_copy_overlapped.cpp
+rem MinGW-w64:
+g++ -O2 -o task1_async_copy_overlapped.exe task1_async_copy_overlapped.cpp
+rem Запуск из папки с exe (файлы создаются в текущей папке):
+task1_async_copy_overlapped.exe</code></pre>
+<p><strong>Файлы:</strong> Входной файл заранее создавать не нужно. Если файла <code>source_large.dat</code> нет в текущей папке, программа сама создаёт файл на 1024 МБ (1 ГБ) из нулей. Файл требует <strong>свободное место от 1 ГБ</strong>, а копия <code>destination_copy.dat</code> требует ещё 1 ГБ, то есть <strong>всего от 2 ГБ</strong>. Если файл <code>source_large.dat</code> уже есть, программа использует файл как есть, любого размера и содержимого, и не пересоздаёт файл. При каждом запуске программа стирает <code>destination_copy.dat</code> и пишет файл заново (<code>CREATE_ALWAYS</code>).</p>
+<p><strong>Ожидаемый вывод:</strong> Программа печатает заголовок. Программа печатает «Размер исходного файла: 1024 МБ». Затем программа печатает строку прогресса в одну строку: от 0,0% до 100,0%. Программа печатает «Копирование успешно завершено!». Копирование 1 ГБ блоками по 64 КБ требует 16 384 итераций. Время зависит от диска: на SSD — секунды, на HDD — дольше.</p>
+<p><strong>Что сломается:</strong> Без 2 ГБ свободного места создание файла даёт ошибку с кодом <code>GetLastError()</code>. Код 112 означает: диск переполнен. Программа выходит с кодом 1. Запуск не из своей папки создаёт файлы в другой папке, а не рядом с exe. Закрытие консоли во время работы оставляет недописанный файл <code>destination_copy.dat</code>. При следующем запуске программа просто переписывает файл.</p>
+<p><strong>Нюанс:</strong> Программа выполняет асинхронные вызовы, но ждёт завершения каждого блока через <code>WaitForSingleObject</code>. Поэтому чтение и запись идут строго по очереди. Это демонстрация механизма, а не ускорение копирования.</p></div>
+
+      </div>
+    </div>
+
+    <div id="task2" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задача 2: Чтение MFT (резидентность vs нерезидентность)</div>
+        <span class="task-path">task2_mft_resident_theory.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="callout-success"><code>FSCTL_GET_RETRIEVAL_POINTERS</code> показывает место <code>$DATA</code> для трёх файлов. Файлы имеют размер 200 байт, 2500 байт и 500 КБ. <code>$DATA</code> лежит внутри записи MFT или в кластерах тома.</div>
+        <div class="code-container"><div class="code-top-bar"><span>task2_mft_resident_theory.cpp</span><button class="copy-btn" onclick="copyCode(this)">Скопировать</button></div><pre><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;io.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;vector&gt;
+
+// Функция анализа размещения файла в NTFS (резидентный в MFT vs нерезидентный с экстентами)
+void AnalyzeNtfsFileAllocation(const wchar_t* filePath, DWORD sizeInBytes) {
+    // Создаем тестовый файл нужного размера
+    HANDLE hFile = CreateFileW(
+        filePath,
+        GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Ошибка открытия файла: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return;
+    }
+
+    std::vector&lt;char&gt; buffer(sizeInBytes, 'X');
+    DWORD written = 0;
+    WriteFile(hFile, buffer.data(), sizeInBytes, &amp;written, NULL);
+
+    // Запрос цепочек кластеров (Data Runs / Extents) через FSCTL_GET_RETRIEVAL_POINTERS
+    STARTING_VCN_INPUT_BUFFER inputVcn;
+    inputVcn.StartingVcn.QuadPart = 0;
+
+    BYTE outBuf[1024];
+    DWORD bytesReturned = 0;
+
+    BOOL fsctlSuccess = DeviceIoControl(
+        hFile,
+        FSCTL_GET_RETRIEVAL_POINTERS,
+        &amp;inputVcn,
+        sizeof(inputVcn),
+        outBuf,
+        sizeof(outBuf),
+        &amp;bytesReturned,
+        NULL
+    );
+
+    std::wcout &lt;&lt; L"--------------------------------------------------" &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"Файл: " &lt;&lt; filePath &lt;&lt; L" (Размер: " &lt;&lt; sizeInBytes &lt;&lt; L" байт)" &lt;&lt; std::endl;
+
+    if (!fsctlSuccess) {
+        DWORD err = GetLastError();
+        if (err == ERROR_HANDLE_EOF) {
+            std::wcout &lt;&lt; L"Статус MFT: РЕЗИДЕНТНЫЙ ФАЙЛ (Resident Attribute $DATA)" &lt;&lt; std::endl;
+            std::wcout &lt;&lt; L"  -&gt; Данные файла целиком хранятся внутри 1024-байтной записи MFT!" &lt;&lt; std::endl;
+            std::wcout &lt;&lt; L"  -&gt; Файл не занимает отдельных кластеров на дисковом томе (Extents = 0)." &lt;&lt; std::endl;
+        } else {
+            std::wcout &lt;&lt; L"Ошибка FSCTL_GET_RETRIEVAL_POINTERS: " &lt;&lt; err &lt;&lt; std::endl;
+        }
+    } else {
+        RETRIEVAL_POINTERS_BUFFER* rp = reinterpret_cast&lt;RETRIEVAL_POINTERS_BUFFER*&gt;(outBuf);
+        std::wcout &lt;&lt; L"Статус MFT: НЕРЕЗИДЕНТНЫЙ ФАЙЛ (Non-Resident Attribute $DATA)" &lt;&lt; std::endl;
+        std::wcout &lt;&lt; L"  -&gt; Данные не поместились в MFT-запись и вынесены в отдельные кластеры тома." &lt;&lt; std::endl;
+        std::wcout &lt;&lt; L"  -&gt; Количество цепочек кластеров (Extents): " &lt;&lt; rp-&gt;ExtentCount &lt;&lt; std::endl;
+        for (DWORD i = 0; i &lt; rp-&gt;ExtentCount; ++i) {
+            std::wcout &lt;&lt; L"     Цепочка " &lt;&lt; i &lt;&lt; L": LCN = " &lt;&lt; rp-&gt;Extents[i].Lcn.QuadPart 
+                       &lt;&lt; L", NextVCN = " &lt;&lt; rp-&gt;Extents[i].NextVcn.QuadPart &lt;&lt; std::endl;
+        }
+    }
+
+    CloseHandle(hFile);
+}
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
+    #endif
+
+    std::wcout &lt;&lt; L"=== АНАЛИЗ ЧТЕНИЯ MFT: РЕЗИДЕНТНЫЕ И НЕРЕЗИДЕНТНЫЕ ДАННЫЕ ===" &lt;&lt; std::endl;
+
+    // Сравнение 1: Маленький файл (200 байт — строго помещается в MFT)
+    AnalyzeNtfsFileAllocation(L"test_resident_200b.dat", 200);
+
+    // Сравнение 2: Большой файл (2500 байт — не помещается в 1 КБ запись MFT)
+    AnalyzeNtfsFileAllocation(L"test_nonresident_2500b.dat", 2500);
+
+    // Сравнение 3: Файл объемом 500 КБ (512 000 байт — нерезидентный массив данных)
+    AnalyzeNtfsFileAllocation(L"test_large_500kb.dat", 500 * 1024);
+
+    return 0;
+}
+</code></pre></div>
+        <div class="explanation-box">
+          <span class="explanation-title">Полный построчный разбор — каждая строка кода</span>
+          <p>Строки указаны по файлу <code>task2_mft_resident_theory.cpp</code>. Разбор имеет 26 блоков. Разбор покрывает все строки файла. Код выше приведён полностью. Код совпадает с файлом <code>task2_mft_resident_theory.cpp</code>.</p>
+          <table class="break-table"><thead><tr><th style="width:64px">Строки</th><th style="width:34%">Код / блок</th><th>Что делает</th><th>Зачем / почему так</th></tr></thead><tbody>
+<tr><td class="ln">1–5</td><td class="code">#include &lt;windows.h&gt; … &lt;vector&gt;</td><td>Заголовки подключают нужные средства программы. <code>windows.h</code> даёт Win32 API и <code>FSCTL_GET_RETRIEVAL_POINTERS</code>. <code>iostream</code> даёт <code>wcout</code>. <code>io.h</code> и <code>fcntl.h</code> задают UTF-8-режим консоли. <code>vector</code> даёт <code>std::vector&lt;char&gt;</code> для буфера данных.</td><td>Программа использует <code>vector</code> вместо <code>new[]</code>. <code>vector</code> освобождает память сам при выходе из функции. Программа не вызывает <code>delete[]</code> вручную.</td></tr>
+<tr><td class="ln">6–8</td><td class="code">void AnalyzeNtfsFileAllocation(const wchar_t* filePath, DWORD sizeInBytes) {</td><td>Функция анализирует один файл. Функция принимает широкий путь и размер тестовых данных в байтах. Функция возвращает <code>void</code>. Функция только печатает результат. Функция не возвращает результат вызывающему коду.</td><td><code>main</code> вызывает функцию трижды. Каждый вызов задаёт свой размер файла. Три вызова дают три результата. Программа сравнивает результаты трёх вызовов.</td></tr>
+<tr><td class="ln">9–10</td><td class="code">// Создаем тестовый файл нужного размера
+    HANDLE hFile = CreateFileW(</td><td>Здесь программа начинает создавать тестовый файл.</td><td>Программа сама создаёт файл. Программа не ищет файл на диске. Каждый запуск повторяет эксперимент с нуля.</td></tr>
+<tr><td class="ln">11–18</td><td class="code">filePath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL</td><td>Аргументы задают режим открытия файла. Путь задаёт файл. Программа открывает файл на чтение и запись. Другие процессы читают файл, но не пишут в файл. <code>CREATE_ALWAYS</code> создаёт новый файл или стирает существующий файл. <code>FILE_ATTRIBUTE_NORMAL</code> задаёт обычный файл без особых атрибутов.</td><td>Программа запрашивает оба права: <code>GENERIC_READ</code> и <code>GENERIC_WRITE</code>. <code>WriteFile</code> заполняет файл данными. <code>DeviceIoControl</code> запрашивает карту кластеров. <code>CREATE_ALWAYS</code> задаёт точный размер и содержимое файла. Размер и содержимое соответствуют текущему запуску. Файл не хранит остаток прошлого запуска.</td></tr>
+<tr><td class="ln">19–23</td><td class="code">if (hFile == INVALID_HANDLE_VALUE) { … return; }</td><td>При ошибке создания программа печатает сообщение. Сообщение содержит код <code>GetLastError()</code>. Программа выходит из функции. Программа не выходит из всей программы. <code>return</code> в функции <code>void</code> завершает только функцию.</td><td><code>main</code> продолжает работу со следующим файлом. Сбой одного файла не останавливает программу. Три кейса независимы друг от друга.</td></tr>
+<tr><td class="ln">24–27</td><td class="code">std::vector&lt;char&gt; buffer(sizeInBytes, 'X'); DWORD written = 0; WriteFile(hFile, buffer.data(), sizeInBytes, &amp;written, NULL);</td><td>Программа создаёт буфер из <code>sizeInBytes</code> символов <code>'X'</code>. Программа записывает буфер в файл одним вызовом <code>WriteFile</code>. Вызов <code>WriteFile</code> — синхронный вызов. Последний аргумент равен <code>NULL</code>. Вызов не использует <code>OVERLAPPED</code>. Переменная <code>written</code> принимает число реально записанных байт.</td><td>Символ <code>'X'</code> — произвольное заполнение. Важно только количество байт. Значение байт не важно. <code>WriteFile</code> работает в режиме синхронного вызова. Запись маленькая, и ожидание короткое. Асинхронный вызов только усложнил бы код.</td></tr>
+<tr><td class="ln">28–31</td><td class="code">STARTING_VCN_INPUT_BUFFER inputVcn; inputVcn.StartingVcn.QuadPart = 0;</td><td>Структура задаёт входной параметр для <code>FSCTL</code>. Структура хранит начальный номер кластера <code>VCN</code>. Программа ставит значение 0. Значение 0 запрашивает карту кластеров с начала файла.</td><td><code>VCN</code> — номер кластера внутри файла. Первый кластер имеет номер 0. Огромный файл допускает запрос карты по частям. Программа двигает <code>StartingVcn</code> для следующей части.</td></tr>
+<tr><td class="ln">32–34</td><td class="code">BYTE outBuf[1024]; DWORD bytesReturned = 0;</td><td>Программа выделяет выходной буфер на 1024 байта. Буфер принимает структуру <code>RETRIEVAL_POINTERS_BUFFER</code>. Переменная <code>bytesReturned</code> принимает число реально возвращённых байт. <code>DeviceIoControl</code> записывает это число в переменную.</td><td>1024 байта хватает на карту небольшого файла. Небольшой файл имеет один или два экстента. Сильно фрагментированный большой файл имеет много экстентов. Буфер может не вместить все экстенты. Тогда <code>DeviceIoControl</code> возвращает ошибку <code>ERROR_MORE_DATA</code>. Код не обрабатывает эту ошибку — смотри теорию.</td></tr>
+<tr><td class="ln">35–36</td><td class="code">BOOL fsctlSuccess = DeviceIoControl(</td><td>Программа вызывает управляющую функцию драйвера. Вызов обращается к драйверу NTFS.</td><td><code>DeviceIoControl</code> — универсальный вызов для драйверов. Код операции говорит драйверу нужное действие. Код начинается с <code>FSCTL</code>.</td></tr>
+<tr><td class="ln">37–45</td><td class="code">hFile, FSCTL_GET_RETRIEVAL_POINTERS, &amp;inputVcn, sizeof(inputVcn), outBuf, sizeof(outBuf), &amp;bytesReturned, NULL</td><td>Аргументы задают запрос карты кластеров. Первый аргумент — дескриптор файла. Второй аргумент — код <code>FSCTL_GET_RETRIEVAL_POINTERS</code>, который просит вернуть карту кластеров файла. Дальше идут входной буфер с <code>StartingVcn</code> и его размер, затем выходной буфер и его размер. Затем идёт адрес для числа возвращённых байт. Последний аргумент <code>NULL</code> задаёт синхронный вызов без <code>OVERLAPPED</code>.</td><td>Этот <code>FSCTL</code> — главный инструмент задачи. <code>FSCTL</code> спрашивает у NTFS место данных файла. NTFS отвечает номерами физических кластеров <code>LCN</code>. Резидентный файл не имеет кластеров. Код ошибки показывает отсутствие кластеров.</td></tr>
+<tr><td class="ln">46–48</td><td class="code">std::wcout &lt;&lt; L"--------------------------------------------------" … &lt;&lt; L"Файл: " &lt;&lt; filePath &lt;&lt; L" (Размер: " &lt;&lt; sizeInBytes &lt;&lt; L" байт)" …</td><td>Программа печатает разделитель и заголовок результата. Заголовок показывает имя файла. Заголовок показывает логический размер файла.</td><td>Разделитель отделяет результаты трёх кейсов друг от друга в выводе.</td></tr>
+<tr><td class="ln">49–50</td><td class="code">if (!fsctlSuccess) {</td><td>Эта ветка обрабатывает ошибку <code>DeviceIoControl</code>. <code>DeviceIoControl</code> завершился ошибкой.</td><td>Для резидентного файла ошибка — ожидаемый исход. Ошибка не означает сбой программы. Дальше код различает два случая по коду <code>GetLastError()</code>. Первый случай — резидентный файл. Второй случай — настоящая ошибка.</td></tr>
+<tr><td class="ln">51–55</td><td class="code">DWORD err = GetLastError(); if (err == ERROR_HANDLE_EOF) { … РЕЗИДЕНТНЫЙ … Данные … внутри 1024-байтной записи MFT! … Extents = 0.</td><td>Код ошибки <code>ERROR_HANDLE_EOF</code> (38) означает конец файла. Программа признаёт файл резидентным. Программа печатает объяснение. Данные целиком лежат внутри записи MFT. Файл не имеет отдельных кластеров.</td><td><code>ERROR_HANDLE_EOF</code> здесь — не ошибка в обычном смысле. Код — сигнал NTFS. Сигнал означает отсутствие карты кластеров у файла. Данные лежат в самой записи MFT. Программа использует код ошибки как диагностический признак. Этот приём — главный приём всей задачи.</td></tr>
+<tr><td class="ln">56–58</td><td class="code">} else { std::wcout &lt;&lt; L"Ошибка FSCTL_GET_RETRIEVAL_POINTERS: " &lt;&lt; err &lt;&lt; std::endl; }</td><td>Любой другой код ошибки означает настоящую проблему. Пример: том не имеет формата NTFS. Программа печатает код ошибки.</td><td>Различение двух случаев важно. Без различения программа не отличила бы резидентный файл от запуска на <code>FAT32</code>. На <code>FAT32</code> код <code>FSCTL</code> тоже не срабатывает. Но на <code>FAT32</code> код ошибки другой.</td></tr>
+<tr><td class="ln">59–60</td><td class="code">} else { RETRIEVAL_POINTERS_BUFFER* rp = reinterpret_cast&lt;RETRIEVAL_POINTERS_BUFFER*&gt;(outBuf);</td><td>Эта ветка обрабатывает успех <code>FSCTL</code>. Программа приводит сырые байты <code>outBuf</code> к указателю. Указатель имеет тип <code>RETRIEVAL_POINTERS_BUFFER</code>. Приведение выполняет <code>reinterpret_cast</code>.</td><td><code>reinterpret_cast</code> здесь безопасен. Драйвер заполнил буфер именно этой структурой. Структура содержит <code>ExtentCount</code> и массив экстентов. Каждый экстент имеет поля <code>Lcn</code> и <code>NextVcn</code>.</td></tr>
+<tr><td class="ln">61–63</td><td class="code">… НЕРЕЗИДЕНТНЫЙ ФАЙЛ … Данные не поместились в MFT-запись … Количество цепочек кластеров (Extents): " &lt;&lt; rp-&gt;ExtentCount …</td><td>Программа печатает вердикт «нерезидентный». Программа печатает число экстентов. Экстент — непрерывная цепочка кластеров. Файл состоит из экстентов.</td><td>Один экстент — идеальный случай. Файл лежит подряд на диске. Несколько экстентов означают фрагментацию файла. Куски файла разбросаны по диску.</td></tr>
+<tr><td class="ln">64–67</td><td class="code">for (DWORD i = 0; i &lt; rp-&gt;ExtentCount; ++i) { … LCN = … NextVCN = … }</td><td>Цикл проходит по экстентам. Для каждого экстента программа печатает два числа. Первое число — <code>LCN</code>, номер первого физического кластера цепочки на томе. Второе число — <code>NextVCN</code>, номер кластера, с которого начинается следующая цепочка. Этот номер означает конец текущей цепочки.</td><td>Пара <code>LCN</code> и <code>NextVCN</code> — это экстент (Data Run) в расшифрованном виде. Пара показывает физическое начало цепочки. Пара показывает логический конец цепочки. По паре читатель восстанавливает всё размещение файла.</td></tr>
+<tr><td class="ln">68</td><td class="code">}</td><td>Скобка закрывает ветку <code>else</code>. Ветка <code>else</code> обрабатывает успешный <code>FSCTL</code>.</td><td>Скобка — только синтаксис. Ветки <code>if</code> и <code>else</code> взаимоисключают друг друга.</td></tr>
+<tr><td class="ln">69–71</td><td class="code">CloseHandle(hFile); }</td><td>Программа закрывает дескриптор тестового файла. Функция завершается.</td><td>Файл остаётся на диске после закрытия. Читатель открывает файл в проводнике. Читатель проверяет размер файла. Дескриптор закрыт. Файл больше не заблокирован.</td></tr>
+<tr><td class="ln">72–73</td><td class="code">int main() {</td><td>Функция <code>main</code> — точка входа программы.</td><td><code>main</code> только настраивает консоль. <code>main</code> вызывает функцию анализа трижды.</td></tr>
+<tr><td class="ln">74–77</td><td class="code">#if defined(_WIN32) system("chcp 65001 &gt; nul"); _setmode(_fileno(stdout), _O_U8TEXT); #endif</td><td>Программа задаёт ту же настройку UTF-8, что и в задаче 1. Кодовая страница равна 65001. Программа переводит <code>stdout</code> в режим <code>_O_U8TEXT</code>.</td><td>Без этой настройки русские подписи отображались бы неверно. Подписи — «РЕЗИДЕНТНЫЙ» и «НЕРЕЗИДЕНТНЫЙ». Консоль Windows показала бы кракозябры.</td></tr>
+<tr><td class="ln">78–79</td><td class="code">std::wcout &lt;&lt; L"=== АНАЛИЗ ЧТЕНИЯ MFT…" &lt;&lt; std::endl;</td><td>Программа печатает заголовок программы.</td><td>Заголовок — ориентир в выводе. Дальше идут три блока результатов.</td></tr>
+<tr><td class="ln">80–82</td><td class="code">// Сравнение 1 … AnalyzeNtfsFileAllocation(L"test_resident_200b.dat", 200);</td><td>Кейс 1: файл 200 байт. Программа ожидает резидентный файл. Запись MFT свободно вмещает 200 байт. Запись MFT имеет размер 1024 байта. Данные лежат после заголовка и служебных атрибутов.</td><td>200 байт — заведомо ниже порога резидентности. Порог равен примерно 700 байт свободного места в записи. Это контрольный «маленький» случай.</td></tr>
+<tr><td class="ln">83–85</td><td class="code">// Сравнение 2 … AnalyzeNtfsFileAllocation(L"test_nonresident_2500b.dat", 2500);</td><td>Кейс 2: файл 2500 байт. Программа ожидает нерезидентный файл. Запись MFT не вмещает 2500 байт. NTFS выносит данные в кластеры.</td><td>2500 байт — чуть выше 1 КБ. Это минимальный «большой» случай. Случай показывает сам переход через границу записи.</td></tr>
+<tr><td class="ln">86–88</td><td class="code">// Сравнение 3 … AnalyzeNtfsFileAllocation(L"test_large_500kb.dat", 500 * 1024);</td><td>Кейс 3: файл 512 000 байт (500 КБ). Файл заведомо имеет нерезидентный атрибут. Файл обычно занимает один экстент. Один экстент возможен при непрерывном свободном месте на диске.</td><td>Третий кейс проверяет вывод для большого файла. Вывод не отличается по смыслу от кейса 2. Экстентов по-прежнему мало при нефрагментированном диске.</td></tr>
+<tr><td class="ln">89–91</td><td class="code">return 0; }</td><td>Программа завершается успешно.</td><td>Программа возвращает код 0. Код 0 означает успешное завершение. Все три кейса отработали. Программа могла не создать один файл. Функция вернулась досрочно в этом случае. <code>main</code> не проверяет этот случай.</td></tr>
+</tbody></table>
+        </div>
+        
+<div class="run-box"><h3>Как запустить — задача 2</h3>
+<p><strong>Только Windows и только том NTFS.</strong> <code>FSCTL_GET_RETRIEVAL_POINTERS</code> — запрос к драйверу NTFS. На <code>FAT32</code> и <code>exFAT</code> результат будет другим. Программа получит другую ошибку. Ошибка не равна <code>ERROR_HANDLE_EOF</code>.</p>
+<pre class="cmd"><code>rem MSVC (Developer Command Prompt for VS):
+cl /EHsc /W4 task2_mft_resident_theory.cpp
+rem MinGW-w64:
+g++ -O2 -o task2_mft_resident_theory.exe task2_mft_resident_theory.cpp
+rem Запуск из папки с exe:
+task2_mft_resident_theory.exe</code></pre>
+<p><strong>Файлы:</strong> заранее ничего создавать не нужно. Программа сама создаёт три файла в текущей папке: <code>test_resident_200b.dat</code> (200 байт), <code>test_nonresident_2500b.dat</code> (2500 байт) и <code>test_large_500kb.dat</code> (512 000 байт). Каждый запуск стирает все три файла и создаёт их заново. Поведение задаёт <code>CREATE_ALWAYS</code>. Диск хранит около 500 КБ для трёх файлов.</p>
+<p><strong>Ожидаемый вывод:</strong> три блока. Для 200 байт программа печатает «Статус MFT: РЕЗИДЕНТНЫЙ ФАЙЛ». Для 2500 байт и 500 КБ программа печатает «НЕРЕЗИДЕНТНЫЙ ФАЙЛ». Программа печатает число экстентов. Число экстентов обычно равно 1. Программа печатает значения <code>LCN</code> и <code>NextVCN</code>.</p>
+<p><strong>Что сломается:</strong> запуск на томе без NTFS даёт ошибку с другим кодом. Пример: флешка <code>FAT32</code>. Маленький файл не получит статус «резидентный». Сильно фрагментированный диск даёт больше одного экстента, и это нормально. Выходной буфер программы имеет размер всего 1024 байта. Список экстентов очень фрагментированного файла может не влезть в буфер.</p></div>
+
+      </div>
+    </div>
+
+    <div id="task3" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задача 3: Реальный физический размер файлов вне таблицы MFT</div>
+        <span class="task-path">task3_mft_physical_size.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="callout-success">Старый вариант программы печатал 200 и 2000. Эти числа — логический размер, а не занятое место на диске. <code>GetCompressedFileSizeW</code> возвращает логический размер для обычных (несжатых) файлов. Программа теперь берёт размер напрямую из <code>AllocationSize</code>. Файл 200 байт занимает 0 байт. Файл 2000 байт занимает 4096 байт.</div>
+        <div class="code-container"><div class="code-top-bar"><span>task3_mft_physical_size.cpp</span><button class="copy-btn" onclick="copyCode(this)">Скопировать</button></div><pre><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;io.h&gt;
+#include &lt;fcntl.h&gt;
+
+void investigateFile(const wchar_t* fileName, DWORD bytesToWrite) {
+    HANDLE hFile = CreateFileW(
+        fileName,
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L&quot;Ошибка создания файла: &quot; &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return;
+    }
+
+    char* buffer = new char[bytesToWrite];
+    memset(buffer, &#x27;A&#x27;, bytesToWrite);
+
+    DWORD bytesWritten = 0;
+    WriteFile(hFile, buffer, bytesToWrite, &amp;bytesWritten, NULL);
+    delete[] buffer;
+
+    // ПРЯМОЙ ПУТЬ: спрашиваем у самой NTFS, сколько места выделено под файл.
+    // FILE_STANDARD_INFO.AllocationSize — это реальный выделенный размер:
+    // 0 для резидентного файла (данные лежат внутри записи MFT, кластеры не
+    // выделялись), для нерезидентного — число кластеров × размер кластера.
+    // Запрос делается по открытому хэндлу, до CloseHandle.
+    FILE_STANDARD_INFO stdInfo = {};
+    LONGLONG physicalSize = -1;
+    if (GetFileInformationByHandleEx(hFile, FileStandardInfo, &amp;stdInfo, sizeof(stdInfo))) {
+        physicalSize = stdInfo.AllocationSize.QuadPart;
+    } else {
+        std::wcout &lt;&lt; L&quot;Ошибка GetFileInformationByHandleEx: &quot; &lt;&lt; GetLastError() &lt;&lt; std::endl;
+    }
+
+    CloseHandle(hFile);
+
+    // ДЛЯ СРАВНЕНИЯ: ловушка GetCompressedFileSizeW.
+    // Несмотря на имя, для обычного (несжатого, не разреженного) файла она
+    // возвращает ЛОГИЧЕСКИЙ размер, как GetFileSize. Так написано в самой
+    // документации Microsoft: &quot;If the file is not compressed or a sparse
+    // file, the value obtained is the actual file size, the same as the value
+    // returned by a call to GetFileSize&quot;. Реальный размер на диске она даёт
+    // только для сжатых и разреженных файлов. Поэтому старый вариант этой
+    // программы печатал 200 и 2000 вместо правильных 0 и 4096.
+    DWORD highSize = 0;
+    DWORD compressedSize = GetCompressedFileSizeW(fileName, &amp;highSize);
+    if (compressedSize == INVALID_FILE_SIZE &amp;&amp; GetLastError() != NO_ERROR) {
+        std::wcout &lt;&lt; L&quot;Ошибка GetCompressedFileSizeW: &quot; &lt;&lt; GetLastError() &lt;&lt; std::endl;
+    }
+
+    std::wcout &lt;&lt; L&quot;Файл: &quot; &lt;&lt; fileName &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L&quot;  Записано данных (логический размер): &quot; &lt;&lt; bytesToWrite &lt;&lt; L&quot; байт.&quot; &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L&quot;  Занято на диске (физический размер, напрямую): &quot; &lt;&lt; physicalSize &lt;&lt; L&quot; байт.&quot; &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L&quot;  GetCompressedFileSizeW (для сравнения): &quot; &lt;&lt; compressedSize &lt;&lt; L&quot; байт.&quot; &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L&quot;--------------------------------------------------&quot; &lt;&lt; std::endl;
+}
+
+int main() {
+    #if defined(_WIN32)
+    system(&quot;chcp 65001 &gt; nul&quot;);
+    _setmode(_fileno(stdout), _O_U8TEXT);
+    #endif
+
+    std::wcout &lt;&lt; L&quot;=== ИССЛЕДОВАНИЕ ФИЗИЧЕСКОГО РАЗМЕРА ФАЙЛА ВНЕ ТАБЛИЦЫ MFT ===&quot; &lt;&lt; std::endl;
+
+    investigateFile(L&quot;small_file.txt&quot;, 200);   // Кейс 1: 200 байт (резидентный в MFT)
+    investigateFile(L&quot;large_file.txt&quot;, 2000); // Кейс 2: 2000 байт (нерезидентный)
+
+    return 0;
+}
+</code></pre></div>
+        <div class="explanation-box">
+          <span class="explanation-title">Полный построчный разбор — каждая строка кода</span>
+          <p>Строки указаны по файлу <code>task3_mft_physical_size.cpp</code>. Разбор содержит 18 блоков и покрывает все строки. Код выше приведён полностью, как в исходном файле.</p>
+          <table class="break-table"><thead><tr><th style="width:64px">Строки</th><th style="width:34%">Код / блок</th><th>Что делает</th><th>Зачем / почему так</th></tr></thead><tbody>
+<tr><td class="ln">1–4</td><td class="code">#include &lt;windows.h&gt; … &lt;fcntl.h&gt;</td><td>Заголовки подключают <code>windows.h</code>, <code>iostream</code>, <code>io.h</code> и <code>fcntl.h</code>. <code>windows.h</code> даёт <code>CreateFileW</code>, <code>WriteFile</code>, <code>GetFileInformationByHandleEx</code> и <code>GetCompressedFileSizeW</code>. <code>iostream</code> даёт <code>wcout</code>. <code>io.h</code> и <code>fcntl.h</code> задают режим UTF-8 для консоли через <code>_setmode</code>.</td><td>Набор минимальный. Программа использует только Win32 API и вывод в консоль.</td></tr>
+<tr><td class="ln">6</td><td class="code">void investigateFile(const wchar_t* fileName, DWORD bytesToWrite) {</td><td>Функция исследует один файл. Она принимает имя файла и число байт для записи. Функция только печатает результат и ничего не возвращает.</td><td>Одинаковая логика для обоих кейсов вынесена в функцию. Программа вызывает её дважды с разными параметрами.</td></tr>
+<tr><td class="ln">7–15</td><td class="code">fileName, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL</td><td>Аргументы <code>CreateFileW</code> задают имя, чтение и запись, запрещённый совместный доступ (0) и <code>CREATE_ALWAYS</code>. Флаг <code>CREATE_ALWAYS</code> создаёт файл заново или стирает существующий файл. Программа открывает обычный файл.</td><td>Флаг <code>CREATE_ALWAYS</code> важен для повторного запуска. Старые файлы не накапливаются и не искажают результат. Каждый запуск записывает ровно заданное число байт. Программа открывает файл и на чтение, и на запись. Чтение нужно не для данных. <code>GetFileInformationByHandleEx</code> требует прав на чтение атрибутов файла.</td></tr>
+<tr><td class="ln">17–20</td><td class="code">if (hFile == INVALID_HANDLE_VALUE) { … return; }</td><td>При ошибке создания программа печатает сообщение с кодом <code>GetLastError()</code>. Затем функция завершает работу.</td><td>Дальнейший код работал бы с битым дескриптором. Ранний возврат защищает программу от этой ошибки. Программа при этом продолжает работу со вторым файлом.</td></tr>
+<tr><td class="ln">22–23</td><td class="code">char* buffer = new char[bytesToWrite]; memset(buffer, 'A', bytesToWrite);</td><td>Программа выделяет буфер нужного размера. Затем программа целиком заполняет буфер символом «A» (код 65).</td><td>Содержимое неважно, важен объём. Символ «A» — наглядный повторяющийся байт. Файл можно открыть и убедиться, что внутри именно столько символов.</td></tr>
+<tr><td class="ln">25–27</td><td class="code">DWORD bytesWritten = 0; WriteFile(hFile, buffer, bytesToWrite, &amp;bytesWritten, NULL); delete[] buffer;</td><td>Программа записывает весь буфер в файл одним синхронным вызовом. <code>bytesWritten</code> принимает число реально записанных байт. Последний аргумент <code>NULL</code> означает запись без <code>OVERLAPPED</code>. Программа освобождает буфер сразу после записи. Вызов <code>delete[]</code> парный к <code>new[]</code>.</td><td>Программа не проверяет результат <code>bytesWritten</code>. Для файлов в 200–2000 байт короткая запись практически невозможна. Формально проверка пропущена. Программа освобождает буфер до замера, потому что память программе больше не нужна.</td></tr>
+<tr><td class="ln">29–33</td><td class="code">// ПРЯМОЙ ПУТЬ: спрашиваем у самой NTFS… // Запрос делается по открытому хэндлу, до CloseHandle.</td><td>Комментарий объясняет главный приём задачи. Программа берёт физический размер напрямую у NTFS через <code>AllocationSize</code>. Программа не использует <code>GetCompressedFileSizeW</code> для этого замера.</td><td>Без этого комментария строка 36 выглядела бы как магия. Комментарий фиксирует: 0 означает резидентный файл, а не ошибку.</td></tr>
+<tr><td class="ln">34–40</td><td class="code">FILE_STANDARD_INFO stdInfo = {}; LONGLONG physicalSize = -1; if (GetFileInformationByHandleEx(hFile, FileStandardInfo, &amp;stdInfo, sizeof(stdInfo))) { physicalSize = stdInfo.AllocationSize.QuadPart; } else { … }</td><td>Программа делает прямой замер через <code>GetFileInformationByHandleEx</code> с классом <code>FileStandardInfo</code>. Вызов возвращает структуру <code>FILE_STANDARD_INFO</code>. Поле <code>AllocationSize</code> — реально выделенный под файл размер. Резидентный файл даёт 0. Нерезидентный файл даёт число кластеров, умноженное на размер кластера. При ошибке <code>physicalSize</code> остаётся -1, и программа печатает код ошибки.</td><td>Программа делает запрос по открытому дескриптору, до <code>CloseHandle</code>. NTFS отдаёт актуальное состояние файла. <code>AllocationSize</code> — то же число, что показывает проводник в графе «Размер на диске». Начальное -1 — маркер «замер не удался». Маркер нельзя спутать с настоящим 0.</td></tr>
+<tr><td class="ln">42</td><td class="code">CloseHandle(hFile);</td><td>Программа закрывает дескриптор. После замера дескриптор больше не нужен.</td><td>Программа закрывает дескриптор после замера, а не до него. <code>GetFileInformationByHandleEx</code> работает только с открытым дескриптором. Дальше программа опрашивает файл уже по имени.</td></tr>
+<tr><td class="ln">44–51</td><td class="code">// ДЛЯ СРАВНЕНИЯ: ловушка GetCompressedFileSizeW. … // программы печатал 200 и 2000 вместо правильных 0 и 4096.</td><td>Комментарий доказывает, почему старый вариант программы врал. Документация Microsoft подтверждает: для несжатого и не разреженного файла функция возвращает логический размер, как <code>GetFileSize</code>.</td><td>Ловушка скрыта в имени функции. Слово <code>Compressed</code> обещает размер на диске. Для обычных файлов функция возвращает логический размер. Комментарий оставлен в коде для защиты. На защите видно: ошибка найдена и понята, а не заметена.</td></tr>
+<tr><td class="ln">52–56</td><td class="code">DWORD highSize = 0; DWORD compressedSize = GetCompressedFileSizeW(fileName, &amp;highSize); if (compressedSize == INVALID_FILE_SIZE &amp;&amp; GetLastError() != NO_ERROR) { … }</td><td>Программа делает контрольный замер тем же вызовом, что и старая версия. Для обычных файлов вызов вернёт 200 и 2000. Проверка ошибки правильная. <code>INVALID_FILE_SIZE</code> (0xFFFFFFFF) может быть и легальным размером. Поэтому программа дополнительно проверяет <code>GetLastError()</code> != <code>NO_ERROR</code>.</td><td>Сравнение двух чисел в выводе наглядно показывает ловушку. <code>highSize</code> — старшие 32 бита 64-битного размера. Для файлов меньше 4 ГБ значение равно 0.</td></tr>
+<tr><td class="ln">58–62</td><td class="code">std::wcout &lt;&lt; L"Файл: " … &lt;&lt; L"  Записано данных (логический размер): " … &lt;&lt; L"  Занято на диске (физический размер, напрямую): " &lt;&lt; physicalSize … &lt;&lt; L"  GetCompressedFileSizeW (для сравнения): " &lt;&lt; compressedSize … &lt;&lt; L"----…" …</td><td>Программа печатает имя файла, логический размер, физический размер напрямую и значение <code>GetCompressedFileSizeW</code> для сравнения. Логический размер — число записанных байт. Физический размер программа берёт из <code>AllocationSize</code>. Разделитель завершает блок вывода.</td><td>Контраст трёх чисел — весь смысл задачи. Первый кейс даёт 200 / 0 / 200. Второй кейс даёт 2000 / 4096 / 2000.</td></tr>
+<tr><td class="ln">63</td><td class="code">}</td><td>Здесь завершается функция исследования файла.</td><td>После выхода из функции её локальные переменные уничтожаются. Файлы остаются на диске.</td></tr>
+<tr><td class="ln">65</td><td class="code">int main() {</td><td>Здесь находится точка входа программы.</td><td>Программа в точке входа только настраивает консоль и запускает два кейса.</td></tr>
+<tr><td class="ln">66–69</td><td class="code">#if defined(_WIN32) system("chcp 65001 &gt; nul"); _setmode(_fileno(stdout), _O_U8TEXT); #endif</td><td>Программа настраивает UTF-8 для консоли, как в остальных задачах.</td><td>Русские подписи «Записано данных» и «Занято на диске» без этой настройки отображались бы неверно.</td></tr>
+<tr><td class="ln">71</td><td class="code">std::wcout &lt;&lt; L"=== ИССЛЕДОВАНИЕ ФИЗИЧЕСКОГО РАЗМЕРА ФАЙЛА ВНЕ ТАБЛИЦЫ MFT ===" &lt;&lt; std::endl;</td><td>Программа печатает заголовок.</td><td>Заголовок служит ориентиром в выводе перед двумя блоками результатов.</td></tr>
+<tr><td class="ln">73–74</td><td class="code">investigateFile(L"small_file.txt", 200);   // Кейс 1: 200 байт (резидентный в MFT)
+investigateFile(L"large_file.txt", 2000); // Кейс 2: 2000 байт (нерезидентный)</td><td>Программа исследует два кейса. Первый кейс: файл 200 байт, ожидается 0 байт на диске, файл резидентный. Второй кейс: файл 2000 байт, ожидается 4096 байт, один кластер 4 КБ.</td><td>Пара подобрана по обе стороны границы записи MFT. Запись MFT даёт около 700 байт свободного места. 200 байт заведомо помещается внутри записи. 2000 байт заведомо выходит за пределы записи.</td></tr>
+<tr><td class="ln">76–77</td><td class="code">return 0; }</td><td>Программа завершается успешно.</td><td>Код 0 не зависит от результатов замеров. Программа-исследователь не считает расхождение размеров ошибкой.</td></tr>
+</tbody></table>
+        </div>
+        
+<div class="run-box"><h3>Как запустить — задача 3</h3>
+<p><strong>Только Windows, том NTFS.</strong> Результат «0 байт на диске» возможен только в NTFS с резидентными атрибутами. На FAT32 и exFAT маленький файл займёт целый кластер.</p>
+<pre class="cmd"><code>rem MSVC (Developer Command Prompt for VS):
+cl /EHsc /W4 task3_mft_physical_size.cpp
+rem MinGW-w64:
+g++ -O2 -o task3_mft_physical_size.exe task3_mft_physical_size.cpp
+rem Запуск из папки с exe:
+task3_mft_physical_size.exe</code></pre>
+<p><strong>Файлы:</strong> Заранее ничего создавать не нужно. Программа сама создаёт в текущей папке <code>small_file.txt</code> (200 байт символа «A») и <code>large_file.txt</code> (2000 байт символа «A»). Оба файла при каждом запуске стираются и создаются заново (<code>CREATE_ALWAYS</code>).</p>
+<p><strong>Ожидаемый вывод:</strong> <code>small_file.txt</code> — записано 200 байт, занято на диске (напрямую) <strong>0 байт</strong>, <code>GetCompressedFileSizeW</code> — 200 байт. <code>large_file.txt</code> — записано 2000 байт, занято на диске (напрямую) <strong>4096 байт</strong> (один кластер 4 КБ при стандартном форматировании NTFS), <code>GetCompressedFileSizeW</code> — 2000 байт. Именно строка «для сравнения» показывает ловушку. Для обычных файлов <code>GetCompressedFileSizeW</code> возвращает логический размер.</p>
+<p><strong>Что сломается / изменится:</strong> Если том отформатирован с другим размером кластера (например, 8 КБ), второй файл займёт 8192 байт вместо 4096. Это не ошибка программы, а свойство тома. На сжатом томе NTFS числа тоже будут другими. Если убрать строку «для сравнения», ловушка перестанет быть видна. Правильные числа (0 и 4096) останутся. Программа берёт их из <code>AllocationSize</code>, а не из <code>GetCompressedFileSizeW</code>.</p></div>
+
+      </div>
+    </div>
+
+    <div id="task4" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задача 4: Эффект блокировки потока при синхронном I/O</div>
+        <span class="task-path">task4_sync_blocking_demo.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="callout-success">Тики идут раз в 0,5 с. На тике 5 синхронный вызов ReadFile читает 64 МБ. Вызов переводит поток в состояние Waiting. Тики останавливаются на время чтения.</div>
+        <div class="code-container"><div class="code-top-bar"><span>task4_sync_blocking_demo.cpp</span><button class="copy-btn" onclick="copyCode(this)">Скопировать</button></div><pre><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;io.h&gt;
+#include &lt;fcntl.h&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
+    #endif
+
+    std::wcout &lt;&lt; L"=== ТЕСТ СИНХРОННОЙ БЛОКИРОВКИ ПОТОКА ПРИ ВВОДЕ-ВЫВОДЕ ===" &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"Для начала эксперимента нажмите [Enter]...";
+    std::cin.get();
+
+    const wchar_t* filePath = L"heavy_test_file.tmp";
+
+    // Проверяем наличие файла. Если нет — создаем файл размером 256 МБ
+    HANDLE hCheck = CreateFileW(filePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hCheck == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Создание демонстрационного файла 256 МБ для эмуляции нагрузки..." &lt;&lt; std::endl;
+        HANDLE hNew = CreateFileW(filePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (hNew != INVALID_HANDLE_VALUE) {
+            LARGE_INTEGER sz;
+            sz.QuadPart = 256LL * 1024 * 1024;
+            SetFilePointerEx(hNew, sz, NULL, FILE_BEGIN);
+            SetEndOfFile(hNew);
+            CloseHandle(hNew);
+        }
+    } else {
+        CloseHandle(hCheck);
+    }
+
+    HANDLE hFile = CreateFileW(
+        filePath,
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        NULL,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Ошибка открытия файла! Код: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return 1;
+    }
+
+    DWORD bufferSize = 64 * 1024 * 1024; // Буфер 64 МБ
+    char* buffer = new char[bufferSize];
+    DWORD bytesRead = 0;
+
+    std::wcout &lt;&lt; L"Начинаем процесс: поток эмулирует работу интерфейса (выводит тики таймера)..." &lt;&lt; std::endl;
+    Sleep(1000);
+
+    for (int i = 1; i &lt;= 10; i++) {
+        std::wcout &lt;&lt; L"Интерфейс: Тик " &lt;&lt; i &lt;&lt; L" [Поток активен, State: Running]" &lt;&lt; std::endl;
+        Sleep(500); // Имитация обработки событий пользовательского интерфейса
+
+        if (i == 5) {
+            std::wcout &lt;&lt; L"\n!!! ВНИМАНИЕ: Вызываем синхронный ReadFile() на 64 МБ!" &lt;&lt; std::endl;
+            std::wcout &lt;&lt; L"!!! Поток переходит в ядре в состояние Waiting (заблокирован драйвером)." &lt;&lt; std::endl;
+            std::wcout &lt;&lt; L"!!! В этот момент GUI-окно программы зависает ('Не отвечает')...\n" &lt;&lt; std::endl;
+
+            // Синхронный вызов. Текущий поток приостанавливается планировщиком Windows
+            ReadFile(hFile, buffer, bufferSize, &amp;bytesRead, NULL);
+
+            std::wcout &lt;&lt; L"!!! ReadFile() завершился! Прочитано " &lt;&lt; (bytesRead / (1024 * 1024))
+                       &lt;&lt; L" МБ. Поток разблокирован и вернулся к выполнению.\n" &lt;&lt; std::endl;
+        }
+    }
+
+    std::wcout &lt;&lt; L"Эксперимент окончен." &lt;&lt; std::endl;
+
+    CloseHandle(hFile);
+    delete[] buffer;
+
+    return 0;
+}
+</code></pre></div>
+        <div class="explanation-box">
+          <span class="explanation-title">Полный построчный разбор — каждая строка кода</span>
+          <p>Разбор приводит строки по файлу <code>task4_sync_blocking_demo.cpp</code>. Разбор имеет 22 блока. Разбор покрывает все строки файла. Код выше повторяет файл .cpp полностью.</p>
+          <table class="break-table"><thead><tr><th style="width:64px">Строки</th><th style="width:34%">Код / блок</th><th>Что делает</th><th>Зачем / почему так</th></tr></thead><tbody>
+<tr><td class="ln">1–4</td><td class="code">#include &lt;windows.h&gt; … &lt;fcntl.h&gt;</td><td>Программа подключает заголовки для файлового API. windows.h даёт CreateFileW, ReadFile и Sleep. iostream даёт wcout и cin. io.h и fcntl.h дают UTF-8-режим консоли.</td><td>Набор заголовков минимальный. Программа использует только файловый API. Программа использует сон потока. Программа использует консольный ввод-вывод.</td></tr>
+<tr><td class="ln">5–6</td><td class="code">int main() {</td><td>main — это точка входа программы. Вся логика находится в main. Отдельных функций в программе нет.</td><td>Демонстрация короткая. Программа не создаёт отдельные функции для демонстрации.</td></tr>
+<tr><td class="ln">7–10</td><td class="code">#if defined(_WIN32) system("chcp 65001 &gt; nul"); _setmode(_fileno(stdout), _O_U8TEXT); #endif</td><td>Строки настраивают UTF-8 для консоли. Настройка совпадает с настройкой остальных задач.</td><td>Без этой настройки консоль показывает русские сообщения о блокировке потока неверно.</td></tr>
+<tr><td class="ln">11–14</td><td class="code">std::wcout &lt;&lt; L"=== ТЕСТ СИНХРОННОЙ БЛОКИРОВКИ…" …; std::wcout &lt;&lt; L"Для начала эксперимента нажмите [Enter]..."; std::cin.get();</td><td>Программа печатает заголовок. Программа ждёт нажатия Enter. std::cin.get() читает один символ из ввода.</td><td>Пауза даёт время переключиться на окно консоли. Пользователь наблюдает тики с самого начала. Без паузы пользователь пропускает первые тики. Пользователь в это время ищет окно консоли.</td></tr>
+<tr><td class="ln">15–16</td><td class="code">const wchar_t* filePath = L"heavy_test_file.tmp";</td><td>Имя тестового файла относительное. Файл лежит в текущей рабочей папке.</td><td>Расширение .tmp показывает назначение файла. Файл служит только для эксперимента. Пользователь может удалить файл после запуска.</td></tr>
+<tr><td class="ln">17–19</td><td class="code">// Проверяем наличие файла. Если нет — создаем файл размером 256 МБ
+    HANDLE hCheck = CreateFileW(filePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);</td><td>Программа проверяет существование файла. Программа открывает файл на чтение с флагом OPEN_EXISTING. Если файл есть, программа получает рабочий дескриптор. Если файла нет, программа получает INVALID_HANDLE_VALUE.</td><td>Один вызов проверяет файл и открывает файл. Отдельная проверка существования не нужна. Один вызов даёт факт наличия файла. Один вызов даёт готовый дескриптор. Программа создаёт файл только при первом запуске.</td></tr>
+<tr><td class="ln">20–23</td><td class="code">if (hCheck == INVALID_HANDLE_VALUE) { … HANDLE hNew = CreateFileW(filePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);</td><td>Ветка «файла нет» печатает сообщение о создании файла. Сообщение называет размер 256 МБ. Программа открывает новый файл на запись. Программа использует флаг CREATE_ALWAYS.</td><td>Программа создаёт файл внутри условия. Повторные запуски не пересоздают файл на 256 МБ. Повторный запуск не тратит время на создание файла.</td></tr>
+<tr><td class="ln">24–29</td><td class="code">if (hNew != INVALID_HANDLE_VALUE) { LARGE_INTEGER sz; sz.QuadPart = 256LL * 1024 * 1024; SetFilePointerEx(hNew, sz, NULL, FILE_BEGIN); SetEndOfFile(hNew); CloseHandle(hNew); }</td><td>Программа задаёт размер 256 МБ быстрым приёмом из задачи 1. Программа ставит указатель на 256 МБ от начала файла. SetEndOfFile фиксирует размер файла. Программа закрывает дескриптор. Содержимое файла — нули. Программа не записывает байты.</td><td>Программа выбирает размер 256 МБ для заметного чтения. Синхронное чтение 64 МБ занимает заметное время. Создание файла не требует долгой записи. Если дескриптор hNew битый, внутренний if пропускает создание. Программа не сообщает об ошибке. Программа позже падает на открытии файла для чтения.</td></tr>
+<tr><td class="ln">30–32</td><td class="code">} else { CloseHandle(hCheck); }</td><td>Ветка «файл уже есть» закрывает дескриптор проверки.</td><td>Программа не пересоздаёт файл. Программа не стирает файл. Программа использует готовый файл на 256 МБ как есть.</td></tr>
+<tr><td class="ln">33–34</td><td class="code">HANDLE hFile = CreateFileW(</td><td>Программа открывает файл для эксперимента. Программа открывает файл на чтение.</td><td>Программа открывает файл отдельно после проверки. Программа уже закрыла дескриптор hCheck. Чтение требует свой дескриптор. Свой дескриптор имеет нужные флаги.</td></tr>
+<tr><td class="ln">35–42</td><td class="code">filePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL</td><td>Программа открывает файл по пути только на чтение. Программа разрешает совместный доступ на чтение. Программа открывает существующий файл. Файл обычный. Ключевое отличие от задачи 1 — отсутствие флага FILE_FLAG_OVERLAPPED. Дескриптор синхронный.</td><td>Отсутствие флага FILE_FLAG_OVERLAPPED — суть демонстрации. ReadFile на таком дескрипторе блокирует поток. Поток ждёт конца операции.</td></tr>
+<tr><td class="ln">43–47</td><td class="code">if (hFile == INVALID_HANDLE_VALUE) { … return 1; }</td><td>При ошибке открытия программа печатает сообщение. Сообщение содержит код GetLastError(). Программа выходит с кодом 1.</td><td>Программа попадает сюда при неудачном создании файла. Создание файла выше проходит молча. Пример причины — нет 256 МБ на диске.</td></tr>
+<tr><td class="ln">48–51</td><td class="code">DWORD bufferSize = 64 * 1024 * 1024; // Буфер 64 МБ
+    char* buffer = new char[bufferSize]; DWORD bytesRead = 0;</td><td>Программа создаёт буфер чтения на 64 МБ. Размер буфера равен 64 × 1024 × 1024 байт. Программа создаёт счётчик прочитанных байт.</td><td>Размер 64 МБ делает блокировку видимой. Чтение с диска занимает заметное время. Программа выделяет буфер в куче через new. Программа не выделяет буфер на стеке. Размер 64 МБ не помещается в стек.</td></tr>
+<tr><td class="ln">52–54</td><td class="code">std::wcout &lt;&lt; L"Начинаем процесс: поток эмулирует работу интерфейса…" …; Sleep(1000);</td><td>Программа печатает сообщение о старте имитации интерфейса. Программа делает паузу на 1 секунду.</td><td>Пауза даёт пользователю время. Пользователь читает сообщение до появления тиков.</td></tr>
+<tr><td class="ln">55–58</td><td class="code">for (int i = 1; i &lt;= 10; i++) { std::wcout &lt;&lt; L"Интерфейс: Тик " &lt;&lt; i &lt;&lt; L" [Поток активен, State: Running]" &lt;&lt; std::endl; Sleep(500);</td><td>Цикл делает 10 тиков. Программа печатает каждый тик на экран. Поток спит 500 мс после каждого тика. Sleep имитирует обработку событий интерфейса (GUI). Поток регулярно делает работу интерфейса.</td><td>Тики — визуальный пульс потока. Тики идут раз в полсекунды. Тики показывают активность потока. Тики останавливаются при блокировке потока. Весь эксперимент использует этот контраст.</td></tr>
+<tr><td class="ln">59–63</td><td class="code">if (i == 5) { std::wcout &lt;&lt; L"\n!!! ВНИМАНИЕ: Вызываем синхронный ReadFile() на 64 МБ!" …; … "GUI-окно программы зависает ('Не отвечает')...\n" …</td><td>На пятом тике программа печатает предупреждения. Предупреждения называют синхронный вызов ReadFile на 64 МБ. Поток уходит в состояние Waiting. GUI зависает.</td><td>Программа печатает предупреждения до вызова. Пользователь замечает момент начала блокировки. Пользователь связывает остановку тиков с причиной блокировки.</td></tr>
+<tr><td class="ln">64–66</td><td class="code">// Синхронный вызов. Текущий поток приостанавливается планировщиком Windows
+            ReadFile(hFile, buffer, bufferSize, &amp;bytesRead, NULL);</td><td>Это сам эксперимент. Синхронный вызов читает 64 МБ с начала файла в буфер. Последний аргумент равен NULL. Вызов не использует OVERLAPPED. Вызов возвращается после чтения всех 64 МБ в память. Ошибка тоже возвращает вызов.</td><td>Пока ReadFile выполняется, планировщик Windows переводит поток из Running в Waiting. Тики останавливаются. Поток не получает квантов CPU. Программа не проверяет возвращаемое значение ReadFile. При ошибке bytesRead остаётся 0. Программа не замечает ошибку.</td></tr>
+<tr><td class="ln">67–69</td><td class="code">std::wcout &lt;&lt; L"!!! ReadFile() завершился! Прочитано " &lt;&lt; (bytesRead / (1024 * 1024)) &lt;&lt; L" МБ. Поток разблокирован и вернулся к выполнению.\n" …</td><td>После возврата из ReadFile программа печатает сообщение. Сообщение подтверждает разблокировку потока. Сообщение называет реально прочитанные мегабайты.</td><td>Сообщение доказывает возвращение потока. Тики 6–10 идут дальше после сообщения. Деление на 1024×1024 переводит байты в мегабайты.</td></tr>
+<tr><td class="ln">70–71</td><td class="code">} }</td><td>Строки закрывают if (i == 5). Строки закрывают тело цикла for.</td><td>После пятого тика цикл продолжается как обычно. Тики 6–10 идут с тем же интервалом. Интервал равен 500 мс.</td></tr>
+<tr><td class="ln">72–73</td><td class="code">std::wcout &lt;&lt; L"Эксперимент окончен." &lt;&lt; std::endl;</td><td>Программа печатает финальное сообщение. Сообщение идёт после всех 10 тиков.</td><td>Программа печатает сообщение всегда. Программа печатает сообщение даже при ошибке ReadFile. Программа не проверяет успешность чтения отдельно.</td></tr>
+<tr><td class="ln">74–76</td><td class="code">CloseHandle(hFile); delete[] buffer;</td><td>Программа закрывает дескриптор файла. Программа освобождает буфер на 64 МБ.</td><td>После закрытия файл heavy_test_file.tmp остаётся на диске. Файл служит для повторных запусков.</td></tr>
+<tr><td class="ln">77–79</td><td class="code">return 0; }</td><td>Программа завершается успешно. Код завершения равен 0.</td><td>Код 0 означает, что эксперимент отработал до конца.</td></tr>
+</tbody></table>
+        </div>
+        
+<div class="run-box"><h3>Как запустить — задача 4</h3>
+<p><strong>Только Windows.</strong> Программа использует Win32 API. Программа использует консольный ввод. Запускайте программу из терминала (cmd/PowerShell). Не запускайте программу двойным кликом. Иначе окно закрывается после завершения.</p>
+<pre class="cmd"><code>rem MSVC (Developer Command Prompt for VS):
+cl /EHsc /W4 task4_sync_blocking_demo.cpp
+rem MinGW-w64:
+g++ -O2 -o task4_sync_blocking_demo.exe task4_sync_blocking_demo.cpp
+rem Запуск из папки с exe:
+task4_sync_blocking_demo.exe</code></pre>
+<p><strong>Интерактивный запуск:</strong> Программа сразу ждёт нажатия <strong>[Enter]</strong>. <code>std::cin.get()</code> читает нажатие. Без нажатия тики не начинаются. Дальше нажимать ничего не нужно. Тики идут сами. Блокировка случается автоматически на тике 5.</p>
+<p><strong>Файлы:</strong> Заранее создавать ничего не нужно. Если файла <code>heavy_test_file.tmp</code> нет в текущей папке, программа создаёт файл сама на 256 МБ из нулей. Программа использует быстрый способ через <code>SetEndOfFile</code>. Нужно <strong>256 МБ свободного места</strong>. Если файл уже есть, программа использует файл как есть. Дополнительно программа выделяет буфер чтения на <strong>64 МБ оперативной памяти</strong>.</p>
+<p><strong>Ожидаемый вывод:</strong> Тики 1–4 идут раз в 0,5 с. На тике 5 программа печатает предупреждения. <code>ReadFile</code> блокирует поток на 64 МБ. Затем программа печатает «ReadFile() завершился! Прочитано 64 МБ». Тики 6–10 идут дальше. Программа печатает «Эксперимент окончен.»</p>
+<p><strong>Что сломается / изменится:</strong> На быстром NVMe SSD с тёплым кэшем программа читает файл из нулей за миллисекунды. Почти незаметная пауза — это нормально. Эффект ярче всего на HDD. Эффект ярче всего при холодном кэше. Если на диске нет 256 МБ, создание файла молча не удаётся. Программа выходит с ошибкой открытия и кодом 1.</p></div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    Лабораторная работа №3 • Системное программирование C++ и Win32 API • 2026
+  </footer>
+
+  <script>
+    function copyCode(btn) {
+      const pre = btn.closest('.code-container').querySelector('pre');
+      const text = pre.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = 'Скопировано!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  </script>
+
+</body>
+</html>

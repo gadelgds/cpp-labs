@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Словарь терминов в стиле STE — Лабораторная №6</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-page); color: var(--text-main); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; padding-bottom: 80px; }
+
+    header {
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-content { max-width: 760px; margin: 0 auto; }
+    .badge-sub { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    h1 { font-size: 19px; font-weight: 800; color: var(--text-main); line-height: 1.25; }
+
+    .nav-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px 0; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+    .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
+
+    main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+    .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .task-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .task-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .task-path { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-subtle); background: var(--bg-code); padding: 3px 7px; border-radius: 4px; }
+    .task-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+    .code-container { position: relative; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-code); overflow: hidden; }
+    .code-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: #e2e8f0; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); }
+    .copy-btn { background: #ffffff; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: var(--text-main); transition: all 0.2s; }
+    .copy-btn:hover { background: var(--primary); color: #ffffff; border-color: var(--primary); }
+    .copy-btn.copied { background: var(--accent-green); color: #ffffff; border-color: var(--accent-green); }
+
+    pre { padding: 12px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.45; color: #0f172a; }
+
+    .explanation-box { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .explanation-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); }
+
+    table.breakdown { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+    table.breakdown th { text-align: left; background: var(--primary-light); color: var(--primary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding: 7px 8px; border: 1px solid var(--border); }
+    table.breakdown td { padding: 7px 8px; border: 1px solid var(--border); vertical-align: top; color: var(--text-muted); line-height: 1.45; }
+    table.breakdown td code { font-family: var(--font-mono); font-size: 12px; color: #1e293b; font-weight: 700; word-break: break-word; }
+    table.breakdown tr:nth-child(even) td { background: #f8fafc; }
+
+    .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
+    .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
+    .run-box { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .run-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-main); }
+    .run-box ol, .run-box ul { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; color: var(--text-muted); }
+    .run-box code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-code); padding: 1px 5px; border-radius: 4px; color: #1e293b; }
+
+    footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
+  
+    .term-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .term-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .term-name { font-size: 16px; font-weight: 800; color: var(--text-main); }
+    .term-name code { font-family: var(--font-mono); font-size: 15px; }
+    .term-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: var(--text-muted); line-height: 1.55; }
+    .term-body p { margin: 0; }
+    .term-example { background: var(--primary-light); border-left: 3px solid var(--primary); padding: 8px 12px; border-radius: 4px; font-size: 13.5px; }
+    .term-example b { color: var(--primary); }
+    .term-rule { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13.5px; color: #065f46; font-weight: 600; }
+    .term-rule b { color: #065f46; }
+    .intro-box { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; color: var(--text-muted); }
+    .intro-box b { color: var(--text-main); }
+    .gloss-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+    .gloss-nav a { font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; }
+    .gloss-nav a:hover { background: var(--primary); color: #ffffff; }
+    .ste-rules { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 10px 12px; border-radius: 4px; font-size: 13.5px; color: #92400e; display: flex; flex-direction: column; gap: 4px; }
+    .ste-rules ul { padding-left: 18px; display: flex; flex-direction: column; gap: 3px; }
+
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Лабораторная №6 · Словарь STE</span>
+      <h1>Словарь терминов в стиле ASD-STE100 — Лабораторная №6</h1>
+      <div class="nav-scroll"><a class="nav-chip" href="index.html">Шпаргалка</a><a class="nav-chip" href="theory.html">Теория</a><a class="nav-chip" href="glossary.html">Обычный словарь</a></div>
+    </div>
+  </header>
+  <main>
+    <div class="intro-box"><b>Как пользоваться словарём.</b> Этот словарь написан по правилам ASD-STE100 примерно на 60%. Правила действуют на сами определения; вступление, примеры и примечания написаны обычным языком. Слова «программа», «функция», «структура», «файл», «память», «окно» и «Windows» считаются известными и в словаре не объясняются.<div class="ste-rules"><b>Какие правила применены (стиль ASD-STE100, примерно 60%):</b>
+<ul>
+<li>Одна мысль — одно предложение.</li>
+<li>Описание — не больше 25 слов. Инструкция — не больше 20 слов.</li>
+<li>Действительный залог: пиши, кто что делает («Windows даёт номер», а не «номер даётся»).</li>
+<li>Одно понятие — всегда одно и то же слово: «процесс», «поток», «дескриптор», «ядро», «родитель», «потомок», «блок окружения», «значение», «завершение». Синонимы не используются.</li>
+<li>Сначала ответ, потом подробности: первое предложение — само определение, дальше только детали или пример.</li>
+<li>Один абзац — одна тема, не больше шести предложений.</li>
+</ul>
+<p>Не применено: запрет на аналогии (примеры оставлены, они помогают запомнить), словарь одобренных слов STE на английском (словарь — на русском), ограничение в 25 слов для вступления и примечаний.</p></div></div>
+    <div class="gloss-nav"><a href="#descriptor">Дескриптор</a><a href="#env-inherit">Наследование окружения</a><a href="#env-var">Переменная окружения</a><a href="#thread">Поток</a><a href="#process">Процесс</a><a href="#handle-leak">Утечка дескрипторов</a><a href="#kernel">Ядро</a><a href="#closehandle">CloseHandle</a><a href="#createprocess">CreateProcess</a><a href="#env-block">Environment Block</a><a href="#getenv">GetEnvironmentVariable</a><a href="#pid">PID</a><a href="#proc-info">PROCESS_INFORMATION</a><a href="#setenv">SetEnvironmentVariable</a><a href="#startupinfo">STARTUPINFO</a><a href="#wait">WaitForSingleObject</a></div>
+    <div class="term-card" id="descriptor"><div class="term-header"><span class="term-name">Дескриптор</span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">Дескриптор — номер, который Windows даёт программе для доступа к процессу.</p><p class="ste-def">Программа показывает дескриптор ядру, и ядро выполняет действие с процессом.</p><div class="term-example ste-example"><b>Пример:</b> Дескриптор похож на номерок в гардеробе: номерок — не пальто, но без номерка пальто не получить.</div></div></div>
+    <div class="term-card" id="env-inherit"><div class="term-header"><span class="term-name">Наследование окружения</span><span class="task-path">Задача 2</span></div><div class="term-body"><p class="ste-def">Наследование окружения — передача копии блока окружения от родителя потомку.</p><p class="ste-def">Родитель не даёт потомку свой блок окружения: родитель даёт потомку копию блока окружения.</p><p class="ste-def">После запуска потомок живёт со своей копией, и изменения у родителя не меняют копию потомка.</p><div class="term-example ste-example"><b>Пример:</b> Наследование окружения похоже на ксерокопию конспекта: у каждого свой лист, и пометки на одном листе не появляются на другом листе.</div></div></div>
+    <div class="term-card" id="env-var"><div class="term-header"><span class="term-name">Переменная окружения</span><span class="task-path">Задача 2</span></div><div class="term-body"><p class="ste-def">Переменная окружения — пара «имя = значение» в блоке окружения процесса.</p><p class="ste-def">В лабе переменная окружения STUDENT_ID имеет значение 19045.</p><div class="term-example ste-example"><b>Пример:</b> Переменная окружения похожа на запись в телефонной книге: имя — это имя человека, а значение — его номер телефона.</div></div></div>
+    <div class="term-card" id="thread"><div class="term-header"><span class="term-name">Поток</span><span class="task-path">Задача 1</span></div><div class="term-body"><p class="ste-def">Поток — самая маленькая работа, которую выполняет процессор внутри процесса.</p><p class="ste-def">Каждый процесс имеет хотя бы один поток, и этот поток выполняет команды процесса.</p><div class="term-example ste-example"><b>Пример:</b> Процесс похож на кухню, а поток похож на повара, который готовит на кухне.</div></div></div>
+    <div class="term-card" id="process"><div class="term-header"><span class="term-name">Процесс</span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">Процесс — работа, которую Windows выполняет из файла.</p><p class="ste-def">Windows даёт процессу номер PID и отдельную память.</p><div class="term-example ste-example"><b>Пример:</b> Процесс похож на отдельную комнату в общежитии: каждый жилец живёт в своей комнате.</div></div></div>
+    <div class="term-card" id="handle-leak"><div class="term-header"><span class="term-name">Утечка дескрипторов</span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">Утечка дескрипторов — дескриптор, который процесс забыл закрыть.</p><p class="ste-def">Ядро продолжает хранить объект процесса, хотя процесс уже завершился.</p><div class="term-example ste-example"><b>Пример:</b> Утечка дескрипторов похожа на забытый открытым кран: вода уже не нужна, а счётчик крутится.</div><div class="term-rule ste-rule"><b>Правило:</b> Закрывай каждый дескриптор через CloseHandle.</div></div></div>
+    <div class="term-card" id="kernel"><div class="term-header"><span class="term-name">Ядро</span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">Ядро — главная часть Windows, которая управляет процессами.</p><p class="ste-def">Ядро управляет процессами, памятью и дескрипторами.</p><p class="ste-def">Процесс не управляет процессами: процесс просит ядро выполнить действие.</p><div class="term-example ste-example"><b>Пример:</b> Ядро похоже на диспетчера в аэропорту: диспетчер решает, когда самолёт взлетает.</div></div></div>
+    <div class="term-card" id="closehandle"><div class="term-header"><span class="term-name"><code>CloseHandle</code></span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">CloseHandle — функция, которая закрывает дескриптор.</p><p class="ste-def">CloseHandle говорит ядру: этот процесс или этот поток больше не нужен, освободи память.</p><p class="ste-def">В лабе CloseHandle закрывает два дескриптора: дескриптор процесса и дескриптор потока.</p><div class="term-example ste-example"><b>Пример:</b> CloseHandle похож на сдачу номерка в гардероб: пальто забрали, номерок больше не нужен.</div><div class="term-rule ste-rule"><b>Правило:</b> Вызывай CloseHandle для каждого дескриптора.</div></div></div>
+    <div class="term-card" id="createprocess"><div class="term-header"><span class="term-name"><code>CreateProcess</code></span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">CreateProcess — функция, которая просит Windows запустить процесс.</p><p class="ste-def">CreateProcess получает имя файла и настройки запуска, а возвращает дескрипторы и PID процесса.</p><div class="term-example ste-example"><b>Пример:</b> CreateProcess похож на кнопку «старт»: нажал кнопку — и процесс начал работу.</div></div></div>
+    <div class="term-card" id="env-block"><div class="term-header"><span class="term-name"><code>Environment Block</code></span><span class="task-path">Задача 2</span></div><div class="term-body"><p class="ste-def">Блок окружения — список всех переменных окружения процесса.</p><p class="ste-def">Родитель передаёт потомку копию блока окружения, а не сам блок окружения.</p><div class="term-example ste-example"><b>Пример:</b> Блок окружения похож на список покупок, который мама переписала для сына: у сына свой листок.</div><div class="term-example ste-example"><b>Пример:</b> Если мама допишет что-то в свой список, список сына не изменится.</div></div></div>
+    <div class="term-card" id="getenv"><div class="term-header"><span class="term-name"><code>GetEnvironmentVariable</code></span><span class="task-path">Задача 2</span></div><div class="term-body"><p class="ste-def">GetEnvironmentVariable — функция, которая читает значение переменной окружения.</p><p class="ste-def">GetEnvironmentVariable возвращает длину значения, а ноль означает: такой переменной окружения нет.</p><div class="term-example ste-example"><b>Пример:</b> Работа GetEnvironmentVariable похожа на вопрос: какое значение имеет имя STUDENT_ID?</div></div></div>
+    <div class="term-card" id="pid"><div class="term-header"><span class="term-name"><code>PID</code></span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">PID — номер, который Windows даёт процессу при запуске.</p><p class="ste-def">PID показывает, какой именно процесс запущен.</p><div class="term-example ste-example"><b>Пример:</b> PID похож на номер паспорта: у каждого человека свой номер.</div></div></div>
+    <div class="term-card" id="proc-info"><div class="term-header"><span class="term-name"><code>PROCESS_INFORMATION</code></span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">PROCESS_INFORMATION — структура, в которую CreateProcess записывает сведения о процессе.</p><p class="ste-def">PROCESS_INFORMATION хранит дескриптор процесса, дескриптор потока, номер PID и номер потока.</p><div class="term-example ste-example"><b>Пример:</b> PROCESS_INFORMATION похож на свидетельство о рождении: там записаны все данные процесса.</div></div></div>
+    <div class="term-card" id="setenv"><div class="term-header"><span class="term-name"><code>SetEnvironmentVariable</code></span><span class="task-path">Задача 2</span></div><div class="term-body"><p class="ste-def">SetEnvironmentVariable — функция, которая задаёт переменную окружения в блоке окружения.</p><p class="ste-def">SetEnvironmentVariable меняет переменную окружения только в памяти текущего процесса.</p><p class="ste-def">Другие процессы не замечают это изменение.</p><div class="term-example ste-example"><b>Пример:</b> SetEnvironmentVariable похож на запись своего имени на своём листке: на листке соседа ничего не изменится.</div></div></div>
+    <div class="term-card" id="startupinfo"><div class="term-header"><span class="term-name"><code>STARTUPINFO</code></span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">STARTUPINFO — структура, в которой родитель описывает вид нового процесса.</p><p class="ste-def">Родитель обнуляет STARTUPINFO и указывает её размер в поле cb.</p><div class="term-example ste-example"><b>Пример:</b> STARTUPINFO похож на анкету при заселении: анкета описывает, какой должна быть комната.</div><div class="term-rule ste-rule"><b>Правило:</b> Обнуляй STARTUPINFO перед запуском процесса.</div></div></div>
+    <div class="term-card" id="wait"><div class="term-header"><span class="term-name"><code>WaitForSingleObject</code></span><span class="task-path">Задача 1</span></div><div class="term-body"><p class="ste-def">WaitForSingleObject — функция, которая останавливает поток и ждёт завершения процесса.</p><p class="ste-def">WaitForSingleObject ждёт столько, сколько нужно: с INFINITE — без ограничения по времени.</p><div class="term-example ste-example"><b>Пример:</b> WaitForSingleObject похож на ожидание у двери: стоишь у двери и ждёшь, пока друг выйдет.</div><div class="term-rule ste-rule"><b>Правило:</b> Вызывай WaitForSingleObject, если нужно дождаться завершения процесса.</div></div></div>
+    <div class="callout-success">Термины взяты из кода task1_createprocess_notepad.cpp, task2_parent.cpp, task2_child.cpp и theory.html. Сначала идут термины на русском, потом — имена функций и структур Windows на латинице.</div>
+  </main>
+</body>
+</html>

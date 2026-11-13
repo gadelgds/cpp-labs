@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Словарь терминов (стиль STE) — Лабораторная №2</title>
+<style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --accent-purple: #7c3aed;
+      --accent-purple-bg: #f5f3ff;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.6;
+      padding-bottom: 70px;
+    }
+
+    /* Верхняя панель навигации (Sticky для смартфона) */
+    header {
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-content {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .badge-sub {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+    }
+
+    h1 {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.25;
+    }
+
+    /* Навигационные чипсы */
+    .nav-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 10px 0 2px 0;
+      scrollbar-width: none;
+    }
+    .nav-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .nav-chip {
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: var(--bg-code);
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .nav-chip:hover, .nav-chip:active {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    /* Контейнер контента */
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* Секции */
+    .section-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .section-header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 8px;
+      margin-top: 8px;
+    }
+
+    .section-tag {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+
+    .tag-lab2 { background: var(--primary-light); color: var(--primary); }
+    .tag-lecture { background: var(--accent-purple-bg); color: var(--accent-purple); }
+    .tag-practice { background: var(--accent-green-bg); color: var(--accent-green); }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    /* Карточки заданий */
+    .task-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .task-header {
+      padding: 12px 16px;
+      background: #fafbfc;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .task-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .task-path {
+      font-size: 11.5px;
+      font-family: var(--font-mono);
+      color: var(--text-subtle);
+      background: var(--bg-code);
+      padding: 3px 7px;
+      border-radius: 4px;
+    }
+
+    .task-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Контейнер кода с кнопкой копирования */
+    .code-container {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-code);
+      overflow: hidden;
+    }
+
+    .code-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 12px;
+      background: #e2e8f0;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-subtle);
+    }
+
+    .copy-btn {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-main);
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    .copy-btn.copied {
+      background: var(--accent-green);
+      color: #ffffff;
+      border-color: var(--accent-green);
+    }
+
+    pre {
+      padding: 12px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.45;
+      color: #0f172a;
+    }
+
+    code {
+      font-family: var(--font-mono);
+    }
+
+    /* Блоки объяснений вне кода */
+    .explanation-box {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 13.5px;
+    }
+
+    .explanation-title {
+      font-weight: 800;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .step-num {
+      min-width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+    }
+
+    /* Таблицы */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      -webkit-overflow-scrolling: touch;
+      margin-top: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: var(--text-main);
+      padding: 8px 10px;
+      text-align: left;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) { background-color: #f8fafc; }
+
+    .badge-diff {
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* Карточки теории / вопросов */
+    .qa-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .qa-header {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .qa-badge {
+      background: #0284c7;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 5px;
+      min-width: 26px;
+      text-align: center;
+      margin-top: 2px;
+    }
+
+    .qa-q-text {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.35;
+    }
+
+    .qa-ans-box {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .qa-ans-box ul {
+      margin-left: 18px;
+      margin-top: 6px;
+    }
+
+    .qa-ans-box li {
+      margin-bottom: 4px;
+    }
+
+    .callout-warn {
+      background: var(--accent-amber-bg);
+      border-left: 3px solid var(--accent-amber);
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #92400e;
+      margin-bottom: 8px;
+    }
+
+    .callout-success {
+      background: var(--accent-green-bg);
+      border-left: 3px solid var(--accent-green);
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #065f46;
+      margin-bottom: 8px;
+    }
+
+    /* Построчный разбор и блоки запуска (добавлено 13.11.2026) */
+    .wrap-table table {
+      white-space: normal;
+    }
+    .wrap-table td {
+      vertical-align: top;
+    }
+    .wrap-table td.code-cell {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--text-main);
+    }
+    .run-box {
+      background: var(--accent-green-bg);
+      border: 1px solid #a7f3d0;
+      border-left: 4px solid var(--accent-green);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 13.5px;
+    }
+    .run-box .run-title {
+      font-weight: 800;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent-green);
+      margin-bottom: 6px;
+      display: block;
+    }
+    .run-box code {
+      background: #ffffff;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .run-box pre {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-top: 6px;
+    }
+    .run-box ul {
+      margin-left: 18px;
+      margin-top: 6px;
+    }
+    .run-box li {
+      margin-bottom: 4px;
+      color: var(--text-muted);
+    }
+
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-subtle);
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Лабораторная №2 · Словарь STE</span>
+      <h1>Словарь терминов лабы 2 (стиль STE)</h1>
+      <div class="nav-scroll">
+        <a href="glossary.html" class="nav-chip">Словарь</a>
+        <a href="glossary_ste.html" class="nav-chip">Словарь STE</a>
+        <a href="theory.html" class="nav-chip">Теория по задачам</a>
+        <a href="index.html" class="nav-chip">Шпаргалка</a>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div class="callout-success">Это тот же словарь, что и glossary.html, но определения написаны по правилам ASD-STE100 (примерно на 60%). Правила действуют на сами определения. Вступление и строка «Встречается в» написаны обычным языком.<br><br>Применённые правила STE: одно предложение — одна мысль; описание — не больше 25 слов, инструкция — не больше 20 слов; действительный залог — подлежащее делает действие; одно понятие — одно и то же слово (падежи и число меняются по правилам русского языка); сначала ответ, потом подробности; один абзац — одна тема, не больше шести предложений. Не применено: официальный список утверждённых слов STE (для русского языка его нет), запрет синонимов в заголовках (в заголовке «Хэндл (дескриптор)» сохранены оба слова, как в версии А, но в определениях используется только слово «хэндл»).</div>
+    <section class="section-wrap">
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">Адрес памяти</div><span class="task-path">термин 1 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">Адрес памяти это номер ячейки в памяти компьютера.</p>
+          <p class="ste-def">Программа находит значение по адресу памяти.</p>
+          <p class="ste-def">Адрес памяти работает как номер дома на улице.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 2_lecture_hw/task1_pointers.cpp, 1_lab2_word/task2_ptr_truncation_fix.cpp, 1_lab2_word/task3_kernel_handles.cpp</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">Буфер</div><span class="task-path">термин 2 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">Буфер это место в памяти для временного хранения данных.</p>
+          <p class="ste-def">Программа кладёт данные в буфер и потом забирает их оттуда.</p>
+          <p class="ste-def">Пример: sprintf записывает число в массив символов.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 3_practice_hw/task4_num_to_string.cpp, 3_practice_hw/task4b_move_letter_n.cpp</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">Венгерская нотация</div><span class="task-path">термин 3 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">Венгерская нотация это правило имён переменных.</p>
+          <p class="ste-def">Имя показывает тип данных переменной.</p>
+          <p class="ste-def">Пример: psz в имени pszName показывает указатель на строку.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 1_lab2_word, задание 1 (теория, без кода)</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">getchar</div><span class="task-path">термин 4 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">getchar это функция для чтения одного символа с клавиатуры.</p>
+          <p class="ste-def">Программа вызывает getchar в цикле до конца строки.</p>
+          <p class="ste-def">Каждый вызов возвращает один символ.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 3_practice_hw/task3_char_reading.cpp</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">Модель данных</div><span class="task-path">термин 5 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">Модель данных это правило размеров типов данных.</p>
+          <p class="ste-def">Модель данных задаёт размер каждого типа данных.</p>
+          <p class="ste-def">Windows на x64 использует модель LLP64.</p>
+          <p class="ste-def">В модели LLP64 тип long занимает 4 байта, а указатель занимает 8 байт.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 1_lab2_word/task1_types_sizeof.cpp</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">Нуль-терминатор</div><span class="task-path">термин 6 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">Нуль-терминатор это ноль в конце строки.</p>
+          <p class="ste-def">Нуль-терминатор показывает, где строка кончается.</p>
+          <p class="ste-def">Без него программа не знает, где остановиться.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 2_lecture_hw/task2_strings_memory.cpp, 3_practice_hw/task4_num_to_string.cpp, 3_practice_hw/task4b_move_letter_n.cpp</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">Переполнение буфера</div><span class="task-path">термин 7 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">Переполнение буфера это запись за край буфера.</p>
+          <p class="ste-def">Данные попадают в чужую память.</p>
+          <p class="ste-def">Программа падает или портит соседние данные.</p>
+          <p class="ste-def">Делайте массив с запасом.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 3_practice_hw/task4_num_to_string.cpp, 3_practice_hw/task4b_move_letter_n.cpp</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">Префикс</div><span class="task-path">термин 8 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">Префикс это короткие буквы в начале имени переменной.</p>
+          <p class="ste-def">Префикс показывает тип данных переменной.</p>
+          <p class="ste-def">Пример: psz означает строку, lp означает указатель, h означает хэндл.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 1_lab2_word, задание 1 (теория, без кода)</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">Приведение типов</div><span class="task-path">термин 9 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">Приведение типов это перевод значения в другой тип данных.</p>
+          <p class="ste-def">Пример: static_cast&lt;double&gt;(7) делает из целого 7 дробное 7.0.</p>
+          <p class="ste-def">Деление 7 на 3 даёт 2.333 вместо 2.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 1_lab2_word/task2_ptr_truncation_fix.cpp, 3_practice_hw/task2_type_casting.cpp</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">Разыменование</div><span class="task-path">термин 10 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">Разыменование получает значение по указателю.</p>
+          <p class="ste-def">Запись *p означает значение по адресу памяти в p.</p>
+          <p class="ste-def">Программа читает или меняет это значение.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 2_lecture_hw/task1_pointers.cpp, 1_lab2_word/task2_ptr_truncation_fix.cpp</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">sizeof</div><span class="task-path">термин 11 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">sizeof это оператор для измерения размера в байтах.</p>
+          <p class="ste-def">sizeof сообщает размер типа данных или переменной.</p>
+          <p class="ste-def">Пример: sizeof(int) даёт 4.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 1_lab2_word/task1_types_sizeof.cpp, 2_lecture_hw/task2_strings_memory.cpp</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">sprintf</div><span class="task-path">термин 12 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">sprintf это функция для записи значения в строку.</p>
+          <p class="ste-def">sprintf переводит число в символы.</p>
+          <p class="ste-def">Пример: sprintf записывает 245 как символы 2, 4 и 5.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 3_practice_hw/task4_num_to_string.cpp, 3_practice_hw/task4b_move_letter_n.cpp</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">strcat</div><span class="task-path">термин 13 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">strcat это функция для склеивания двух строк.</p>
+          <p class="ste-def">strcat добавляет вторую строку к концу первой строки.</p>
+          <p class="ste-def">Пример: strcat даёт Клиент №245 из Клиент № и 245.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 3_practice_hw/task4_num_to_string.cpp, 3_practice_hw/task4b_move_letter_n.cpp</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">Строка (C-строка)</div><span class="task-path">термин 14 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">Строка это ряд символов в памяти.</p>
+          <p class="ste-def">Нуль-терминатор завершает строку.</p>
+          <p class="ste-def">Пример: Hello это пять букв и ноль в конце.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 2_lecture_hw/task2_strings_memory.cpp, 3_practice_hw/task3_char_reading.cpp, 3_practice_hw/task4_num_to_string.cpp, 3_practice_hw/task4b_move_letter_n.cpp</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">Тип данных</div><span class="task-path">термин 15 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">Тип данных это правило для значений переменной.</p>
+          <p class="ste-def">Тип данных задаёт вид значений и их размер.</p>
+          <p class="ste-def">Пример: int хранит целое число в 4 байтах.</p>
+          <p class="ste-def">Пример: double хранит дробное число в 8 байтах.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 1_lab2_word/task1_types_sizeof.cpp, 1_lab2_word/task2_ptr_truncation_fix.cpp, 3_practice_hw/task2_type_casting.cpp</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">Указатель</div><span class="task-path">термин 16 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">Указатель это переменная для хранения адреса памяти.</p>
+          <p class="ste-def">Указатель хранит адрес памяти, а не само значение.</p>
+          <p class="ste-def">Пример: p хранит адрес памяти переменной a.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 1_lab2_word/task1_types_sizeof.cpp, 1_lab2_word/task2_ptr_truncation_fix.cpp, 2_lecture_hw/task1_pointers.cpp, 2_lecture_hw/task2_strings_memory.cpp, 3_practice_hw/task4b_move_letter_n.cpp</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">Усечение указателя</div><span class="task-path">термин 17 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">Усечение указателя это потеря старшей половины адреса памяти.</p>
+          <p class="ste-def">Программа записывает 64-битный адрес памяти в 32-битную переменную.</p>
+          <p class="ste-def">Адрес памяти ломается, и программа обращается не туда.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 1_lab2_word/task2_ptr_truncation_fix.cpp</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">Хэндл (дескриптор)</div><span class="task-path">термин 18 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">Хэндл это номер для доступа к ядру Windows.</p>
+          <p class="ste-def">Windows выдаёт хэндл программе вместо прямого доступа.</p>
+          <p class="ste-def">Программа называет номер, и Windows находит файл или событие.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 1_lab2_word/task3_kernel_handles.cpp</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">Win32 API</div><span class="task-path">термин 19 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">Win32 API это набор готовых функций Windows.</p>
+          <p class="ste-def">Программа вызывает функции для файлов, событий и памяти.</p>
+          <p class="ste-def">Пример: CreateFileW создаёт файл.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: Все задачи 1_lab2_word</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">x86 / x64</div><span class="task-path">термин 20 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">x86 и x64 это два вида процессоров и программ.</p>
+          <p class="ste-def">x86 это 32-битная система, а x64 это 64-битная система.</p>
+          <p class="ste-def">В системе x64 указатель занимает 8 байт, а в системе x86 указатель занимает 4 байта.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 1_lab2_word/task1_types_sizeof.cpp, 1_lab2_word/task2_ptr_truncation_fix.cpp</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-header"><div class="task-title">Ядро Windows</div><span class="task-path">термин 21 из 21</span></div>
+        <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Определение (стиль STE)</span>
+          <p class="ste-def">Ядро Windows это главная часть Windows.</p>
+          <p class="ste-def">Ядро Windows управляет памятью, файлами и событиями.</p>
+          <p class="ste-def">Программа не трогает их напрямую.</p>
+          <p class="ste-def">Программа просит ядро Windows через хэндлы.</p>
+        </div>
+          <p style="font-size:12.5px;color:var(--text-subtle)">Встречается в: 1_lab2_word/task3_kernel_handles.cpp</p>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>Лабораторная №2 · C++ и Win32 API · Словарь терминов</footer>
+</body>
+</html>

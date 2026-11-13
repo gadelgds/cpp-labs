@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Лабораторная работа №6 — Жизненный цикл процессов и Environment Block</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-page); color: var(--text-main); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; padding-bottom: 80px; }
+
+    header {
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-content { max-width: 760px; margin: 0 auto; }
+    .badge-sub { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    h1 { font-size: 19px; font-weight: 800; color: var(--text-main); line-height: 1.25; }
+
+    .nav-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px 0; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+    .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
+
+    main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+    .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .task-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .task-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .task-path { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-subtle); background: var(--bg-code); padding: 3px 7px; border-radius: 4px; }
+    .task-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+    .code-container { position: relative; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-code); overflow: hidden; }
+    .code-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: #e2e8f0; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); }
+    .copy-btn { background: #ffffff; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: var(--text-main); transition: all 0.2s; }
+    .copy-btn:hover { background: var(--primary); color: #ffffff; border-color: var(--primary); }
+    .copy-btn.copied { background: var(--accent-green); color: #ffffff; border-color: var(--accent-green); }
+
+    pre { padding: 12px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.45; color: #0f172a; }
+
+    .explanation-box { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .explanation-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); }
+
+    table.breakdown { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+    table.breakdown th { text-align: left; background: var(--primary-light); color: var(--primary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding: 7px 8px; border: 1px solid var(--border); }
+    table.breakdown td { padding: 7px 8px; border: 1px solid var(--border); vertical-align: top; color: var(--text-muted); line-height: 1.45; }
+    table.breakdown td code { font-family: var(--font-mono); font-size: 12px; color: #1e293b; font-weight: 700; word-break: break-word; }
+    table.breakdown tr:nth-child(even) td { background: #f8fafc; }
+
+    .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
+    .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
+    .run-box { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .run-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-main); }
+    .run-box ol, .run-box ul { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; color: var(--text-muted); }
+    .run-box code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-code); padding: 1px 5px; border-radius: 4px; color: #1e293b; }
+
+    footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Лабораторная работа №6</span>
+      <h1>Жизненный цикл процессов и Environment Block</h1>
+      <div class="nav-scroll">
+        <a href="#task1" class="nav-chip">1. CreateProcess + Блокнот</a>
+        <a href="#task2parent" class="nav-chip">2. Parent.exe</a>
+        <a href="#task2child" class="nav-chip">2. Child.exe</a>
+        <a href="theory_ste.html" class="nav-chip">Теория (STE) →</a>
+        <a href="glossary.html" class="nav-chip">Словарь →</a>
+        <a href="glossary_ste.html" class="nav-chip">Словарь (STE) →</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <div class="explanation-box">
+      <span class="explanation-title">STE-версия: как читать этот файл</span>
+      <p>Этот файл переписывает объяснения по правилам ASD-STE100. Код не меняется. Правила: одно предложение — одна мысль. Инструкция — не больше 20 слов. Описание — не больше 25 слов. Текст использует действительный залог. Одно понятие — одно слово. Сначала ответ, потом подробности.</p>
+      <p>Термины в файле всегда одни и те же. Список терминов: программа, процесс, поток, родитель, потомок, дескриптор, объект ядра, ядро, блок окружения, переменная окружения, структура, консоль, значение, код ошибки, снимок, утечка. Словарь терминов: <a href="glossary_ste.html">glossary_ste.html</a>. Обычная версия: <a href="index.html">index.html</a>.</p>
+    </div>
+
+        <!-- Задача 1 -->
+    <div id="task1" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задание 1: Жизненный цикл процесса и очистка ресурсов ядра</div>
+        <span class="task-path">task1_createprocess_notepad.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="code-container">
+          <div class="code-top-bar">
+            <span>task1_createprocess_notepad.cpp</span>
+            <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+          </div>
+          <pre><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    std::cout &lt;&lt; "=== ЗАДАНИЕ 1: ЖИЗНЕННЫЙ ЦИКЛ ПРОЦЕССА И ОЧИСТКА РЕСУРСОВ ЯДРА ===" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "Запускаем Блокнот (notepad.exe) через CreateProcess..." &lt;&lt; std::endl;
+
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+
+    ZeroMemory(&amp;si, sizeof(si));
+    ZeroMemory(&amp;pi, sizeof(pi));
+
+    si.cb = sizeof(si);
+
+    wchar_t cmdLine[] = L"notepad.exe";
+
+    BOOL ok = CreateProcess(
+        NULL,           // lpApplicationName
+        cmdLine,        // lpCommandLine
+        NULL,           // lpProcessAttributes
+        NULL,           // lpThreadAttributes
+        FALSE,          // bInheritHandles
+        0,              // dwCreationFlags
+        NULL,           // lpEnvironment
+        NULL,           // lpCurrentDirectory
+        &amp;si,            // lpStartupInfo
+        &amp;pi             // lpProcessInformation
+    );
+
+    if (!ok) {
+        std::cout &lt;&lt; "Ошибка CreateProcess: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return 1;
+    }
+
+    std::cout &lt;&lt; "Блокнот запущен. PID процесса: " &lt;&lt; pi.dwProcessId
+              &lt;&lt; ", PID главного потока: " &lt;&lt; pi.dwThreadId &lt;&lt; std::endl;
+    std::cout &lt;&lt; "Ждём, пока вы закроете Блокнот..." &lt;&lt; std::endl;
+
+    DWORD waitResult = WaitForSingleObject(pi.hProcess, INFINITE);
+
+    if (waitResult == WAIT_OBJECT_0) {
+        std::cout &lt;&lt; "Блокнот закрыт пользователем." &lt;&lt; std::endl;
+    } else {
+        std::cout &lt;&lt; "WaitForSingleObject вернул неожиданный код: " &lt;&lt; waitResult
+                  &lt;&lt; " (GetLastError: " &lt;&lt; GetLastError() &lt;&lt; ")" &lt;&lt; std::endl;
+    }
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    std::cout &lt;&lt; "Дескрипторы процесса и потока закрыты (CloseHandle). Ресурсы ядра освобождены." &lt;&lt; std::endl;
+
+    return 0;
+}</code></pre>
+        </div>
+
+        <div class="explanation-box">
+          <span class="explanation-title">Полный построчный разбор — ни одна строка не пропущена</span>
+          <table class="breakdown"><tr><th>Строка / блок</th><th>Что делает</th><th>Зачем / почему так</th></tr><tr><td><code>#include &lt;windows.h&gt;</code></td><td>Заголовок даёт программе функции Windows: <code>CreateProcess</code>, <code>WaitForSingleObject</code>, <code>CloseHandle</code>, <code>STARTUPINFO</code>, <code>PROCESS_INFORMATION</code>, <code>ZeroMemory</code>, <code>GetLastError</code>.</td><td>Без заголовка программа не вызывает ни одну функцию Windows. Заголовок — главный API-заголовок для системного программирования.</td></tr><tr><td><code>#include &lt;iostream&gt;</code></td><td>Заголовок даёт программе <code>std::cout</code> и <code>std::endl</code> для вывода в консоль.</td><td>Вывод показывает жизненный цикл: запуск, ожидание, закрытие.</td></tr><tr><td><code>int main() {</code></td><td>Функция <code>main</code> — точка входа программы.</td><td>Функция <code>main</code> запускает процесс, ждёт его завершения и закрывает дескрипторы.</td></tr><tr><td><code>#if defined(_WIN32) system("chcp 65001 &gt; nul"); #endif</code></td><td>Директива включает команду только в Windows. Команда переключает консоль на UTF-8 (код 65001). Консоль показывает русский текст правильно.</td><td>Без UTF-8 консоль показывает русский текст как кракозябры. Директива работает только в Windows.</td></tr><tr><td><code>std::cout &lt;&lt; "=== ЗАДАНИЕ 1 ..."</code></td><td>Команда печатает заголовок программы.</td><td>Заголовок показывает, какая программа работает и что она делает.</td></tr><tr><td><code>std::cout &lt;&lt; "Запускаем Блокнот..."</code></td><td>Команда сообщает пользователю о начале запуска.</td><td>Пользователь понимает: сейчас открывается окно Блокнота. Процесс не появляется случайно.</td></tr><tr><td><code>STARTUPINFO si;</code></td><td>Объявление создаёт структуру <code>si</code>. Структура хранит параметры запуска: вид окна и дескрипторы стандартных потоков.</td><td>Без структуры <code>si</code> функция <code>CreateProcess</code> не знает, как показать окно нового процесса.</td></tr><tr><td><code>PROCESS_INFORMATION pi;</code></td><td>Объявление создаёт структуру <code>pi</code>. Структура принимает результаты: дескрипторы процесса и потока и их ID.</td><td>Только структура <code>pi</code> даёт программе дескриптор запущенного процесса. Без дескриптора программа не ждёт процесс и не закрывает его.</td></tr><tr><td><code>ZeroMemory(&amp;si, sizeof(si));</code></td><td>Функция заполняет структуру <code>si</code> нулями.</td><td>Локальные переменные хранят мусор из стека. Случайный бит во флагах меняет поведение функции <code>CreateProcess</code>. Ноль убирает мусор.</td></tr><tr><td><code>ZeroMemory(&amp;pi, sizeof(pi));</code></td><td>Функция заполняет структуру <code>pi</code> нулями.</td><td>При ошибке функции <code>CreateProcess</code> поля <code>pi</code> остаются нулями, а не мусором. Ноль защищает программу от случайных значений.</td></tr><tr><td><code>si.cb = sizeof(si);</code></td><td>Команда записывает в поле <code>cb</code> размер структуры в байтах.</td><td>Функция <code>CreateProcess</code> читает поле <code>cb</code> и узнаёт версию структуры. Поле <code>cb</code> со значением 0 или мусором даёт ошибку <code>ERROR_INVALID_PARAMETER</code>.</td></tr><tr><td><code>wchar_t cmdLine[] = L"notepad.exe";</code></td><td>Объявление создаёт изменяемый буфер <code>cmdLine</code>. Буфер хранит командную строку «notepad.exe» в широких символах (Unicode).</td><td>Документация требует изменяемый буфер: функция <code>CreateProcess</code> может менять строку на месте. Строковый литерал лежит в памяти только для чтения. Программа не передаёт литерал напрямую.</td></tr><tr><td><code>BOOL ok = CreateProcess( ... );</code></td><td>Функция создаёт новый процесс <code>notepad.exe</code>. Функция возвращает <code>TRUE</code> при успехе и <code>FALSE</code> при ошибке.</td><td>Это главный вызов задания: только здесь рождается потомок. Программа всегда проверяет результат вызова.</td></tr><tr><td><code>NULL, // lpApplicationName</code></td><td>Параметр не задаёт имя исполняемого файла отдельно.</td><td>Первый параметр равен <code>NULL</code>. Система берёт имя программы из командной строки: «notepad.exe».</td></tr><tr><td><code>cmdLine, // lpCommandLine</code></td><td>Параметр передаёт командную строку с именем программы.</td><td>Система ищет файл <code>notepad.exe</code> в каталоге приложения, в системных каталогах и в PATH. Блокнот есть в каждой Windows. Путь указывать не нужно.</td></tr><tr><td><code>NULL, // lpProcessAttributes</code></td><td>Параметр задаёт атрибуты безопасности процесса по умолчанию.</td><td>Потомки не наследуют дескриптор процесса. Задание не требует наследования.</td></tr><tr><td><code>NULL, // lpThreadAttributes</code></td><td>Параметр задаёт атрибуты безопасности главного потока по умолчанию.</td><td>Потомки не наследуют дескриптор потока. Задание не требует наследования.</td></tr><tr><td><code>FALSE, // bInheritHandles</code></td><td>Параметр запрещает Блокноту наследовать дескрипторы программы.</td><td>Наследование открывает Блокноту доступ к файлам и объектам программы. Задание не требует наследования. Запрет защищает программу.</td></tr><tr><td><code>0, // dwCreationFlags</code></td><td>Параметр задаёт ноль особых флагов создания.</td><td>Процесс создаётся обычным образом: не приостановленным, не в отдельной консоли, без повышенных прав.</td></tr><tr><td><code>NULL, // lpEnvironment</code></td><td>Параметр не задаёт блок окружения для потомка.</td><td>Значение <code>NULL</code> даёт потомку копию блока окружения родителя. Для Блокнота копия подходит. Задание 2 разбирает механизм копии подробно.</td></tr><tr><td><code>NULL, // lpCurrentDirectory</code></td><td>Параметр не задаёт рабочий каталог потомка.</td><td>Значение <code>NULL</code> даёт потомку текущий каталог родителя. Блокноту каталог не важен.</td></tr><tr><td><code>&amp;si, // lpStartupInfo</code></td><td>Параметр передаёт заполненную структуру запуска.</td><td>Система читает структуру и показывает окно Блокнота обычным образом.</td></tr><tr><td><code>&amp;pi // lpProcessInformation</code></td><td>Параметр передаёт адрес структуры для результатов.</td><td>Система записывает сюда <code>hProcess</code>, <code>hThread</code>, <code>dwProcessId</code> и <code>dwThreadId</code>. Эти значения нужны для ожидания и очистки.</td></tr><tr><td><code>if (!ok) { ... return 1; }</code></td><td>При значении <code>FALSE</code> программа печатает код ошибки из <code>GetLastError()</code>. Программа завершается с кодом 1.</td><td>Без проверки программа ждёт по мусорному дескриптору. Код 1 сообщает системе: запуск не удался.</td></tr><tr><td><code>std::cout &lt;&lt; "Блокнот запущен. PID процесса: " &lt;&lt; pi.dwProcessId ...</code></td><td>Команда выводит ID процесса и ID его главного потока.</td><td>PID доказывает: процесс реально создан. Пользователь находит процесс в Диспетчере задач по PID.</td></tr><tr><td><code>std::cout &lt;&lt; "Ждём, пока вы закроете Блокнот..."</code></td><td>Команда объясняет, почему консоль ждёт.</td><td>Без строки ожидание выглядит как зависание программы. Пользователь знает: нужно закрыть Блокнот.</td></tr><tr><td><code>DWORD waitResult = WaitForSingleObject(pi.hProcess, INFINITE);</code></td><td>Функция останавливает поток, пока Блокнот не завершится. Дескриптор процесса становится сигнальным ровно при завершении процесса. Параметр <code>INFINITE</code> снимает ограничение времени.</td><td>Это и есть ожидание закрытия. Пользователь держит Блокнот открытым сколько угодно. Функция ждёт без ограничения времени.</td></tr><tr><td><code>if (waitResult == WAIT_OBJECT_0) { ... }</code></td><td>Проверка подтверждает: ожидание завершилось завершением процесса, а не ошибкой.</td><td>Код <code>WAIT_OBJECT_0</code> — нормальный исход. Другой код означает сбой ожидания. Программа показывает сбой, а не молчит о нём.</td></tr><tr><td><code>std::cout &lt;&lt; "Блокнот закрыт пользователем."</code></td><td>Команда подтверждает закрытие Блокнота.</td><td>Пользователь видит: программа заметила закрытие Блокнота.</td></tr><tr><td><code>else { std::cout &lt;&lt; "WaitForSingleObject вернул неожиданный код..." }</code></td><td>Ветка ошибки печатает код возврата и код из <code>GetLastError()</code>.</td><td>Честная диагностика показывает причину сбоя. Программа не молчит при сбое ожидания.</td></tr><tr><td><code>CloseHandle(pi.hProcess);</code></td><td>Функция закрывает дескриптор процесса Блокнота.</td><td>Это критическое условие задания. Пока дескриптор открыт, ядро хранит объект процесса и код завершения. Незакрытый дескриптор — утечка ресурса ядра.</td></tr><tr><td><code>CloseHandle(pi.hThread);</code></td><td>Функция закрывает дескриптор главного потока Блокнота.</td><td>Функция <code>CreateProcess</code> возвращает два дескриптора. Программа закрывает оба. Забытый дескриптор потока — та же утечка. Порядок закрытия не важен.</td></tr><tr><td><code>std::cout &lt;&lt; "Дескрипторы ... закрыты ..."</code></td><td>Команда подтверждает выполнение очистки.</td><td>На защите видно: программа дошла до <code>CloseHandle</code> и не завершилась раньше.</td></tr><tr><td><code>return 0;</code></td><td>Программа завершается с кодом 0.</td><td>Код 0 означает нормальное завершение. Вызывающая среда читает код 0.</td></tr></table>
+        </div>
+
+        <div class="run-box">
+          <span class="run-title">Как запустить</span>
+          <ol>
+            <li>Не создавайте файлы заранее. Утилита <code>notepad.exe</code> есть в каждой Windows.</li>
+            <li>Скомпилируйте файл. MSVC: выполните команду <code>cl /EHsc task1_createprocess_notepad.cpp</code>. Команда создаёт файл <code>task1_createprocess_notepad.exe</code>. MinGW: выполните команду <code>g++ -o task1.exe task1_createprocess_notepad.cpp</code>.</li>
+            <li>Запустите exe из консоли. Блокнот открывается. Консоль ждёт закрытия Блокнота.</li>
+            <li>Закройте Блокнот: нажмите крестик или клавиши Alt+F4. Консоль показывает сообщение о закрытии и о закрытых дескрипторах. Затем программа завершается.</li>
+          </ol>
+          <div class="callout-success">Ожидаемый вывод. Программа показывает строку о запуске с PID процесса и потока. Затем программа показывает строку «Ждём, пока вы закроете Блокнот...». После закрытия Блокнота программа показывает строку «Блокнот закрыт пользователем.». Затем программа показывает строку «Дескрипторы процесса и потока закрыты (CloseHandle). Ресурсы ядра освобождены.».</div>
+          <div class="callout-warn">Закрытие консоли раньше Блокнота не закрывает Блокнот. Завершение родителя не завершает потомка. Процессы в Windows независимы. Это нормальное поведение.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Задача 2: Parent -->
+    <div id="task2parent" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задание 2 (часть 1): Parent.exe — родитель</div>
+        <span class="task-path">task2_parent.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="code-container">
+          <div class="code-top-bar">
+            <span>task2_parent.cpp</span>
+            <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+          </div>
+          <pre><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    std::cout &lt;&lt; "=== ЗАДАНИЕ 2: PARENT (РОДИТЕЛЬ) ===" &lt;&lt; std::endl;
+
+    const wchar_t* varName = L"STUDENT_ID";
+    const wchar_t* valueBefore = L"19045";
+
+    if (!SetEnvironmentVariable(varName, valueBefore)) {
+        std::cout &lt;&lt; "Ошибка SetEnvironmentVariable: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return 1;
+    }
+
+    std::cout &lt;&lt; "Parent: установлена переменная STUDENT_ID=";
+    std::wcout &lt;&lt; valueBefore &lt;&lt; std::endl;
+
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    ZeroMemory(&amp;si, sizeof(si));
+    ZeroMemory(&amp;pi, sizeof(pi));
+    si.cb = sizeof(si);
+
+    wchar_t cmdLine[] = L"Child.exe";
+
+    BOOL ok = CreateProcess(
+        NULL,           // lpApplicationName
+        cmdLine,        // lpCommandLine
+        NULL,           // lpProcessAttributes
+        NULL,           // lpThreadAttributes
+        FALSE,          // bInheritHandles
+        0,              // dwCreationFlags
+        NULL,           // lpEnvironment — копия блока окружения родителя
+        NULL,           // lpCurrentDirectory
+        &amp;si,            // lpStartupInfo
+        &amp;pi             // lpProcessInformation
+    );
+
+    if (!ok) {
+        std::cout &lt;&lt; "Ошибка CreateProcess (не найден Child.exe рядом с Parent.exe?): "
+                  &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return 1;
+    }
+
+    std::cout &lt;&lt; "Parent: Child.exe запущен. PID потомка: " &lt;&lt; pi.dwProcessId &lt;&lt; std::endl;
+
+    const wchar_t* valueAfter = L"99999";
+    if (!SetEnvironmentVariable(varName, valueAfter)) {
+        std::cout &lt;&lt; "Ошибка повторного SetEnvironmentVariable: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+    } else {
+        std::cout &lt;&lt; "Parent: переменная у СЕБЯ перезаписана на STUDENT_ID=";
+        std::wcout &lt;&lt; valueAfter &lt;&lt; std::endl;
+        std::cout &lt;&lt; "Parent: у потомка осталась КОПИЯ со значением 19045 — она не изменилась." &lt;&lt; std::endl;
+    }
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    std::cout &lt;&lt; "Parent: дескрипторы потомка закрыты, родитель завершает работу." &lt;&lt; std::endl;
+
+    return 0;
+}</code></pre>
+        </div>
+
+        <div class="explanation-box">
+          <span class="explanation-title">Полный построчный разбор — Parent.exe</span>
+          <table class="breakdown"><tr><th>Строка / блок</th><th>Что делает</th><th>Зачем / почему так</th></tr><tr><td><code>#include &lt;windows.h&gt;</code></td><td>Заголовок даёт программе функции Windows: <code>SetEnvironmentVariable</code>, <code>CreateProcess</code>, <code>CloseHandle</code>, <code>STARTUPINFO</code>, <code>PROCESS_INFORMATION</code>.</td><td>Все главные функции задания приходят из этого заголовка.</td></tr><tr><td><code>#include &lt;iostream&gt;</code></td><td>Заголовок даёт программе <code>std::cout</code> и <code>std::wcout</code> для вывода.</td><td>Значения переменных хранятся в <code>wchar_t</code>. Программа использует обычный и широкий вывод.</td></tr><tr><td><code>int main() {</code></td><td>Функция <code>main</code> — точка входа программы Parent.exe.</td><td>Функция <code>main</code> устанавливает переменную, запускает потомка, перезаписывает переменную и завершается.</td></tr><tr><td><code>#if defined(_WIN32) system("chcp 65001 &gt; nul"); #endif</code></td><td>Директива включает команду только в Windows. Команда переключает консоль на UTF-8. Консоль показывает русский текст правильно.</td><td>Без UTF-8 русские строки в выводе превращаются в кракозябры.</td></tr><tr><td><code>std::cout &lt;&lt; "=== ЗАДАНИЕ 2: PARENT ..."</code></td><td>Команда печатает заголовок программы.</td><td>Заголовок различает окно родителя и окно потомка.</td></tr><tr><td><code>const wchar_t* varName = L"STUDENT_ID";</code></td><td>Объявление задаёт имя переменной окружения: STUDENT_ID. Имя хранится как широкая строка (Unicode).</td><td>Функции окружения в программе — широкие (W-версии). Широкие функции требуют строки <code>wchar_t</code> с префиксом L.</td></tr><tr><td><code>const wchar_t* valueBefore = L"19045";</code></td><td>Объявление задаёт исходное значение переменной: 19045. Значение — номер студента из задания.</td><td>Именно это значение должен увидеть потомок. Константа хранит литерал в одном месте. Программа не дублирует литерал.</td></tr><tr><td><code>if (!SetEnvironmentVariable(varName, valueBefore)) { ... return 1; }</code></td><td>Функция создаёт переменную STUDENT_ID=19045 в блоке окружения текущего процесса. При ошибке программа печатает код из <code>GetLastError()</code>. Программа завершается с кодом 1.</td><td>Это шаг 1 задания. Функция меняет только память этого процесса. Система и другие процессы не видят переменную. Без переменной запускать потомка бессмысленно.</td></tr><tr><td><code>std::cout &lt;&lt; "Parent: установлена переменная STUDENT_ID="; std::wcout &lt;&lt; valueBefore</code></td><td>Команда выводит установленное значение на экран.</td><td>Вывод фиксирует значение «до»: переменная равна 19045 до запуска потомка. Обычный <code>cout</code> не печатает широкую строку правильно. Программа использует <code>std::wcout</code> для широкой строки.</td></tr><tr><td><code>STARTUPINFO si;</code></td><td>Объявление создаёт структуру параметров запуска потомка.</td><td>Без структуры функция <code>CreateProcess</code> не вызывается.</td></tr><tr><td><code>PROCESS_INFORMATION pi;</code></td><td>Объявление создаёт структуру для результатов запуска.</td><td>Структура даёт PID потомка и дескрипторы для <code>CloseHandle</code>.</td></tr><tr><td><code>ZeroMemory(&amp;si, sizeof(si));</code></td><td>Функция заполняет структуру <code>si</code> нулями.</td><td>Мусор в полях структуры <code>STARTUPINFO</code> — частая причина сбоев функции <code>CreateProcess</code>.</td></tr><tr><td><code>ZeroMemory(&amp;pi, sizeof(pi));</code></td><td>Функция заполняет структуру <code>pi</code> нулями.</td><td>При ошибке запуска поля остаются нулями, а не мусором.</td></tr><tr><td><code>si.cb = sizeof(si);</code></td><td>Команда записывает размер структуры <code>STARTUPINFO</code> в поле <code>cb</code>.</td><td>Без корректного значения <code>cb</code> функция <code>CreateProcess</code> возвращает ошибку <code>ERROR_INVALID_PARAMETER</code>.</td></tr><tr><td><code>wchar_t cmdLine[] = L"Child.exe";</code></td><td>Объявление создаёт изменяемый буфер <code>cmdLine</code>. Буфер хранит относительное имя потомка: Child.exe.</td><td>Относительное имя ищет файл Child.exe рядом с Parent.exe. Это условие запуска. Функция <code>CreateProcess</code> может менять строку на месте. Буфер должен быть изменяемым.</td></tr><tr><td><code>BOOL ok = CreateProcess( ... );</code></td><td>Функция создаёт процесс Child.exe. Функция возвращает <code>TRUE</code> при успехе.</td><td>Это главный вызов. В этот момент система копирует блок окружения родителя потомку.</td></tr><tr><td><code>NULL, // lpApplicationName</code></td><td>Параметр не задаёт имя программы отдельно.</td><td>Имя берётся из командной строки: «Child.exe».</td></tr><tr><td><code>cmdLine, // lpCommandLine</code></td><td>Параметр передаёт командную строку запуска потомка.</td><td>Относительный путь ищет файл сначала в каталоге Parent.exe, затем в системных каталогах и в PATH.</td></tr><tr><td><code>NULL, // lpProcessAttributes</code></td><td>Параметр задаёт атрибуты безопасности процесса по умолчанию.</td><td>Дескриптор потомка не наследуется дальше. Задание не требует наследования.</td></tr><tr><td><code>NULL, // lpThreadAttributes</code></td><td>Параметр задаёт атрибуты безопасности потока по умолчанию.</td><td>Дескриптор потока не наследуется дальше. Задание не требует наследования.</td></tr><tr><td><code>FALSE, // bInheritHandles</code></td><td>Параметр запрещает потомку наследовать дескрипторы родителя.</td><td>Потомку не нужны открытые файлы и объекты родителя. Наследование только расширяет доступ потомка.</td></tr><tr><td><code>0, // dwCreationFlags</code></td><td>Параметр задаёт ноль особых флагов создания.</td><td>Потомок стартует сразу, в обычном режиме.</td></tr><tr><td><code>NULL, // lpEnvironment</code></td><td>Параметр не передаёт явный блок окружения.</td><td>Это главный момент задания. Значение <code>NULL</code> передаёт потомку копию блока окружения родителя. Система делает копию в момент вызова <code>CreateProcess</code>. Позже родитель меняет свою копию. У потомка остаётся снимок.</td></tr><tr><td><code>NULL, // lpCurrentDirectory</code></td><td>Параметр не задаёт рабочий каталог потомка.</td><td>Потомок наследует текущий каталог родителя. Поиск файла Child.exe от каталога не зависит: важен каталог Parent.exe.</td></tr><tr><td><code>&amp;si, // lpStartupInfo</code></td><td>Параметр передаёт параметры запуска.</td><td>Система читает параметры и настраивает окно потомка.</td></tr><tr><td><code>&amp;pi // lpProcessInformation</code></td><td>Параметр передаёт структуру для результатов.</td><td>Структура даёт <code>dwProcessId</code> потомка и дескрипторы <code>hProcess</code> и <code>hThread</code>.</td></tr><tr><td><code>if (!ok) { ... return 1; }</code></td><td>При ошибке запуска программа печатает текст и код из <code>GetLastError()</code>. Программа завершается с кодом 1.</td><td>Частая причина ошибки: файл Child.exe не лежит рядом с Parent.exe. Сообщение прямо подсказывает причину.</td></tr><tr><td><code>std::cout &lt;&lt; "Parent: Child.exe запущен. PID потомка: " &lt;&lt; pi.dwProcessId</code></td><td>Команда выводит PID запущенного потомка.</td><td>PID доказывает: потомок реально создан. Пользователь находит потомка в Диспетчере задач по PID.</td></tr><tr><td><code>const wchar_t* valueAfter = L"99999";</code></td><td>Объявление задаёт новое значение переменной: 99999.</td><td>Новое значение отличается от 19045. Разница видна сразу. Константа хранит значение в одном месте.</td></tr><tr><td><code>if (!SetEnvironmentVariable(varName, valueAfter)) { ... }</code></td><td>Функция перезаписывает переменную STUDENT_ID на 99999 в своём блоке окружения. Ветка <code>else</code> печатает два факта: у родителя стало 99999, у потомка осталась копия 19045.</td><td>Это шаг 3 задания. Порядок решает всё: перезапись идёт строго после вызова <code>CreateProcess</code>. Перезапись до вызова дала бы потомку уже 99999. Эксперимент потерял бы смысл.</td></tr><tr><td><code>CloseHandle(pi.hProcess);</code></td><td>Функция закрывает дескриптор процесса-потомка.</td><td>Родитель не ждёт потомка. Дескриптор всё равно нужно закрыть. Иначе объект процесса висит в ядре как утечка. Закрытие дескриптора не завершает потомка.</td></tr><tr><td><code>CloseHandle(pi.hThread);</code></td><td>Функция закрывает дескриптор главного потока потомка.</td><td>Программа закрывает оба дескриптора из структуры <code>PROCESS_INFORMATION</code> всегда, даже без ожидания.</td></tr><tr><td><code>std::cout &lt;&lt; "Parent: дескрипторы потомка закрыты..."</code></td><td>Команда сообщает о завершении очистки.</td><td>Видно: родитель дошёл до конца сценария и ничего не забыл.</td></tr><tr><td><code>return 0;</code></td><td>Родитель завершается сразу с кодом 0.</td><td>Это шаг 3 задания. Родитель уходит сразу. Потомок продолжает жить сам. Завершение родителя не завершает потомка.</td></tr></table>
+        </div>
+
+        <div class="run-box">
+          <span class="run-title">Как запустить — Parent.exe</span>
+          <ol>
+            <li>Скомпилируйте оба файла отдельно. MSVC: выполните команду <code>cl /EHsc task2_parent.cpp</code>. Команда создаёт файл <code>task2_parent.exe</code>. Переименуйте файл в <code>Parent.exe</code>. Выполните команду <code>cl /EHsc task2_child.cpp</code>. Переименуйте файл в <code>Child.exe</code>. MinGW: выполните команду <code>g++ -o Parent.exe task2_parent.cpp</code>. Выполните команду <code>g++ -o Child.exe task2_child.cpp</code>.</li>
+            <li>Положите файлы <code>Parent.exe</code> и <code>Child.exe</code> в одну папку. Это обязательное условие. Родитель ищет файл <code>Child.exe</code> по относительному имени рядом с собой.</li>
+            <li>Запустите файл <code>Parent.exe</code> двойным щелчком или из консоли. Откроется окно Child.exe. Окно Parent закроется почти сразу.</li>
+          </ol>
+          <div class="callout-warn">Не перезаписывайте переменную до вызова <code>CreateProcess</code>. Потомок получит уже новое значение 99999. Эксперимент потеряет смысл. Доказать автономность будет нечем. Порядок решает всё: сначала <code>CreateProcess</code>, потом перезапись.</div>
+          <div class="callout-warn">Файл Child.exe в другой папке даёт ошибку. Функция <code>CreateProcess</code> возвращает <code>FALSE</code>. Родитель печатает ошибку с кодом из <code>GetLastError</code>. Обычно код равен 2 (<code>ERROR_FILE_NOT_FOUND</code>). Родитель завершается с кодом 1.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Задача 2: Child -->
+    <div id="task2child" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задание 2 (часть 2): Child.exe — потомок</div>
+        <span class="task-path">task2_child.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="code-container">
+          <div class="code-top-bar">
+            <span>task2_child.cpp</span>
+            <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+          </div>
+          <pre><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    std::cout &lt;&lt; "=== ЗАДАНИЕ 2: CHILD (ПОТОМОК) ===" &lt;&lt; std::endl;
+
+    const wchar_t* varName = L"STUDENT_ID";
+    wchar_t buffer[256];
+
+    DWORD len = GetEnvironmentVariable(varName, buffer, sizeof(buffer) / sizeof(buffer[0]));
+
+    if (len == 0) {
+        DWORD err = GetLastError();
+        if (err == ERROR_ENVVAR_NOT_FOUND) {
+            std::cout &lt;&lt; "ОШИБКА: переменная STUDENT_ID не найдена в блоке окружения." &lt;&lt; std::endl;
+            std::cout &lt;&lt; "Скорее всего, Child.exe запущен напрямую, без Parent.exe," &lt;&lt; std::endl;
+            std::cout &lt;&lt; "поэтому никто не установил эту переменную перед запуском." &lt;&lt; std::endl;
+        } else {
+            std::cout &lt;&lt; "Ошибка GetEnvironmentVariable: " &lt;&lt; err &lt;&lt; std::endl;
+        }
+    } else {
+        std::cout &lt;&lt; "Child: прочитана переменная STUDENT_ID=";
+        std::wcout &lt;&lt; buffer &lt;&lt; std::endl;
+
+        if (wcscmp(buffer, L"19045") == 0) {
+            std::cout &lt;&lt; "Child: значение равно 19045 — оно НЕ изменилось вслед за родителем." &lt;&lt; std::endl;
+            std::cout &lt;&lt; "Child: доказано — Environment Block копируется при создании процесса," &lt;&lt; std::endl;
+            std::cout &lt;&lt; "Child: потомок живёт со своим снимком окружения, а не с общей памятью." &lt;&lt; std::endl;
+        } else {
+            std::cout &lt;&lt; "Child: ВНИМАНИЕ: значение отличается от ожидаемого 19045!" &lt;&lt; std::endl;
+            std::cout &lt;&lt; "Child: возможно, Child.exe запущен не из-под Parent.exe," &lt;&lt; std::endl;
+            std::cout &lt;&lt; "Child: а из среды, где STUDENT_ID уже была задана иначе." &lt;&lt; std::endl;
+        }
+    }
+
+    std::cout &lt;&lt; "Child: родитель уже завершён, а потомок продолжает работу сам." &lt;&lt; std::endl;
+    system("pause");
+
+    return 0;
+}</code></pre>
+        </div>
+
+        <div class="explanation-box">
+          <span class="explanation-title">Полный построчный разбор — Child.exe</span>
+          <table class="breakdown"><tr><th>Строка / блок</th><th>Что делает</th><th>Зачем / почему так</th></tr><tr><td><code>#include &lt;windows.h&gt;</code></td><td>Заголовок даёт программе функцию <code>GetEnvironmentVariable</code> и код <code>ERROR_ENVVAR_NOT_FOUND</code>.</td><td>Чтение переменных окружения — функция Windows API.</td></tr><tr><td><code>#include &lt;iostream&gt;</code></td><td>Заголовок даёт программе <code>std::cout</code> и <code>std::wcout</code> для вывода.</td><td>Вывод показывает значение переменной и доказательство автономности.</td></tr><tr><td><code>int main() {</code></td><td>Функция <code>main</code> — точка входа программы Child.exe.</td><td>Функция <code>main</code> читает переменную, сравнивает значение, доказывает автономность и ждёт клавишу.</td></tr><tr><td><code>#if defined(_WIN32) system("chcp 65001 &gt; nul"); #endif</code></td><td>Директива включает команду только в Windows. Команда переключает консоль на UTF-8. Консоль показывает русский текст правильно.</td><td>Без UTF-8 русский вывод превращается в кракозябры.</td></tr><tr><td><code>std::cout &lt;&lt; "=== ЗАДАНИЕ 2: CHILD ..."</code></td><td>Команда печатает заголовок программы.</td><td>Заголовок различает окна родителя и потомка на экране.</td></tr><tr><td><code>const wchar_t* varName = L"STUDENT_ID";</code></td><td>Объявление задаёт имя искомой переменной окружения: STUDENT_ID.</td><td>Родитель устанавливал переменную с тем же именем. Опечатка в имени даёт ошибку «переменная не найдена».</td></tr><tr><td><code>wchar_t buffer[256];</code></td><td>Объявление создаёт буфер на стеке. Буфер принимает значение переменной: 256 широких символов.</td><td>Функция <code>GetEnvironmentVariable</code> не возвращает строку. Функция копирует строку в буфер вызывающего. Буфер на 256 символов с запасом принимает короткое значение.</td></tr><tr><td><code>DWORD len = GetEnvironmentVariable(varName, buffer, sizeof(buffer) / sizeof(buffer[0]));</code></td><td>Функция читает переменную STUDENT_ID из собственного блока окружения процесса. Функция копирует значение в буфер. Функция возвращает длину значения без завершающего нуля. Значение 0 означает: переменная не найдена или пуста.</td><td>Это шаг 4 задания. Потомок читает копию блока, которую он получил при старте. Размер передаётся в символах, а не в байтах. Программа делит <code>sizeof(buffer)</code> на <code>sizeof(buffer[0])</code>.</td></tr><tr><td><code>if (len == 0) {</code></td><td>Ветка обрабатывает случай: переменная не прочитана.</td><td>Ноль — единственный сигнал проблемы. Программа выясняет причину через <code>GetLastError()</code>.</td></tr><tr><td><code>DWORD err = GetLastError();</code></td><td>Команда сохраняет код последней ошибки сразу после неудачного вызова.</td><td>Код ошибки нужно читать немедленно. Любой следующий вызов API перезаписывает код. Сохранение в переменную — правильный приём.</td></tr><tr><td><code>if (err == ERROR_ENVVAR_NOT_FOUND) { ... }</code></td><td>При коде 203 (<code>ERROR_ENVVAR_NOT_FOUND</code>) программа печатает понятное объяснение: переменная не задана. Вероятно, пользователь запустил файл Child.exe напрямую, без Parent.exe.</td><td>Это главный диагностический случай. Отдельный запуск файла Child.exe — штатная ситуация. Программа объясняет ситуацию, а не просто завершается.</td></tr><tr><td><code>else { std::cout &lt;&lt; "Ошибка GetEnvironmentVariable: " &lt;&lt; err ... }</code></td><td>При другой ошибке программа печатает её код.</td><td>Код <code>ERROR_ENVVAR_NOT_FOUND</code> — не единственная возможность. Маленький буфер даёт другую логику: функция возвращает нужную длину. Прочие коды означают редкие сбои API.</td></tr><tr><td><code>} else {</code></td><td>Ветка успеха: переменная найдена. Значение лежит в буфере.</td><td>Основная ветка сценария. Дальше программа выводит значение и проверяет его.</td></tr><tr><td><code>std::cout &lt;&lt; "Child: прочитана переменная STUDENT_ID="; std::wcout &lt;&lt; buffer</code></td><td>Команда выводит прочитанное значение.</td><td>Это главный вывод программы: значение реально лежит в блоке окружения потомка. Буфер широкий (<code>wchar_t</code>). Программа использует <code>std::wcout</code> для широкого буфера.</td></tr><tr><td><code>if (wcscmp(buffer, L"19045") == 0) {</code></td><td>Функция сравнивает прочитанное значение с ожидаемым значением «19045». Функция <code>wcscmp</code> возвращает 0 при равенстве широких строк.</td><td>Это и есть доказательство. Значение 19045 означает: перезапись родителя на 99999 не повлияла на потомка.</td></tr><tr><td><code>std::cout &lt;&lt; "Child: значение равно 19045 — оно НЕ изменилось..."</code></td><td>Команда печатает вывод-доказательство: значение не изменилось вслед за родителем.</td><td>Формулировка результата подходит для защиты. Эксперимент удался. Автономность подтверждена.</td></tr><tr><td><code>std::cout &lt;&lt; "Child: доказано — Environment Block копируется..."</code></td><td>Команда печатает объяснение механизма: блок окружения копируется при создании процесса.</td><td>Объяснение связывает наблюдаемый факт с теорией. Потомок живёт со своим снимком, а не с общей памятью.</td></tr><tr><td><code>} else { std::cout &lt;&lt; "Child: ВНИМАНИЕ: значение отличается..." }</code></td><td>Ветка несовпадения предупреждает: значение не равно 19045. Программа называет возможную причину: запуск не из-под Parent.exe, а из среды с другой переменной STUDENT_ID.</td><td>Честная обработка неожиданного результата. Программа не утверждает, что всё хорошо. Программа называет возможную причину.</td></tr><tr><td><code>std::cout &lt;&lt; "Child: родитель уже завершён, а потомок продолжает работу сам."</code></td><td>Команда сообщает: потомок живёт после завершения родителя.</td><td>Это второе доказательство автономности процессов. Смерть родителя не убивает потомка.</td></tr><tr><td><code>system("pause");</code></td><td>Функция выводит строку «Для продолжения нажмите любую клавишу...». Функция ждёт нажатия клавиши.</td><td>Без паузы окно потомка закрылось бы сразу. Никто не успел бы прочитать вывод. Пауза — это и есть «продолжает работу» из задания.</td></tr><tr><td><code>return 0;</code></td><td>Потомок завершается с кодом 0 после нажатия клавиши.</td><td>Код 0 означает нормальное завершение. Программа уходит только после того, как пользователь увидел вывод.</td></tr></table>
+        </div>
+
+        <div class="run-box">
+          <span class="run-title">Как запустить — Child.exe и ожидаемый вывод</span>
+          <ol>
+            <li>Не создавайте файлы заранее. Компиляция описана в карточке Parent. MinGW: выполните команду <code>g++ -o Child.exe task2_child.cpp</code>. MSVC: выполните команду <code>cl /EHsc task2_child.cpp</code>. Переименуйте файл в <code>Child.exe</code>.</li>
+            <li>Обычный сценарий: запустите программу через Parent.exe. Оба файла exe лежат в одной папке. Запускается Parent. Потомок выводит значение STUDENT_ID=19045. Потомок выводит строку «значение равно 19045 — оно НЕ изменилось вслед за родителем». Потомок ждёт нажатия клавиши.</li>
+            <li>Отдельный запуск тоже возможен. Запустите файл Child.exe без Parent: двойным щелчком или из консоли. Переменная STUDENT_ID не задана в окружении потомка. Потомок выводит ошибку: «переменная STUDENT_ID не найдена в блоке окружения». Потомок объясняет: его запустили напрямую, без Parent.exe. Это нормальное поведение, а не ошибка.</li>
+          </ol>
+          <div class="callout-success">Ожидаемый вывод полного сценария. Окно Parent показывает строки по порядку. Первая строка: «установлена переменная STUDENT_ID=19045». Вторая строка: «Child.exe запущен. PID потомка: ...». Третья строка: «переменная у СЕБЯ перезаписана на STUDENT_ID=99999». Четвёртая строка: «у потомка осталась КОПИЯ со значением 19045». Затем окно Parent закрывается. Окно Child показывает строки по порядку. Первая строка: «прочитана переменная STUDENT_ID=19045». Вторая строка: «значение равно 19045 — оно НЕ изменилось вслед за родителем». Затем потомок ждёт нажатия клавиши.</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    Лабораторная работа №6 • Системное программирование C++ и Win32 API • 2026<br>
+    Теория (STE): <a href="theory_ste.html">theory_ste.html</a> • Обычная версия: <a href="index.html">index.html</a>
+  </footer>
+
+  <script>
+    function copyCode(btn) {
+      const pre = btn.closest('.code-container').querySelector('pre');
+      const text = pre.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = 'Скопировано!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  </script>
+
+</body>
+</html>

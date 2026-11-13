@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Лабораторная работа №5 — Теория</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --accent-red: #dc2626;
+      --accent-red-bg: #fef2f2;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-page); color: var(--text-main); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; padding-bottom: 80px; }
+    header { background: rgba(255, 255, 255, 0.96); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(8px); padding: 12px 16px; box-shadow: var(--shadow-sm); }
+    .header-content { max-width: 760px; margin: 0 auto; }
+    .badge-sub { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    h1 { font-size: 19px; font-weight: 800; color: var(--text-main); line-height: 1.25; }
+    h2 { font-size: 17px; font-weight: 800; margin: 4px 0 6px 0; }
+    h3 { font-size: 15px; font-weight: 700; margin: 12px 0 4px 0; }
+    p { margin: 6px 0; }
+    ul, ol { margin: 6px 0 6px 20px; }
+    li { margin: 3px 0; }
+    .nav-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px 0; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+    .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
+    main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+    .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .task-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .task-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .task-path { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-subtle); background: var(--bg-code); padding: 3px 7px; border-radius: 4px; }
+    .task-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .code-container { position: relative; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-code); overflow: hidden; }
+    .code-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: #e2e8f0; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); }
+    .copy-btn { background: #ffffff; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: var(--text-main); transition: all 0.2s; }
+    .copy-btn:hover { background: var(--primary); color: #ffffff; border-color: var(--primary); }
+    .copy-btn.copied { background: var(--accent-green); color: #ffffff; border-color: var(--accent-green); }
+    pre { padding: 12px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.45; color: #0f172a; }
+    pre.cmd { background: #0f172a; color: #e2e8f0; border-radius: var(--radius-sm); }
+    .explanation-box { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .explanation-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); }
+    .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
+    .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
+    .callout-error { background: var(--accent-red-bg); border-left: 3px solid var(--accent-red); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #991b1b; }
+    .callout-info { background: var(--primary-light); border-left: 3px solid var(--primary); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #1e3a8a; }
+    table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+    table.tbl th, table.tbl td { border: 1px solid var(--border); padding: 6px 8px; text-align: left; vertical-align: top; }
+    table.tbl th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    table.tbl td code, .task-body code { font-family: var(--font-mono); font-size: 12px; background: var(--bg-code); padding: 1px 4px; border-radius: 3px; }
+    table.tbl tr:nth-child(even) td { background: #f8fafc; }
+    table.tbl td.ln { white-space: nowrap; font-family: var(--font-mono); font-weight: 700; font-size: 12px; }
+    footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Лабораторная работа №5 • Теория</span>
+      <h1>Теория: небуферизированный I/O, file mapping, TLB и VirtualAlloc</h1>
+      <div class="nav-scroll">
+        <a href="#t1" class="nav-chip">1. Небуферизированный I/O</a>
+        <a href="#t2" class="nav-chip">2. File mapping и TLB</a>
+        <a href="#t3" class="nav-chip">3. Виртуальная память</a>
+        <a href="#t4" class="nav-chip">4. Замер времени</a>
+        <a href="#run" class="nav-chip">Условия запуска</a>
+        <a href="index_ste.html" class="nav-chip">← Шпаргалка с кодом</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="callout-info"><strong>STE-версия.</strong> Текст переписан по правилам ASD-STE100. Одно предложение даёт одну мысль. Описание имеет не больше 25 слов. Инструкция имеет не больше 20 слов. Предложения используют действительный залог. Один термин всегда означает одно понятие. Код программ не изменён. Оригинал: <a href="theory.html">theory.html</a>. Словарь: программа, файл, буфер, диск, кэш, системный кэш, память, адрес, страница, кластер, сектор, ядро, Windows, ошибка, код ошибки, время, тест, режим, чтение, запись, размер, флаг, дескриптор, таблица страниц, TLB, сброс TLB, проецирование, окно, смещение, выравнивание, небуферизированный ввод-вывод, пользователь.</div>
+
+
+    <div id="t1" class="task-card">
+      <div class="task-header"><div class="task-title">Тема 1. Небуферизированный ввод-вывод (FILE_FLAG_NO_BUFFERING)</div><span class="task-path">Задача №1</span></div>
+      <div class="task-body">
+        <h2>Что это</h2>
+        <p>Обычное чтение файла идёт через системный кэш. Ядро читает данные с диска в системный кэш. Ядро копирует данные из системного кэша в буфер программы. Данные проходят через память дважды. Флаг <code>FILE_FLAG_NO_BUFFERING</code> в <code>CreateFileW</code> отключает системный кэш. Контроллер диска пишет данные напрямую в буфер программы через <strong>DMA</strong> — прямой доступ к памяти без участия процессора.</p>
+        <h2>Зачем это нужно</h2>
+        <ul>
+          <li><strong>СУБД</strong> (SQL Server, PostgreSQL, Oracle) ведут собственный кэш страниц. СУБД не хотят второй копии тех же данных в системном кэше. Вторая копия удваивает расход памяти.</li>
+          <li><strong>Видео и большие файлы:</strong> системный кэш бесполезен при потоковой обработке гигабайтов. Программа читает данные один раз. Данные больше не нужны программе. Системный кэш только вытесняет полезные страницы других программ.</li>
+          <li><strong>Предсказуемость:</strong> без кэша время чтения равно времени диска. Результат не зависит от того, лежат ли данные уже в памяти.</li>
+        </ul>
+        <h2>Три правила выравнивания — за их нарушение ядро возвращает ошибку 87</h2>
+        <p>Небуферизированный ввод-вывод обходит системный кэш. Ядро не дочитывает недостающие байты из системного кэша. Контроллер диска читает только целые секторы. Программа задаёт все три параметра чтения кратными размеру сектора.</p>
+        <table class="tbl"><thead><tr><th>Правило</th><th>Что должно быть кратно 4096</th><th>Пример нарушения в задаче 1</th></tr></thead><tbody>
+        <tr><td>1. Адрес буфера</td><td>Базовый адрес буфера в памяти</td><td><code>char unalignedBuf[1000]</code> лежит на стеке. Адрес буфера произвольный. Адрес не кратен 4096.</td></tr>
+        <tr><td>2. Смещение в файле</td><td>Позиция чтения (файловый указатель)</td><td>В задаче 1 смещение равно 0. Смещение кратно сектору. Программа не нарушает правило смещения.</td></tr>
+        <tr><td>3. Размер чтения</td><td>Число запрашиваемых байтов</td><td><code>sizeof(unalignedBuf)</code> равно 1000. Размер не кратен 4096.</td></tr>
+        </tbody></table>
+        <p>Любое нарушение даёт код ошибки 87. <code>ReadFile</code> возвращает <code>FALSE</code>. <code>GetLastError()</code> возвращает <strong>87 (ERROR_INVALID_PARAMETER)</strong>. Ошибка означает неверные параметры вызова. Ошибка не означает сбой диска. Ошибка не означает отсутствие файла.</p>
+        <div class="callout-warn"><strong>Почему в коде 4096, если сектор диска равен 512 байт?</strong> Физический сектор современного диска равен 4096 байт (Advanced Format). Страница памяти тоже равна 4096 байт. Windows задаёт требования через размер сектора тома. Буфер с выравниванием 4096 подходит и для дисков с сектором 512 байт, потому что 4096 кратно 512. Поэтому 4096 — безопасный выбор на любом диске.</div>
+        <h2>Как исправить: VirtualAlloc</h2>
+        <p><code>VirtualAlloc</code> выделяет память целыми страницами. Возвращаемый адрес всегда кратен 64 КБ (гранулярности распределения), поэтому адрес автоматически кратен и 4096. В задаче 1 размер буфера равен 64 КБ, и размер 65536 кратен 4096: 65536 / 4096 = 16. Чтение идёт с начала файла, смещение равно 0. Все три правила выполнены, поэтому чтение проходит. Программа проверяет адрес выводом <code>Адрес % 4096 == 0</code>.</p>
+        <h2>Типичные ошибки</h2>
+        <table class="tbl"><thead><tr><th>Ошибка</th><th>Симптом</th><th>Как чинить</th></tr></thead><tbody>
+        <tr><td>Буфер на стеке (<code>char buf[N]</code>)</td><td>Ошибка 87</td><td>Программа выделяет буфер через <code>VirtualAlloc</code> или <code>_aligned_malloc</code>.</td></tr>
+        <tr><td>Размер чтения не кратен сектору.</td><td>Ошибка 87</td><td>Программа округляет размер вверх до кратного 4096. Программа дочитывает «хвост» обычным чтением.</td></tr>
+        <tr><td>Программа читает файл с середины. Смещение равно 100.</td><td>Ошибка 87</td><td>Программа читает с выровненного смещения. Программа отбрасывает лишнее в буфере.</td></tr>
+        <tr><td>Пользователь забывает, что <code>FILE_FLAG_NO_BUFFERING</code> действует и на запись.</td><td><code>WriteFile</code> возвращает ошибку 87.</td><td>Запись подчиняется тем же трём правилам.</td></tr>
+        <tr><td>Программа проверяет <code>GetLastError()</code> не сразу после ошибки.</td><td>Неверный код ошибки</td><td>Программа сохраняет код ошибки в переменную сразу после неудачного вызова.</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+    <div id="t2" class="task-card">
+      <div class="task-header"><div class="task-title">Тема 2. Отображение файлов в память и TLB</div><span class="task-path">Задача №2</span></div>
+      <div class="task-body">
+        <h2>Что такое file mapping</h2>
+        <p><strong>Проецирование файла в память (file mapping)</strong> работает с файлом как с массивом в памяти. Проецирование не использует <code>ReadFile</code> и <code>WriteFile</code>. Сначала <code>CreateFileW</code> открывает файл, затем <code>CreateFileMappingW</code> создаёт объект-раздел на файл. Затем <code>MapViewOfFile</code> отображает часть файла в адресное пространство процесса. Программа читает и пишет обычными обращениями по указателю, а в конце <code>UnmapViewOfFile</code> снимает отображение. Ядро сбрасывает грязные страницы на диск лениво, в фоне.</p>
+        <h2>Зачем СУБД используют file mapping</h2>
+        <ul>
+          <li><strong>Скорость случайного доступа:</strong> программа не позиционирует указатель для каждой записи. Программа не вызывает чтение для каждой записи. Программа обращается к данным по указателю. Ядро подгружает страницу по Page Fault.</li>
+          <li><strong>Единый кэш:</strong> спроецированные страницы — это страницы системного кэша. Программа не копирует данные дважды.</li>
+          <li><strong>Совместный доступ:</strong> несколько процессов проецируют один файл. Каждый процесс видит изменения других процессов.</li>
+          <li><strong>Пример:</strong> SQLite, LMDB и многие встраиваемые СУБД целиком используют mmap и <code>MapViewOfFile</code>.</li>
+        </ul>
+        <h2>Страницы, таблицы страниц и TLB</h2>
+        <p>Память делится на страницы по 4096 байт. Таблица страниц процесса хранит соответствие виртуального адреса физическому фрейму. Процессор кэширует недавние трансляции в <strong>TLB (Translation Lookaside Buffer)</strong>. TLB — маленький, но очень быстрый аппаратный кэш. Пока трансляция лежит в TLB, программа обращается к памяти без таблиц страниц.</p>
+        <p><strong>Сброс TLB</strong> — сброс этого кэша. Ядро меняет таблицы страниц, например при <code>UnmapViewOfFile</code>. Старые трансляции становятся неверными. Процессор выбрасывает старые трансляции инструкцией <code>INVLPG</code> (сброс одной записи) или перезаписью регистра <code>CR3</code> (сброс всего TLB). После сброса следующее обращение к странице даёт TLB Miss и проход по таблицам страниц. Если страницы нет в памяти, обращение даёт ещё и Page Fault с загрузкой страницы с диска.</p>
+        <h2>Почему режим Б в задаче 2 медленнее</h2>
+        <table class="tbl"><thead><tr><th></th><th>Режим А: стандартный I/O</th><th>Режим Б: скользящее окно + Unmap</th></tr></thead><tbody>
+        <tr><td>Обращение к данным</td><td><code>SetFilePointerEx + ReadFile/WriteFile</code></td><td><code>MapViewOfFile → *pVal += 1 → UnmapViewOfFile</code></td></tr>
+        <tr><td>Таблицы страниц</td><td>Таблицы страниц не меняются. Страницы файла стабильно лежат в системном кэше.</td><td>Ядро перестраивает таблицы страниц 10 000 раз.</td></tr>
+        <tr><td>TLB</td><td>Трансляции живут. Промахов почти нет.</td><td>Сброс TLB происходит после каждого Unmap. Затем следуют TLB Miss и Page Fault.</td></tr>
+        <tr><td>Системных вызовов</td><td>3 на операцию (позиция + чтение + запись)</td><td>Программа делает 2 вызова на операцию (Map + Unmap). Каждый вызов требует работы ядра над таблицами страниц.</td></tr>
+        <tr><td>Итог</td><td>Быстро</td><td>Проецирование работает медленно. Накладные расходы на управление памятью съедают выигрыш от прямого доступа.</td></tr>
+        </tbody></table>
+        <p><strong>Вывод для практики:</strong> проецирование быстро, когда программа проецирует окно один раз и держит его долго. Так работают реальные СУБД. Проецировать и снимать окно на каждую операцию — антипаттерн. Стоимость сброса TLB на порядки выше стоимости чтения 4 байт.</p>
+        <h2>Гранулярность 64 КБ против страницы 4 КБ</h2>
+        <p>В Windows есть два разных размера. Страница равна 4 КБ и служит единицей коммита и защиты, а гранулярность распределения равна 64 КБ. Резервирование и проецирование начинаются только с границы 64 КБ, поэтому смещение в <code>MapViewOfFile</code> кратно 64 КБ. В задаче 2 программа округляет смещение вниз: <code>(byteOffset / 65536) * 65536</code>, а остаток <code>byteOffset % 65536</code> — смещение внутри окна. Программа узнаёт гранулярность через <code>GetSystemInfo</code>, а не хардкодом.</p>
+        <h2>Типичные ошибки</h2>
+        <table class="tbl"><thead><tr><th>Ошибка</th><th>Симптом</th><th>Как чинить</th></tr></thead><tbody>
+        <tr><td>Смещение <code>MapViewOfFile</code> не кратно 64 КБ.</td><td><code>MapViewOfFile</code> возвращает NULL. Код ошибки равен 87.</td><td>Программа округляет смещение вниз до гранулярности.</td></tr>
+        <tr><td>Программа вызывает <code>UnmapViewOfFile</code> после каждой операции.</td><td>Просадка скорости (TLB Flush)</td><td>Программа держит окно спроецированным. Программа снимает окно один раз в конце.</td></tr>
+        <tr><td>Программа пишет в проецирование, открытое как <code>PAGE_READONLY</code>.</td><td>Исключение доступа (Access Violation)</td><td>Программа согласует <code>PAGE_READWRITE</code> и <code>FILE_MAP_ALL_ACCESS</code>.</td></tr>
+        <tr><td>Окно выходит за конец файла.</td><td><code>MapViewOfFile</code> возвращает NULL.</td><td>Программа проверяет <code>pView</code> и не пропускает ошибку молча. Программа уменьшает окно у конца файла.</td></tr>
+        <tr><td>Программа закрывает файл раньше, чем проецирование.</td><td>Неопределённое поведение</td><td>Программа сначала вызывает <code>CloseHandle(hMapping)</code>, потом вызывает <code>CloseHandle(hFile)</code>.</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+    <div id="t3" class="task-card">
+      <div class="task-header"><div class="task-title">Тема 3. Виртуальная память и VirtualAlloc</div><span class="task-path">Задача №3</span></div>
+      <div class="task-body">
+        <h2>Что такое виртуальная память</h2>
+        <p>Каждый процесс в 64-битной Windows видит своё приватное виртуальное адресное пространство. Пользователю доступно около 128 ТБ. Виртуальные адреса не равны физическим адресам. MMU процессора переводит виртуальные адреса в физические фреймы памяти через таблицы страниц. Один и тот же виртуальный адрес в двух процессах указывает на разную физическую память. Ядро выделяет физическую память только тогда, когда программа реально обращается к странице.</p>
+        <h2>Два шага: MEM_RESERVE и MEM_COMMIT</h2>
+        <table class="tbl"><thead><tr><th>Флаг</th><th>Что делает</th><th>Стоит ли RAM</th></tr></thead><tbody>
+        <tr><td><code>MEM_RESERVE</code></td><td><code>MEM_RESERVE</code> резервирует непрерывный диапазон виртуальных адресов. Никто другой не занимает этот диапазон.</td><td>Нет — только адреса</td></tr>
+        <tr><td><code>MEM_COMMIT</code></td><td><code>MEM_COMMIT</code> привязывает к зарезервированным адресам физические страницы. Страницы лежат в памяти или в файле подкачки.</td><td>Да — страницы реально выделяются</td></tr>
+        <tr><td><code>MEM_RESERVE | MEM_COMMIT</code></td><td><code>MEM_RESERVE | MEM_COMMIT</code> выполняет оба шага сразу. Это самый частый случай, как в задачах 1 и 3.</td><td>Да</td></tr>
+        </tbody></table>
+        <p>Программа резервирует адресное пространство впрок, а коммитит страницы по мере роста данных. Программа резервирует, например, 1 ГБ адресного пространства. Так работают кучи, стеки потоков и базы данных.</p>
+        <h2>Правила VirtualAlloc / VirtualFree</h2>
+        <ul>
+          <li><strong>Выравнивание:</strong> базовый адрес всегда кратен 64 КБ (гранулярности распределения). Поэтому память от <code>VirtualAlloc</code> автоматически подходит для <code>FILE_FLAG_NO_BUFFERING</code>.</li>
+          <li><strong>Округление размера:</strong> ядро округляет запрошенный размер вверх до целого числа страниц по 4096 байт. Запрос 40 000 байт реально даёт 40 960 байт, то есть 10 страниц. Программа не просит кратность размера.</li>
+          <li><strong>Защита страниц:</strong> <code>PAGE_READWRITE</code> разрешает чтение и запись. <code>PAGE_READONLY</code> разрешает только чтение. <code>PAGE_EXECUTE_READWRITE</code> служит для JIT-кода. MMU проверяет защиту страниц. Неверный доступ даёт исключение, а не тихую порчу.</li>
+          <li><strong><code>VirtualFree</code> и <code>MEM_RELEASE</code>:</strong> при <code>MEM_RELEASE</code> размер равен 0. Программа освобождает весь блок целиком. Ненулевой размер даёт ошибку 87. Программа не освобождает блок частично, только целиком.</li>
+          <li><strong><code>MEM_DECOMMIT</code>:</strong> ядро возвращает физические страницы. Диапазон адресов остаётся зарезервированным. Программа снова коммитит этот диапазон. В задачах 1 и 3 программа не использует <code>MEM_DECOMMIT</code>.</li>
+        </ul>
+        <h2>VirtualAlloc против new / malloc</h2>
+        <table class="tbl"><thead><tr><th></th><th><code>new / malloc</code></th><th><code>VirtualAlloc</code></th></tr></thead><tbody>
+        <tr><td>Уровень</td><td>Библиотечная куча (CRT Heap)</td><td>Прямой вызов ядра</td></tr>
+        <tr><td>Минимальный кусок</td><td>Байты</td><td>Страница 4096 байт</td></tr>
+        <tr><td>Выравнивание адреса</td><td>16 байт (не гарантировано больше)</td><td>64 КБ</td></tr>
+        <tr><td>Защита страниц</td><td>Нет</td><td>Да (<code>PAGE_*</code>)</td></tr>
+        <tr><td>Когда нужен</td><td>Обычные объекты и массивы</td><td>Большие буферы, выравнивание под DMA, резерв без RAM, file mapping</td></tr>
+        </tbody></table>
+        <h2>Типичные ошибки</h2>
+        <table class="tbl"><thead><tr><th>Ошибка</th><th>Симптом</th><th>Как чинить</th></tr></thead><tbody>
+        <tr><td>Программа вызывает <code>VirtualFree(p, размер, MEM_RELEASE)</code> с ненулевым размером.</td><td>Ошибка 87, память не освобождена</td><td>При <code>MEM_RELEASE</code> размер всегда равен 0.</td></tr>
+        <tr><td>Освобождение не с базового адреса</td><td>Ошибка, утечка</td><td>Программа передаёт ровно тот указатель, что вернул <code>VirtualAlloc</code>.</td></tr>
+        <tr><td>Программа не проверяет <code>NULL</code> после <code>VirtualAlloc</code>.</td><td>Падение при разыменовании NULL</td><td>Программа проверяет указатель и завершается с кодом 1.</td></tr>
+        <tr><td><code>MEM_COMMIT</code> без <code>MEM_RESERVE</code> на новом адресе</td><td>Ошибка</td><td>Программа задаёт либо оба флага вместе, либо сначала резерв, потом коммит.</td></tr>
+        <tr><td>Пользователь забывает вызвать <code>VirtualFree</code>.</td><td>Утечка страниц до конца процесса</td><td><code>VirtualFree</code> всегда идёт в паре с <code>VirtualAlloc</code>.</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+    <div id="t4" class="task-card">
+      <div class="task-header"><div class="task-title">Тема 4. Замер времени: QueryPerformanceCounter</div><span class="task-path">Задачи №1 и №2</span></div>
+      <div class="task-body">
+        <p>Обычные часы (<code>clock()</code>, <code>GetTickCount()</code>) слишком грубы для замера миллисекунд. <code>QueryPerformanceCounter</code> — высокоточный таймер Windows с разрешением в доли микросекунды. Программа измеряет время по такой схеме:</p>
+        <ol>
+          <li><code>QueryPerformanceFrequency(&amp;freq)</code> узнаёт, сколько тиков в одной секунде. У разных ПК частота разная, обычно порядка 10 МГц.</li>
+          <li><code>QueryPerformanceCounter(&amp;start)</code> ставит отметку «до».</li>
+          <li>Программа выполняет замеряемый код.</li>
+          <li><code>QueryPerformanceCounter(&amp;end)</code> ставит отметку «после».</li>
+          <li>Время в мс равно <code>(end − start) × 1000 / freq</code>. Программа делит именно на частоту, а не на 1000. Деление на 1000 — частая ошибка.</li>
+        </ol>
+        <p>Программа измеряет только интересующий код. Программа выносит открытие файла и создание проецирования в задачах 1–2 за пределы замера. Иначе в результат попадает посторонний шум. В режиме Б задачи 2 замер намеренно включает Map/Unmap. Их стоимость и есть предмет измерения.</p>
+      </div>
+    </div>
+
+    <div id="run" class="task-card">
+      <div class="task-header"><div class="task-title">Условия запуска — все три программы</div><span class="task-path">Windows 10/11 x64</span></div>
+      <div class="task-body">
+
+<div class="callout-info"><strong>Это общее правило для всех трёх программ.</strong> Программы работают только в Windows. Программы используют заголовок <code>&lt;windows.h&gt;</code>, вызовы Win32 API и команду <code>chcp</code>. Компилятор не компилирует программы на Linux или macOS. Пользователь компилирует программы из папки <code>lab5c++</code>. Пользователь запускает программы из командной строки, чтобы видеть вывод и вводить данные.</div>
+<pre class="cmd">REM MSVC (Developer Command Prompt for VS):
+cl /EHsc task1_no_buffering_bench.cpp
+cl /EHsc task2_dbms_sim_filemapping_tlb.cpp
+cl /EHsc task3_direct_kernel_memory.cpp
+
+REM MinGW-w64 (PowerShell или cmd):
+g++ -O2 -o task1.exe task1_no_buffering_bench.cpp
+g++ -O2 -o task2.exe task2_dbms_sim_filemapping_tlb.cpp
+g++ -O2 -o task3.exe task3_direct_kernel_memory.cpp</pre>
+<p>Флаг <code>/EHsc</code> у MSVC включает обработку исключений C++. Флаг нужен для <code>&lt;iostream&gt;</code> и <code>&lt;vector&gt;</code>. Программа не требует отдельных библиотек. Все вызовы (<code>CreateFileW</code>, <code>VirtualAlloc</code>, <code>MapViewOfFile</code>) живут в <code>kernel32.lib</code>. Компилятор линкует <code>kernel32.lib</code> по умолчанию. Пользователь запускает программу из той же папки, где лежит exe.</p>
+<pre class="cmd">REM cmd:
+task1_no_buffering_bench.exe
+REM PowerShell:
+.\task1_no_buffering_bench.exe</pre>
+<p>Запуск двойным кликом по exe тоже работает. Windows закрывает окно консоли сразу после завершения. Пользователь не успевает прочитать вывод. Для задачи 3 консоль обязательна. Программа ждёт ввода числа с клавиатуры.</p>
+
+        <h3>Задача №1 — небуферизированный I/O</h3>
+
+<div class="callout-success"><strong>Файл готовить заранее не нужно.</strong> Программа сама создаёт <code>test_direct_io_10mb.dat</code> (10 МБ) в рабочей папке при запуске. Файл создаёт функция <code>GenerateRandomFile</code> с флагом <code>CREATE_ALWAYS</code>. При повторном запуске программа перезаписывает старый файл. Нужно только около 10 МБ свободного места на диске. Нужно только право на запись в папку, откуда запущен exe.</div>
+<p>Если пользователь удаляет .dat-файл вручную, ничего страшного не происходит. При следующем запуске программа создаёт файл заново. Файл обязан существовать только внутри <code>BenchmarkReading</code> (<code>OPEN_EXISTING</code>). К тому моменту программа уже создаёт файл шагом 1.</p>
+<p><strong>Ожидаемый вывод:</strong></p>
+<pre class="cmd">=== ПРАКТИКА №1: НЕБУФЕРИЗИРОВАННЫЙ ВВОД-ВЫВОД (NO_BUFFERING) ===
+1. Создание тестового файла 10 МБ со случайными данными...
+
+2. Попытка чтения в невыровненный буфер (char unalignedBuf[1000])...
+   [ОШИБКА ПОЛУЧЕНА]: ReadFile вернул FALSE, GetLastError() = 87
+   -&gt; Код 87 (ERROR_INVALID_PARAMETER): буфер не выровнен по границе сектора (4096 байт)!
+
+3. Выделение выровненного буфера через VirtualAlloc (64 КБ)...
+   Адрес выровненного буфера: 0x000001... (Адрес % 4096 == 0)
+
+4. Сравнение производительности чтения 10 МБ (QueryPerformanceCounter):
+   А) Стандартное чтение (с системным кэшем):  X мс
+   Б) Прямое чтение (без промежуточного кэша): Y мс</pre>
+<p><strong>Типичные ситуации (не ошибки):</strong> код 87 на шаге 2 — это запланированная демонстрация, а не сбой. Времена X и Y меняются от запуска к запуску: на них влияют SSD/HDD, загрузка диска и кэш. <strong>Настоящие ошибки:</strong> время «-1 мс» означает, что программа не создала файл. Программа не создаёт файл без прав на запись, при полном диске или при блокировке создания .dat антивирусом. Пользователь проверяет, появился ли <code>test_direct_io_10mb.dat</code> рядом с exe. Значение <code>Адрес % 4096 == 0</code> не равно нулю практически никогда, потому что <code>VirtualAlloc</code> всегда выравнивает адрес.</p>
+
+        <h3>Задача №2 — симуляция СУБД</h3>
+
+<div class="callout-success"><strong>Файл готовить заранее не нужно.</strong> Программа сама создаёт <code>database_16mb.bin</code> (16 МБ, 4 194 304 значения int) в рабочей папке при запуске. Файл создаёт функция <code>CreateDbBinaryFile</code> с флагом <code>CREATE_ALWAYS</code>. Нужно только около 16 МБ свободного места и право на запись в папку с exe. После прогона пользователь удаляет файл. При следующем запуске программа пересоздаёт файл.</div>
+<p><strong>Ожидаемый вывод:</strong></p>
+<pre class="cmd">=== ПРАКТИКА №2: СИМУЛЯЦИЯ СУБД (СТАНДАРТНЫЙ I/O vs FILE MAPPING &amp; TLB FLUSH) ===
+1. Создание бинарного файла 16 МБ с массивом целых чисел (int)...
+
+2. Запуск Режима А (Стандартный I/O со системным кэшем): 10 000 операций...
+   -&gt; Время выполнения Режима А: X мс
+
+3. Запуск Режима Б (Ручное проецирование с UnmapViewOfFile): 10 000 операций...
+   -&gt; Время выполнения Режима Б: Y мс
+
+--- АНАЛИЗ НАКЛАДНЫХ РАСХОДОВ TLB FLUSH ---
+1. При частых вызовах UnmapViewOfFile ядро ОС Windows вынуждено:
+   - Изменять таблицы страниц (Page Tables) процесса;
+   - Выполнять аппаратную инструкцию сброса буфера ассоциативной трансляции (TLB Flush / INVLPG);
+   - Обрабатывать Page Fault при следующем MapViewOfFile.
+2. В Режиме А системный файловый кэш держит страницы непрерывно в ОЗУ без переключения маппингов.</pre>
+<p><strong>Что должно получиться:</strong> время режима Б заметно больше времени режима А, обычно в разы, и это измеряемый эффект сброса TLB. Если режим Б оказался быстрее, диск и кэш прогреты первым режимом, поэтому второй прогон подряд даёт другую картину, и пользователь перезапускает программу. <strong>Настоящие ошибки:</strong> «Время -1 мс» не предусмотрено в этой программе, потому что программа считает время всегда. Если программа не создала файл, оба режима читают несуществующий файл и молча работают с ошибками <code>ReadFile</code> и <code>WriteFile</code>. Пользователь проверяет, что <code>database_16mb.bin</code> появился и его размер равен ровно 16 777 216 байт.</p>
+
+        <h3>Задача №3 — память ядра</h3>
+
+<div class="callout-success"><strong>Файлы не нужны вообще.</strong> Программа не открывает и не создаёт файлов, только память и консоль. Единственное условие запуска — консоль (cmd или PowerShell). Программа ждёт ввода числа с клавиатуры.</div>
+<p><strong>Как вводить размер:</strong> после приглашения пользователь вводит число и нажимает Enter. Примеры: <code>10000</code> (по умолчанию), <code>1000</code>, <code>500000</code>. Чтобы получить значение по умолчанию, пользователь вводит <code>0</code> или любую букву. Просто нажать Enter не выйдет. Оператор <code>&gt;&gt;</code> пропускает пустые строки и ждёт число.</p>
+<p><strong>Ожидаемый вывод (для 10000):</strong></p>
+<pre class="cmd">=== ПРАКТИКА №3: ВЫДЕЛЕНИЕ ПАМЯТИ НАПРЯМУЮ У ЯДРА WINDOWS (VirtualAlloc) ===
+Введите размер массива целых чисел (по умолчанию 10000): 10000
+Запрошено элементов: 10000 (40000 байт / ~39 КБ)
+Память успешно выделена ядром по адресу: 0x000001...
+
+Первые 10 элементов массива (квадраты индексов):
+  pArray[0] = 0
+  pArray[1] = 1
+  pArray[2] = 4
+  pArray[3] = 9
+  pArray[4] = 16
+  pArray[5] = 25
+  pArray[6] = 36
+  pArray[7] = 49
+  pArray[8] = 64
+  pArray[9] = 81
+
+Память успешно возвращена ядру Windows (VirtualFree MEM_RELEASE).</pre>
+<p><strong>Ограничения ввода:</strong> при count больше 46 341 значения <code>i*i</code> перестают влезать в int. Это переполнение. Для учебного запуска пользователь берёт count ≤ 46 341. Гигантские значения, например больше свободной памяти, дают «Ошибка выделения памяти у ядра» и завершение с кодом 1. Это честная проверка из программы, а не падение. Ядро округляет реально выделяемый объём вверх до целого числа страниц по 4096 байт.</p>
+
+        <table class="tbl"><thead><tr><th>Программа</th><th>Файл нужен заранее?</th><th>Что создаётся при запуске</th><th>Ввод с клавиатуры</th></tr></thead><tbody>
+        <tr><td>Задача №1</td><td>Нет</td><td><code>test_direct_io_10mb.dat</code> (10 МБ)</td><td>Нет</td></tr>
+        <tr><td>Задача №2</td><td>Нет</td><td><code>database_16mb.bin</code> (16 МБ)</td><td>Нет</td></tr>
+        <tr><td>Задача №3</td><td>Нет (файлов нет вообще)</td><td>Ничего</td><td>Да — размер массива, по умолчанию 10000</td></tr>
+        </tbody></table>
+        <div class="callout-warn"><strong>Главный вывод про «заранее создать файл»:</strong> ни для одной программы файл заранее создавать не надо. Обе программы, которым нужен файл, создают его сами при запуске (<code>CREATE_ALWAYS</code>). Поэтому инструкция «создайте непустой файл и укажите путь» к этой лабе не относится. Путь уже указан в коде относительным именем. Файл появляется сам в рабочей папке.</div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    Лабораторная работа №5 • Теория • Системное программирование C++ и Win32 API • 2026 • Код и построчный разбор — <a href="index_ste.html">index.html</a>
+  </footer>
+
+  <script>
+    function copyCode(btn) {
+      const pre = btn.closest('.code-container').querySelector('pre');
+      const text = pre.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = 'Скопировано!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  </script>
+
+</body>
+</html>

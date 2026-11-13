@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0" name="viewport">
+<title>Лабораторная работа №4 — Теория: приведение типов, void* и проецирование файлов (STE-версия)</title>
+<style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-page); color: var(--text-main); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; padding-bottom: 80px; }
+
+    header {
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-content { max-width: 760px; margin: 0 auto; }
+    .badge-sub { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    h1 { font-size: 19px; font-weight: 800; color: var(--text-main); line-height: 1.25; }
+
+    .nav-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px 0; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+    .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
+    .nav-chip.theory { background: var(--primary-light); color: var(--primary); }
+
+    main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+    .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .task-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .task-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .task-path { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-subtle); background: var(--bg-code); padding: 3px 7px; border-radius: 4px; }
+    .task-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+    .code-container { position: relative; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-code); overflow: hidden; }
+    .code-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: #e2e8f0; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); }
+    .copy-btn { background: #ffffff; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: var(--text-main); transition: all 0.2s; }
+    .copy-btn:hover { background: var(--primary); color: #ffffff; border-color: var(--primary); }
+    .copy-btn.copied { background: var(--accent-green); color: #ffffff; border-color: var(--accent-green); }
+
+    pre { padding: 12px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.45; color: #0f172a; }
+
+    .explanation-box { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .explanation-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); }
+
+    .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
+    .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
+
+    .run-box { background: #f8fafc; border: 1px solid var(--border); border-left: 4px solid var(--accent-green); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .run-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent-green); }
+    .run-box p, .run-box li { color: var(--text-muted); line-height: 1.5; }
+    .run-box ul, .run-box ol { padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+    .cmd { background: #0f172a; color: #e2e8f0; padding: 10px 12px; border-radius: 6px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.5; overflow-x: auto; white-space: pre; }
+    .output { background: #1e293b; color: #bbf7d0; padding: 10px 12px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; line-height: 1.5; overflow-x: auto; white-space: pre; }
+
+    .theory-text { font-size: 14px; color: var(--text-muted); line-height: 1.6; display: flex; flex-direction: column; gap: 10px; }
+    .theory-text h3 { color: var(--text-main); font-size: 15px; margin-top: 6px; }
+    .theory-text p code, .theory-text li code, .run-box code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-code); padding: 1px 4px; border-radius: 3px; }
+    .theory-text ul, .theory-text ol { padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+    .theory-text table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .theory-text table th, .theory-text table td { border: 1px solid var(--border); padding: 7px 9px; vertical-align: top; text-align: left; }
+    .theory-text table th { background: var(--primary-light); color: var(--primary); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .theory-text table td code { font-family: var(--font-mono); font-size: 12px; background: var(--bg-code); padding: 1px 4px; border-radius: 3px; }
+    .table-wrap { overflow-x: auto; }
+
+    footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
+  </style>
+</head>
+<body>
+<header>
+<div class="header-content">
+<span class="badge-sub">Лабораторная работа №4 • Теория</span>
+<h1>Приведение типов, void* и проецирование файлов в память</h1>
+<div class="nav-scroll">
+<a class="nav-chip" href="index_ste.html">← Шпаргалка с кодом (STE)</a><a class="nav-chip" href="index.html">Оригинал шпаргалки</a><a class="nav-chip" href="theory.html">Оригинал теории</a>
+<a class="nav-chip" href="#theory1">1. Приведение типов</a>
+<a class="nav-chip" href="#theory2">2. void* и x64</a>
+<a class="nav-chip" href="#theory3">3. MapViewOfFile</a>
+<a class="nav-chip" href="#launch">Условия запуска</a>
+</div>
+</div>
+</header>
+<main><div class="callout-success"><strong>STE-версия.</strong> Этот файл переписан по правилам ASD-STE100 (около 60%). Правила: одно предложение — одна мысль. Инструкция — не больше 20 слов. Описание — не больше 25 слов. Текст использует действительный залог: программа и Windows действуют сами. Одно понятие — всегда одно и то же слово. Сначала ответ, потом подробности. Фиксированные слова: файл, программа, компилятор, тип, значение, указатель, адрес, память, смещение, гранулярность, страница, окно, маркер, дескриптор, секция, отображение, ошибка, размер, байт, код, консоль, вывод. Код примеров не изменён.</div>
+<!-- Теория 1: приведение типов -->
+<div class="task-card" id="theory1">
+<div class="task-header">
+<div class="task-title">Тема 1. Приведение типов: неявное, явное, static_cast</div>
+<span class="task-path">к задаче 1 • task1_explicit_casting.cpp</span>
+</div>
+<div class="task-body">
+<div class="theory-text">
+<h3>Что это</h3>
+<p>Приведение типов — это смена типа значения. Один и тот же набор бит получает правила другого типа. Пример: число 25000 имеет тип <code>int</code>. После приведения к <code>long</code> число остаётся 25000. Но теперь оно принадлежит старшему целочисленному типу. Теперь оно участвует в операциях с <code>long</code> без лишних преобразований.</p>
+<h3>Зачем это нужно</h3>
+<p>У каждой переменной строгий тип. У каждой операции свои требования к типам операндов. Приведение типов нужно для трёх целей. Цель 1: выполнить операцию между значениями разных типов по заданным правилам. Цель 2: показать компилятору и читателю, что преобразование сделано намеренно. Цель 3: убрать предупреждения компилятора там, где программист проверил отсутствие потерь.</p>
+<h3>Неявное и явное приведение</h3>
+<div class="table-wrap">
+<table>
+<tr><th>Вид</th><th>Как выглядит</th><th>Кто решает</th><th>Пример</th></tr>
+<tr><td><strong>Неявное</strong> (implicit)</td><td>Компилятор вставляет сам. В коде ничего не пишется.</td><td>Компилятор решает по правилам языка.</td><td><code>long x = 25000;</code> — <code>int</code> неявно расширяется до <code>long</code>.</td></tr>
+<tr><td><strong>Явное</strong> (explicit)</td><td>Программист пишет оператор приведения в коде.</td><td>Программист решает сам.</td><td><code>long x = static_cast&lt;long&gt;(25000);</code></td></tr>
+</table>
+</div>
+<p>Неявное приведение происходит в четырёх местах. Место 1: присваивание. Место 2: передача аргумента в функцию. Место 3: возврат из функции. Место 4: смешанные арифметические выражения. Язык разрешает неявно только безопасные преобразования. Безопасные преобразования не теряют значение. Сужающие преобразования неявно тоже разрешены. Но компилятор выдаёт предупреждение. Предупреждение спрашивает: проверь, ты точно этого хотел?</p>
+<h3>static_cast — главный оператор явного приведения</h3>
+<p><code>static_cast&lt;НовыйТип&gt;(выражение)</code> — приведение с проверкой во время компиляции. Слово <code>static</code> означает: проверка происходит на этапе сборки. Код проверки в программу не добавляется. Поэтому <code>static_cast</code> бесплатен по времени работы. Что он умеет:</p>
+<ul>
+<li>Числовые преобразования: <code>int</code> ↔ <code>long</code>, <code>float</code> ↔ <code>double</code>, целое ↔ вещественное, знаковое ↔ беззнаковое.</li>
+<li>Приведения указателей: <code>void*</code> → типизированный указатель и обратно (тема 2). Приведения в иерархии классов вверх и вниз. В этой лабе они не используются.</li>
+<li>Явный вызов конструктора преобразования: <code>static_cast&lt;std::string&gt;(…)</code> и подобные.</li>
+</ul>
+<p>Чего <code>static_cast</code> не делает. Он не снимает <code>const</code>. Для этого есть <code>const_cast</code>. Он не приводит несвязанные типы. Пример: <code>int*</code> → <code>double*</code> напрямую вызывает ошибку компиляции. Он не проверяет во время выполнения, что по указателю лежит объект нужного типа. Для этого есть <code>dynamic_cast</code>. Он работает только для классов с виртуальными функциями. Старый C-style каст <code>(long)valInt</code> делает всё это молча и без проверок. Поэтому в современном C++ его избегают. <code>static_cast</code> виден в коде. Его легко найти поиском. Он запрещает опасные преобразования.</p>
+<h3>Расширяющие и сужающие преобразования</h3>
+<div class="table-wrap">
+<table>
+<tr><th>Направление</th><th>Примеры</th><th>Потеря данных</th></tr>
+<tr><td><strong>Расширяющее</strong> (widening)</td><td><code>int</code> → <code>long</code>, <code>float</code> → <code>double</code>, <code>int</code> → <code>double</code></td><td>Нет: значение сохраняется точно.</td></tr>
+<tr><td><strong>Сужающее</strong> (narrowing)</td><td><code>long</code> → <code>int</code>, <code>double</code> → <code>float</code>, <code>double</code> → <code>int</code></td><td>Возможна: старшие биты отбрасываются. Дробная часть отбрасывается. Точность теряется.</td></tr>
+</table>
+</div>
+<p>Оба приведения в задаче 1 — расширяющие. Поэтому результат точный. Обратные примеры: <code>static_cast&lt;int&gt;(100000L)</code> ещё влезает в 32-битный <code>int</code>. Но <code>static_cast&lt;int&gt;(5000000000L)</code> даёт неверное число: происходит переполнение. <code>static_cast&lt;int&gt;(3.99)</code> даёт 3: дробная часть отбрасывается без округления.</p>
+<h3>Размеры целых типов в Windows (модель LLP64)</h3>
+<div class="table-wrap">
+<table>
+<tr><th>Тип</th><th>Размер (Windows x64)</th><th>Диапазон (знаковый)</th></tr>
+<tr><td><code>int</code></td><td>4 байта</td><td>−2 147 483 648 … 2 147 483 647</td></tr>
+<tr><td><code>long</code></td><td>4 байта</td><td>Тот же, что у <code>int</code>.</td></tr>
+<tr><td><code>long long</code></td><td>8 байт</td><td>≈ ±9,2 × 10¹⁸</td></tr>
+<tr><td><code>size_t</code></td><td>8 байт (x64) / 4 байта (x86)</td><td>0 … 2⁶⁴−1 (x64)</td></tr>
+</table>
+</div>
+<p>В Linux x64 модель данных другая: LP64. Там <code>long</code> равен 8 байтам. Поэтому <code>sizeof(long)</code> зависит от системы. Программа задачи 2 измеряет его через <code>sizeof</code>. Программа не полагается на память.</p>
+<h3>Вещественные числа: IEEE 754, float и double</h3>
+<p>Числа с плавающей точкой хранятся по стандарту IEEE 754. Число состоит из трёх частей. Часть 1: знак (1 бит). Часть 2: порядок-экспонента. Часть 3: мантисса — значащие цифры в двоичной системе.</p>
+<div class="table-wrap">
+<table>
+<tr><th>Тип</th><th>Размер</th><th>Знак / экспонента / мантисса</th><th>Точных десятичных цифр</th><th>Примерный диапазон</th></tr>
+<tr><td><code>float</code></td><td>4 байта (32 бита)</td><td>1 / 8 / 23 бита</td><td>≈ 7</td><td>±3,4 × 10³⁸</td></tr>
+<tr><td><code>double</code></td><td>8 байт (64 бита)</td><td>1 / 11 / 52 бита</td><td>≈ 15–16</td><td>±1,8 × 10³⁰⁸</td></tr>
+</table>
+</div>
+<p>Главное следствие: большинство десятичных дробей нельзя точно записать в двоичной системе. Примеры: 0.1 и 0.2. Число 25.25 — исключение: оно записывается точно. Поэтому <code>float</code> и <code>double</code> хранят лишь приближение. Примеры кода:</p>
+<div class="code-container"><div class="code-top-bar"><span>Пример: потеря точности</span></div><pre><code>float f = 0.1f;              // хранится как 0.100000001490116...
+double d = static_cast&lt;double&gt;(f); // станет 0.10000000149011612 —
+// расширение НЕ добавляет точности, оно показывает
+// то значение, которое уже было во float
+double x = 0.1 + 0.2;        // 0.30000000000000004, а не 0.3</code></pre></div>
+<p>В задаче 1 этого эффекта нет. Число 25.25 равно 25 + 1/4. Дробь 1/4 — точная степень двойки. Поэтому <code>float</code> хранит 25.25 точно. Результат 100.5 точен. Суффикс <code>f</code> у литерала <code>25.25f</code> обязателен. Без него литерал имеет тип <code>double</code>. Присваивание в <code>float</code> стало бы сужающим преобразованием. Компилятор выдал бы предупреждение.</p>
+<h3>Типичные ошибки</h3>
+<ul>
+<li>Путать <code>static_cast</code> с C-style кастом <code>(тип)значение</code>: результат тот же. Но C-style каст скрывает опасные преобразования. Его нельзя найти поиском по коду.</li>
+<li>Считать, что <code>static_cast&lt;double&gt;(float)</code> повышает точность: нет. Он лишь сохраняет уже имеющееся значение <code>float</code> в более широком формате.</li>
+<li>Сравнивать вещественные числа через <code>==</code> после вычислений: ошибка округления накапливается. Выражение <code>0.1 + 0.2 == 0.3</code> даёт <code>false</code>. Сравнивай с допуском (эпсилон).</li>
+<li>Забывать суффикс <code>f</code> у <code>float</code>-литералов и суффикс <code>L</code> у <code>long</code>-литералов: компилятор выдаёт предупреждения о сужении.</li>
+<li>Сужающее приведение больших значений: <code>static_cast&lt;int&gt;(5000000000L)</code> вызывает переполнение. Значение искажается молча. Ошибки времени выполнения нет.</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- Теория 2: void* -->
+<div class="task-card" id="theory2">
+<div class="task-header">
+<div class="task-title">Тема 2. Указатели void* и разрядность x64</div>
+<span class="task-path">к задаче 2 • task2_void_pointers_x64.cpp</span>
+</div>
+<div class="task-body">
+<div class="theory-text">
+<h3>Что это</h3>
+<p>Указатель — переменная. Она хранит адрес ячейки памяти. Пример: <code>int* p = &amp;x;</code>. Переменная <code>p</code> хранит адрес переменной <code>x</code>. По этому адресу лежит значение типа <code>int</code>. Тип указателя говорит компилятору две вещи. Вещь 1: сколько байт читать при разыменовании (<code>*p</code>). Вещь 2: на сколько байт сдвигаться при <code>p + 1</code>.</p>
+<p><code>void*</code> — универсальный указатель. Он не имеет типа. Он хранит адрес. Он не знает, данные какого типа лежат по этому адресу. Слово <code>void</code> буквально означает «пустота». У типа <code>void</code> нет размера. Поэтому компилятор не знает, сколько байт читать и как их толковать.</p>
+<h3>Зачем нужен void*</h3>
+<ul>
+<li>Обобщённые функции: <code>memcpy</code>, <code>malloc</code>, <code>qsort</code> работают с сырой памятью любого типа. Они принимают <code>void*</code>.</li>
+<li>Системные API: Win32-функции принимают и возвращают <code>void*</code>. Пример: <code>MapViewOfFile</code> (тема 3). Отображаемая память может содержать что угодно: текст, структуры, картинки.</li>
+<li>Хранение чужого адреса: тип данных заранее неизвестен. Тип выясняется позже. Например, по коду типа, переданному рядом.</li>
+</ul>
+<h3>Правила работы с void*</h3>
+<div class="table-wrap">
+<table>
+<tr><th>Операция</th><th>Разрешена?</th><th>Пояснение</th></tr>
+<tr><td>Любой указатель → <code>void*</code></td><td>Да, неявно</td><td><code>void* p = &amp;numInt;</code>. Адрес просто копируется. Это безопасно.</td></tr>
+<tr><td><code>void*</code> → типизированный указатель</td><td>Только явно, через <code>static_cast</code></td><td><code>int* p = static_cast&lt;int*&gt;(ptrVoid);</code>. Программист отвечает за правильность типа.</td></tr>
+<tr><td>Разыменование <code>*ptrVoid</code></td><td>Нет — ошибка компиляции</td><td>Неизвестно, сколько байт читать. У <code>void</code> нет размера.</td></tr>
+<tr><td>Арифметика <code>ptrVoid + 1</code></td><td>Нет (в стандартном C++)</td><td>Неизвестен шаг: сдвигаться на 1, 4 или 8 байт?</td></tr>
+<tr><td><code>sizeof(void*)</code></td><td>Да</td><td>Размер самого указателя известен всегда: 8 байт в x64.</td></tr>
+<tr><td>Сравнение указателей <code>==</code></td><td>Да</td><td>Адреса сравниваются как числа.</td></tr>
+</table>
+</div>
+<p>Главный риск <code>void*</code>: компилятор не проверяет тип при обратном приведении. Пример: в <code>void*</code> лежит адрес <code>double</code>. Программа приводит его к <code>int*</code> и разыменовывает. Результат — мусор: первые 4 байта <code>double</code> читаются как целое число. Ошибки компиляции нет. Программа просто выдаёт неверный результат. Поэтому рядом с <code>void*</code> всегда держи отдельный признак типа. Признак — перечисление, флаг или знание из контекста.</p>
+<h3>Разрядность x64 и размеры типов</h3>
+<p>64-битная архитектура означает: адресное пространство — 64 бита. Указатель адресует 2⁶⁴ байт. Сам указатель занимает 8 байт. Размер указателя зависит только от архитектуры. Тип данных не влияет на него.</p>
+<div class="table-wrap">
+<table>
+<tr><th>Выражение</th><th>Windows x64 (LLP64)</th><th>Linux x64 (LP64)</th><th>Windows/Linux x86</th></tr>
+<tr><td><code>sizeof(void*)</code></td><td>8</td><td>8</td><td>4</td></tr>
+<tr><td><code>sizeof(int*)</code>, <code>sizeof(long*)</code></td><td>8</td><td>8</td><td>4</td></tr>
+<tr><td><code>sizeof(int)</code></td><td>4</td><td>4</td><td>4</td></tr>
+<tr><td><code>sizeof(long)</code></td><td>4</td><td>8</td><td>4</td></tr>
+<tr><td><code>sizeof(long long)</code></td><td>8</td><td>8</td><td>8</td></tr>
+</table>
+</div>
+<p>Модель данных Windows называется LLP64. В ней <code>long long</code> и указатели — 64-битные. А <code>long</code> остаётся 32-битным. Причина: совместимость со старым кодом. Модель Linux называется LP64. В ней <code>long</code> тоже 64-битный. Поэтому программа задачи 2 на Linux печатает <code>sizeof(long) = 8</code>. Это не ошибка. Это другая модель данных. Приём <code>sizeof(void*) * 8</code> спрашивает разрядность у компилятора. В x64 получается 64. В x86 получается 32.</p>
+<h3>Адреса в выводе: почему они каждый раз разные</h3>
+<p>Адреса переменных на стеке при каждом запуске разные. Пример: <code>0x000000A1B2C3D4E5</code>. Причина: ASLR. ASLR — рандомизация размещения адресного пространства. Это защитный механизм Windows. Сравнивать адреса между запусками бессмысленно. Важно лишь одно: адрес из <code>ptrInt</code> совпадает с адресом <code>numInt</code>. Значения извлекаются верно.</p>
+<h3>Типичные ошибки</h3>
+<ul>
+<li>Разыменование <code>void*</code> напрямую (<code>*ptrVoid</code>): ошибка компиляции. Сначала сделай <code>static_cast</code>.</li>
+<li>Неявное приведение <code>void*</code> → <code>int*</code> (<code>int* p = ptrVoid;</code>): ошибка компиляции в C++. В C это разрешено. В C++ — нет.</li>
+<li>Обратное приведение к неверному типу: компилятор промолчит. Значение будет мусором.</li>
+<li>Разыменование указателя после уничтожения переменной: указатель становится висячим. <code>void*</code> не продлевает жизнь объекту.</li>
+<li>Путать размер указателя и размер данных: <code>sizeof(int*)</code> = 8. А <code>sizeof(int)</code> = 4. Это разные вещи.</li>
+<li>Сборка в 32-битном режиме при задаче про x64: <code>sizeof(void*)</code> станет 4. Проверяй целевую платформу x64 в настройках проекта.</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- Теория 3: проецирование файлов -->
+<div class="task-card" id="theory3">
+<div class="task-header">
+<div class="task-title">Тема 3. Проецирование файлов в память: CreateFileMapping и MapViewOfFile</div>
+<span class="task-path">к задаче 3 • task3_memory_mapped_offset.cpp</span>
+</div>
+<div class="task-body">
+<div class="theory-text">
+<h3>Что это</h3>
+<p>Проецирование файла в память — механизм Windows. Содержимое файла отображается в виртуальное адресное пространство процесса. Байты файла становятся обычной памятью. Программа читает их через указатель. Чтение файла превращается в чтение из памяти (<code>pView[i]</code>). Запись в память превращается в запись в файл. Это работает, если отображение открыто на запись. Диспетчер виртуальной памяти Windows сам подгружает страницы с диска. Он сам сбрасывает изменённые страницы обратно.</p>
+<h3>Зачем это нужно</h3>
+<ul>
+<li>Большие файлы: файл в гигабайты не нужно целиком грузить в RAM. Программа отображает только нужное окно. Система подкачивает страницы по мере обращения.</li>
+<li>Скорость: нет буферов и лишних копирований, как при <code>ReadFile</code>. Данные читаются напрямую из страничного кэша системы.</li>
+<li>Общий доступ к памяти: одна секция проецируется в несколько процессов. Это способ межпроцессного взаимодействия (shared memory).</li>
+<li>Произвольный доступ: программа обращается к любому смещению файла напрямую. Функции <code>seek</code> и последовательное чтение не нужны.</li>
+</ul>
+<h3>Цепочка вызовов: от файла к указателю</h3>
+<p>Проецирование всегда делается в три шага. У каждого шага свой дескриптор. Каждый дескриптор потом надо закрыть.</p>
+<div class="table-wrap">
+<table>
+<tr><th>Шаг</th><th>Функция</th><th>Что создаёт</th><th>Что вернуть / закрыть</th></tr>
+<tr><td>1</td><td><code>CreateFileW</code></td><td>Открывает файл. Возвращает <code>HANDLE hFile</code>.</td><td>Ошибка: <code>INVALID_HANDLE_VALUE</code>. Закрытие: <code>CloseHandle(hFile)</code>.</td></tr>
+<tr><td>2</td><td><code>CreateFileMappingW</code></td><td>Создаёт объект ядра «секция». Возвращает <code>HANDLE hMapping</code>.</td><td>Ошибка: <code>NULL</code>. Закрытие: <code>CloseHandle(hMapping)</code>.</td></tr>
+<tr><td>3</td><td><code>MapViewOfFile</code></td><td>Отображает окно секции в память. Возвращает <code>void* pView</code>.</td><td>Ошибка: <code>NULL</code>. Снятие: <code>UnmapViewOfFile(pView)</code>.</td></tr>
+</table>
+</div>
+<p>Порядок освобождения обратен порядку создания. Шаг 1: <code>UnmapViewOfFile(pView)</code>. Шаг 2: <code>CloseHandle(hMapping)</code>. Шаг 3: <code>CloseHandle(hFile)</code>. Закрытие дескриптора файла раньше времени отображение не разрушает: секция держит файл. Но правильный порядок — часть дисциплины. Каждый открытый дескриптор закрывается ровно один раз.</p>
+<h3>CreateFileMapping: параметры</h3>
+<p><code>CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)</code>. Аргументы по порядку. Аргумент 1: дескриптор файла. Аргумент 2: атрибуты безопасности. <code>NULL</code> означает значения по умолчанию. Аргумент 3: защита страниц. <code>PAGE_READONLY</code> означает только чтение. <code>PAGE_READWRITE</code> означает чтение и запись. <code>PAGE_WRITECOPY</code> означает копирование при записи. Аргументы 4 и 5: старший и младший DWORD размера секции. Значения 0, 0 означают размер всего файла. Аргумент 6: имя секции. <code>NULL</code> означает безымянную секцию только для этого процесса. Защита секции и права доступа к файлу обязаны согласовываться. <code>PAGE_READONLY</code> требует <code>GENERIC_READ</code> у файла. <code>PAGE_READWRITE</code> требует <code>GENERIC_READ | GENERIC_WRITE</code>.</p>
+<h3>MapViewOfFile: параметры</h3>
+<p><code>MapViewOfFile(hMapping, FILE_MAP_READ, offsetHigh, offsetLow, viewSize)</code>. Аргументы по порядку. Аргумент 1: дескриптор секции. Аргумент 2: желаемый доступ. <code>FILE_MAP_READ</code> означает чтение. <code>FILE_MAP_WRITE</code> означает запись. <code>FILE_MAP_ALL_ACCESS</code> означает полный доступ. Аргументы 3 и 4: старшая и младшая части смещения начала окна. Аргумент 5: размер окна в байтах. Значение 0 означает: до конца секции. Функция возвращает <code>void*</code> — указатель на начало окна. Программист приводит его к нужному типу. Для текста это <code>const char*</code>.</p>
+<h3>Allocation Granularity — почему смещение не может быть случайным</h3>
+<p>Диспетчер виртуальной памяти Windows работает не с отдельными байтами, а с блоками. Есть два разных размера. Их нельзя путать.</p>
+<div class="table-wrap">
+<table>
+<tr><th>Величина</th><th>Значение (x86/x64)</th><th>На что влияет</th></tr>
+<tr><td><strong>Размер страницы</strong> (<code>dwPageSize</code>)</td><td>4 КБ (4096 байт)</td><td>Минимальная единица подкачки с диска и защиты памяти.</td></tr>
+<tr><td><strong>Гранулярность распределения</strong> (<code>dwAllocationGranularity</code>)</td><td>64 КБ (65 536 байт)</td><td>Выравнивание начальных адресов областей памяти — и смещений в <code>MapViewOfFile</code>.</td></tr>
+</table>
+</div>
+<p>Смещение окна обязано быть кратно именно гранулярности — 64 КБ. Причина: виртуальные адреса областей выравниваются по 64 КБ. Начало окна привязано к этим границам. Смещение 131072 = 2 × 65536: оно допустимо. Смещение 100000, 131073 или 65537: недопустимо. <code>MapViewOfFile</code> немедленно возвращает <code>NULL</code>. <code>GetLastError</code> даёт код 1132 — <code>ERROR_MAPPED_ALIGNMENT</code>. Код означает: базовый адрес или смещение файла не имеют требуемого выравнивания.</p>
+<p>При этом размер окна может быть любым. В задаче он равен 1024 байтам. Выравнивание требуется только для начала окна, а не для его конца. Читать внутри окна можно с любой точностью. Пример: нужны данные со смещения 100000. Программа проецирует окно со смещения 65536. Потом программа берёт <code>pView[100000 − 65536]</code>. Разница добавляется внутри окна.</p>
+<div class="callout-warn">Как узнать гранулярность правильно: не хардкодь 65536. Спроси у системы через <code>GetSystemInfo(&amp;sysInfo)</code>. Возьми поле <code>dwAllocationGranularity</code>. На всех современных Windows x86/x64 это 64 КБ. Но код, который спрашивает, а не угадывает, — переносимый и правильный.</div>
+<h3>Разбиение смещения на offsetHigh / offsetLow</h3>
+<p><code>MapViewOfFile</code> — функция из 32-битной эпохи. Она принимает 64-битное смещение двумя 32-битными параметрами. Поэтому смещение разрезают пополам.</p>
+<div class="code-container"><div class="code-top-bar"><span>Разбиение 64-битного смещения</span></div><pre><code>DWORD offsetLow  = (DWORD)(targetOffset &amp; 0xFFFFFFFF);
+DWORD offsetHigh = (DWORD)(((ULONGLONG)targetOffset &gt;&gt; 32) &amp; 0xFFFFFFFF);
+// Обратная сборка: смещение = offsetHigh * 2^32 + offsetLow</code></pre></div>
+<div class="table-wrap">
+<table>
+<tr><th>Смещение</th><th>offsetHigh</th><th>offsetLow</th></tr>
+<tr><td>131072 (128 КБ, задача)</td><td>0</td><td>131072</td></tr>
+<tr><td>5 368 709 120 (5 ГБ)</td><td>1</td><td>1 073 741 824 (0x40000000)</td></tr>
+<tr><td>0 (начало файла)</td><td>0</td><td>0</td></tr>
+</table>
+</div>
+<p>Приведение к <code>ULONGLONG</code> перед сдвигом обязательно. Сдвиг 32-битного значения на 32 бита — неопределённое поведение. Для смещений меньше 4 ГБ старшая часть всегда равна 0. Но код пишется общим: для файлов любого размера.</p>
+<h3>Чтение порциями: идея задачи</h3>
+<p>Файл в задаче — 256 КБ. Окно — всего 1 КБ. Это модель работы с огромным файлом. Программа не грузит весь файл в память. Программа отображает окно на нужном смещении. Программа читает окно. Программа снимает отображение. Потом программа отображает следующее окно. Следующее окно тоже начинается с кратного 64 КБ смещения. Поэтому порции при проецировании обычно делают размером, кратным гранулярности. Внутри окна программа двигается указателем. Задача показывает один шаг этого цикла: окно на 128 КБ, чтение маркера, снятие отображения.</p>
+<h3>Типичные ошибки</h3>
+<ul>
+<li>Смещение не кратно 64 КБ: <code>MapViewOfFile</code> возвращает <code>NULL</code>. Ошибка 1132 (<code>ERROR_MAPPED_ALIGNMENT</code>).</li>
+<li>Смещение и окно выходят за конец файла: <code>MapViewOfFile</code> возвращает <code>NULL</code>. Файл обязан быть не меньше, чем <code>offset + viewSize</code>.</li>
+<li>Забыть <code>UnmapViewOfFile</code> или <code>CloseHandle</code>: утечка диапазона адресов и дескрипторов.</li>
+<li>Чтение или запись за пределами окна: нарушение доступа. Программа падает.</li>
+<li>Запись через отображение <code>PAGE_READONLY</code> / <code>FILE_MAP_READ</code>: нарушение доступа. Для записи нужны <code>PAGE_READWRITE</code> и <code>FILE_MAP_WRITE</code>.</li>
+<li>Путать коды ошибок: у <code>CreateFileW</code> признак неудачи — <code>INVALID_HANDLE_VALUE</code>. У <code>CreateFileMappingW</code> и <code>MapViewOfFile</code> — <code>NULL</code>.</li>
+<li>Вывод <code>const char*</code> через <code>cout</code> без приведения к <code>void*</code>: печатается строка, а не адрес.</li>
+<li>Проверка <code>GetLastError()</code> не сразу после неудачного вызова: следующий вызов API перезаписывает код ошибки.</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- Условия запуска -->
+<div class="task-card" id="launch">
+<div class="task-header">
+<div class="task-title">Общий раздел. Условия запуска всех программ</div>
+<span class="task-path">компиляция • файлы • проверка</span>
+</div>
+<div class="task-body">
+<div class="theory-text">
+<h3>Сводная таблица: что нужно для каждой программы</h3>
+<div class="table-wrap">
+<table>
+<tr><th>Программа</th><th>ОС</th><th>Файлы заранее</th><th>Права</th><th>Главное условие</th></tr>
+<tr><td>Задача 1 — <code>task1_explicit_casting.cpp</code></td><td>Windows, Linux, macOS</td><td>Не нужны</td><td>Нет</td><td>Нужен только компилятор C++17. Вывод идёт в консоль.</td></tr>
+<tr><td>Задача 2 — <code>task2_void_pointers_x64.cpp</code></td><td>Windows, Linux, macOS</td><td>Не нужны</td><td>Нет</td><td>Обязательна 64-битная сборка (x64). Иначе <code>sizeof(void*)</code> равен 4, а не 8.</td></tr>
+<tr><td>Задача 3 — <code>task3_memory_mapped_offset.cpp</code></td><td>Только Windows</td><td>Не нужны: файл создаётся самой программой.</td><td>Право на запись в рабочую папку</td><td>Файл <code>mapped_large_test.txt</code> создаётся при запуске (256 КБ). Смещение 128 КБ кратно 64 КБ.</td></tr>
+</table>
+</div>
+<h3>Чем компилировать</h3>
+<p>Подходят два компилятора. Нужен стандарт C++17 или новее.</p>
+<div class="code-container"><div class="code-top-bar"><span>Компиляция всех трёх задач</span></div><pre><code>:: MSVC — в Developer Command Prompt for VS (цель x64):
+cl /EHsc /std:c++17 task1_explicit_casting.cpp
+cl /EHsc /std:c++17 task2_void_pointers_x64.cpp
+cl /EHsc /std:c++17 task3_memory_mapped_offset.cpp
+
+:: MinGW-w64 (g++) — в PowerShell / cmd:
+g++ -std=c++17 -o task1.exe task1_explicit_casting.cpp
+g++ -std=c++17 -o task2.exe task2_void_pointers_x64.cpp
+g++ -std=c++17 -o task3.exe task3_memory_mapped_offset.cpp</code></pre></div>
+<p>Флаг <code>/EHsc</code> у MSVC включает обработку исключений C++. Он нужен для работы стандартной библиотеки. Флаг <code>-std=c++17</code> задаёт стандарт языка. Имя выходного exe у MSVC совпадает с именем cpp-файла: <code>task1_explicit_casting.exe</code>. У g++ имя задаёт флаг <code>-o</code>. Запускай из той же папки, где лежит exe: <code>.\task1.exe</code>, <code>.\task2.exe</code>, <code>.\task3.exe</code>.</p>
+<h3>Задача 3: откуда берётся файл</h3>
+<p>В актуальном коде файл создаётся самой программой. <code>CreateFileW</code> вызван с флагом <code>CREATE_ALWAYS</code>. Флаг означает: создать новый файл или обнулить существующий. Поэтому заранее создавать <code>mapped_large_test.txt</code> не нужно. Размер заранее не важен: программа сама записывает 256 КБ (4 блока по 64 КБ). Программа кладёт маркер на смещение 128 КБ. После запуска файл остаётся рядом с exe. Его размер — 262144 байта. Повторный запуск перезаписывает файл заново. Это нормально.</p>
+<p>Если бы в коде стоял <code>OPEN_EXISTING</code>, файл пришлось бы создавать заранее. Так было в сокращённой версии кода из старой шпаргалки. Файл обязан был бы быть не меньше 128 КБ + 1 КБ: смещение плюс окно. Для такого случая файл создаётся одной из команд. Выполняй команду в папке запуска. Нужны права на запись.</p>
+<div class="code-container"><div class="code-top-bar"><span>Создание тестового файла вручную — только для режима OPEN_EXISTING</span></div><pre><code>:: cmd (256 КБ = 262144 байта):
+fsutil file createnew mapped_large_test.txt 262144
+
+:: PowerShell (тот же результат):
+[System.IO.File]::WriteAllBytes('mapped_large_test.txt', [byte[]]::new(262144))</code></pre></div>
+<p>К актуальному коду задачи 3 эти команды не относятся. Они приведены только для ясности. Они объясняют, откуда взялось требование «файл не меньше 128 КБ». Они показывают, как выполнить требование, если преподаватель попросит вариант с <code>OPEN_EXISTING</code>.</p>
+<h3>Проверка результата</h3>
+<ul>
+<li>Задача 1: в выводе обязаны быть 75000 и 100.5000. Любое другое число означает ошибку в значениях или в приведении.</li>
+<li>Задача 2: значения 42 и 123456 извлечены верно. Все <code>sizeof(...*)</code> равны 8. Разрядность — 64 бита. Адреса при каждом запуске разные. Это нормально (ASLR).</li>
+<li>Задача 3: в выводе — гранулярность 65536 байт (64 КБ). В выводе — смещение 131072 байта. В выводе — прочитанный маркер «[СЕКРЕТНЫЙ ТЕКСТ НА СМЕЩЕНИИ 128 КБ]». В выводе — строка об успешном размонтировании. Рядом с exe лежит файл <code>mapped_large_test.txt</code> размером 262144 байта.</li>
+</ul>
+<div class="callout-warn">Двойной клик по exe закрывает консоль сразу после завершения. Вывод прочитать не успеть. Запускай из cmd или PowerShell. Или добавь паузу в конце. Например, <code>system("pause")</code> перед <code>return 0</code>. Пауза нужна только для отладки. В сдаваемый код её лучше не включать.</div>
+</div>
+<div class="run-box">
+<span class="run-title">Связь теории с кодом</span>
+<p>Теория в этом файле относится к шпаргалке <a href="index_ste.html">index_ste.html</a>. Там полные тексты всех трёх программ. Там построчный разбор буквально каждой строки. Там ожидаемый вывод и типичные ошибки запуска. Файлы программ: <code>task1_explicit_casting.cpp</code>, <code>task2_void_pointers_x64.cpp</code>, <code>task3_memory_mapped_offset.cpp</code>.</p>
+</div>
+</div>
+</div>
+</main>
+<footer>Лабораторная работа №4 • Теория (STE-версия) • Системное программирование C++ и Win32 API • 2026<br>Код и построчный разбор — в файле <a href="index_ste.html">index_ste.html</a> (STE) и <a href="index.html">index.html</a> (оригинал). Словарь терминов — <a href="glossary.html">glossary.html</a> и <a href="glossary_ste.html">glossary_ste.html</a>.</footer>
+<script>
+    function copyCode(btn) {
+      const pre = btn.closest('.code-container').querySelector('pre');
+      const text = pre.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = 'Скопировано!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

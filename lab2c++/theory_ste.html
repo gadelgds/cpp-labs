@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Теория к лабораторной №2 — типы, указатели, строки, Win32 (STE-версия)</title>
+<style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --accent-purple: #7c3aed;
+      --accent-purple-bg: #f5f3ff;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.6;
+      padding-bottom: 70px;
+    }
+
+    /* Верхняя панель навигации (Sticky для смартфона) */
+    header {
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-content {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .badge-sub {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+    }
+
+    h1 {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.25;
+    }
+
+    /* Навигационные чипсы */
+    .nav-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 10px 0 2px 0;
+      scrollbar-width: none;
+    }
+    .nav-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .nav-chip {
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: var(--bg-code);
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .nav-chip:hover, .nav-chip:active {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    /* Контейнер контента */
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* Секции */
+    .section-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .section-header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 8px;
+      margin-top: 8px;
+    }
+
+    .section-tag {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+
+    .tag-lab2 { background: var(--primary-light); color: var(--primary); }
+    .tag-lecture { background: var(--accent-purple-bg); color: var(--accent-purple); }
+    .tag-practice { background: var(--accent-green-bg); color: var(--accent-green); }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    /* Карточки заданий */
+    .task-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .task-header {
+      padding: 12px 16px;
+      background: #fafbfc;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .task-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .task-path {
+      font-size: 11.5px;
+      font-family: var(--font-mono);
+      color: var(--text-subtle);
+      background: var(--bg-code);
+      padding: 3px 7px;
+      border-radius: 4px;
+    }
+
+    .task-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Контейнер кода с кнопкой копирования */
+    .code-container {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-code);
+      overflow: hidden;
+    }
+
+    .code-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 12px;
+      background: #e2e8f0;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-subtle);
+    }
+
+    .copy-btn {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-main);
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    .copy-btn.copied {
+      background: var(--accent-green);
+      color: #ffffff;
+      border-color: var(--accent-green);
+    }
+
+    pre {
+      padding: 12px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.45;
+      color: #0f172a;
+    }
+
+    code {
+      font-family: var(--font-mono);
+    }
+
+    /* Блоки объяснений вне кода */
+    .explanation-box {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 13.5px;
+    }
+
+    .explanation-title {
+      font-weight: 800;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .step-num {
+      min-width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+    }
+
+    /* Таблицы */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      -webkit-overflow-scrolling: touch;
+      margin-top: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: var(--text-main);
+      padding: 8px 10px;
+      text-align: left;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) { background-color: #f8fafc; }
+
+    .badge-diff {
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* Карточки теории / вопросов */
+    .qa-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .qa-header {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .qa-badge {
+      background: #0284c7;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 5px;
+      min-width: 26px;
+      text-align: center;
+      margin-top: 2px;
+    }
+
+    .qa-q-text {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.35;
+    }
+
+    .qa-ans-box {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .qa-ans-box ul {
+      margin-left: 18px;
+      margin-top: 6px;
+    }
+
+    .qa-ans-box li {
+      margin-bottom: 4px;
+    }
+
+    .callout-warn {
+      background: var(--accent-amber-bg);
+      border-left: 3px solid var(--accent-amber);
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #92400e;
+      margin-bottom: 8px;
+    }
+
+    .callout-success {
+      background: var(--accent-green-bg);
+      border-left: 3px solid var(--accent-green);
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #065f46;
+      margin-bottom: 8px;
+    }
+
+    /* Построчный разбор и блоки запуска (добавлено 13.11.2026) */
+    .wrap-table table {
+      white-space: normal;
+    }
+    .wrap-table td {
+      vertical-align: top;
+    }
+    .wrap-table td.code-cell {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--text-main);
+    }
+    .run-box {
+      background: var(--accent-green-bg);
+      border: 1px solid #a7f3d0;
+      border-left: 4px solid var(--accent-green);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 13.5px;
+    }
+    .run-box .run-title {
+      font-weight: 800;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent-green);
+      margin-bottom: 6px;
+      display: block;
+    }
+    .run-box code {
+      background: #ffffff;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .run-box pre {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-top: 6px;
+    }
+    .run-box ul {
+      margin-left: 18px;
+      margin-top: 6px;
+    }
+    .run-box li {
+      margin-bottom: 4px;
+      color: var(--text-muted);
+    }
+
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-subtle);
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+<header>
+    <div class="header-content">
+      <span class="badge-sub">Теория • Лабораторная №2 • STE</span>
+      <h1>Теория к лабе №2: типы, указатели, строки, Win32 (STE-версия)</h1>
+      <div class="nav-scroll">
+        <a href="index.html" class="nav-chip">← Шпаргалка и код</a>
+        <a href="index_ste.html" class="nav-chip">Шпаргалка STE</a>
+        <a href="glossary.html" class="nav-chip">Словарь</a>
+        <a href="glossary_ste.html" class="nav-chip">Словарь STE</a>
+        <a href="#t-notation" class="nav-chip">Нотация</a>
+        <a href="#t-models" class="nav-chip">Модели данных</a>
+        <a href="#t-truncation" class="nav-chip">Усечение</a>
+        <a href="#t-handles" class="nav-chip">Хэндлы</a>
+        <a href="#t-pointers" class="nav-chip">Указатели</a>
+        <a href="#t-strings" class="nav-chip">Строки</a>
+        <a href="#t-casting" class="nav-chip">Приведение типов</a>
+        <a href="#t-getchar" class="nav-chip">getchar</a>
+        <a href="#t-strfuncs" class="nav-chip">sprintf / strcat</a>
+        <a href="#t-run" class="nav-chip">Условия запуска</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+<div class="callout-success"><p><strong>STE-версия.</strong> Весь текст переписан по правилам ASD-STE100 (на 60%).</p><p>Правила. Одно предложение — одна мысль. Инструкция — не больше 20 слов. Описание — не больше 25 слов. Действительный залог: предложение называет, кто что делает. Одно понятие — одно слово. Сначала ответ, потом подробности. Один абзац — одна тема.</p><p>Заголовки и названия файлов — как в оригинале. Код и построчный разбор — в файле <a href="index_ste.html">index_ste.html</a>, условия запуска всех 10 программ — в разделе <a href="#t-run">«Условия запуска»</a> внизу.</p><p>Фиксированные слова: программа, файл, строка кода, текстовая строка, указатель, адрес, значение, байт, тип, хэндл, память, стек, компилятор, консоль, вывод, ввод, ошибка, сборка.</p><p>Словарь терминов: <a href="glossary.html">glossary.html</a> (обычный) и <a href="glossary_ste.html">glossary_ste.html</a> (STE).</p></div>
+
+    <!-- ============ 1. ВЕНГЕРСКАЯ НОТАЦИЯ ============ -->
+    <section id="t-notation" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag tag-lab2">Тема 1 • Задание 1 из Word</span>
+        <h2>Венгерская нотация и типы Win32</h2>
+      </div>
+
+      <div class="task-card">
+        <div class="task-body">
+          <div class="explanation-box">
+            <span class="explanation-title">Что это</span>
+            <p><strong>Венгерская нотация</strong> — соглашение об именах переменных в Win32 API. Имя начинается с префикса из строчных букв. Префикс подсказывает тип или назначение переменной. Префикс — это не часть типа. Это только подсказка для читающего код. Компилятор на префикс не смотрит.</p>
+            <p>Нотация появилась во времена C без строгой типизации. Тогда перепутать указатель и число было легко. В современном C++ её роль меньше. Но весь Win32 API написан именно так. Поэтому префиксы надо уметь читать.</p>
+          </div>
+
+          <div class="table-responsive wrap-table">
+            <table>
+              <thead><tr><th>Префикс</th><th>Расшифровка</th><th>Что означает</th><th>Пример</th></tr></thead>
+              <tbody>
+                <tr><td><code>psz</code></td><td>pointer to string, zero-terminated</td><td>Указатель на текстовую строку с нулём на конце</td><td><code>pszName</code> — <code>const char*</code></td></tr>
+                <tr><td><code>lp</code></td><td>long pointer</td><td>Указатель. Раньше слово означало «дальний указатель». Сейчас это обычный указатель.</td><td><code>lpBuffer</code> — <code>void*</code></td></tr>
+                <tr><td><code>h</code></td><td>handle</td><td>Хэндл объекта ядра или модуля</td><td><code>hMod</code> — <code>HMODULE</code></td></tr>
+                <tr><td><code>cb</code></td><td>count of bytes</td><td>Размер в байтах</td><td><code>cbSize</code> — <code>DWORD</code></td></tr>
+                <tr><td><code>dw</code></td><td>double word</td><td>32-битное беззнаковое целое</td><td><code>dwFlags</code> — <code>DWORD</code></td></tr>
+                <tr><td><code>w</code></td><td>word</td><td>16-битное беззнаковое целое</td><td><code>wValue</code> — <code>WORD</code></td></tr>
+                <tr><td><code>b</code></td><td>byte / bool</td><td>Байт или логическое значение</td><td><code>bEnabled</code> — <code>BYTE</code> / <code>BOOL</code></td></tr>
+                <tr><td><code>sz</code></td><td>string, zero-terminated</td><td>Текстовая строка с нулём на конце. Без p — сам массив.</td><td><code>szPath</code> — <code>char[]</code></td></tr>
+                <tr><td><code>n</code> / <code>i</code></td><td>number / integer</td><td>Целое число</td><td><code>nCount</code> — <code>int</code></td></tr>
+                <tr><td><code>f</code></td><td>flag</td><td>Логический флаг</td><td><code>fSuccess</code> — <code>BOOL</code></td></tr>
+                <tr><td><code>u</code></td><td>unsigned</td><td>Беззнаковое целое</td><td><code>uIndex</code> — <code>UINT</code></td></tr>
+                <tr><td><code>l</code></td><td>long</td><td>32-битное знаковое целое</td><td><code>lResult</code> — <code>LONG</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Типы Win32 из задания 1</span>
+            <p><code>LPCSTR</code> = <code>const char*</code>. Это указатель на константную ANSI-строку (L — long pointer, P — pointer, C — const, STR — string). Буква <code>C</code> означает «только чтение». Через такой указатель текстовую строку менять нельзя.</p>
+            <p><code>LPVOID</code> = <code>void*</code>. Это нетипизированный указатель на любой буфер. Его нельзя разыменовать напрямую. Сначала приведите его к конкретному типу.</p>
+            <p><code>HMODULE</code> — хэндл загруженного модуля (.exe или .dll). По сути это базовый адрес модуля в памяти. В Win32 он равен <code>HINSTANCE</code>. <code>HINSTANCE</code> равен <code>HANDLE</code>.</p>
+            <p><code>DWORD</code> = <code>unsigned long</code>. Это 32-битное беззнаковое целое. Тип всегда занимает 4 байта: и в x86, и в x64. Это важно для темы усечения ниже.</p>
+          </div>
+
+          <div class="callout-warn"><strong>Типичная ошибка:</strong> Не читайте префикс как тип. <code>cbSize</code> — это не «тип cb». Это обычное 32-битное число. Имя подсказывает: в нём хранится размер в байтах. И наоборот: переменная без префикса может иметь любой тип. Префикс ни к чему не обязывает компилятор.</div>
+          <p style="font-size: 13.5px;">Тема применяется в файлах: <code>1_lab2_word/task1_types_sizeof.cpp</code> (типы Win32), <code>1_lab2_word/task2_ptr_truncation_fix.cpp</code> (<code>lpContext</code>), <code>1_lab2_word/task3_kernel_handles.cpp</code> (<code>hFile</code>, <code>hEvent</code>, <code>hProcess</code>).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2. МОДЕЛИ ДАННЫХ ============ -->
+    <section id="t-models" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag tag-lab2">Тема 2 • task1_types_sizeof.cpp</span>
+        <h2>Модели данных и sizeof: x86 / x64, LLP64</h2>
+      </div>
+
+      <div class="task-card">
+        <div class="task-body">
+          <div class="explanation-box">
+            <span class="explanation-title">Что это</span>
+            <p><strong>Модель данных</strong> — это правило. Правило задаёт размер каждого базового типа в байтах на данной платформе. Стандарт C++ фиксирует только соотношения (например, <code>sizeof(char) == 1</code>, <code>sizeof(long) &gt;= sizeof(int)</code>). Точные размеры выбирает платформа. Поэтому одна и та же программа на разных системах видит разные размеры типов.</p>
+            <p><strong>sizeof</strong> — оператор. Он возвращает размер типа или переменной в байтах. Компилятор вычисляет его во время компиляции (для обычных типов). Оператор не выполняет свой операнд: <code>sizeof(a++)</code> не увеличит <code>a</code>.</p>
+          </div>
+
+          <div class="table-responsive wrap-table">
+            <table>
+              <thead><tr><th>Модель</th><th>Где действует</th><th>int</th><th>long</th><th>long long</th><th>указатель</th></tr></thead>
+              <tbody>
+                <tr><td><strong>ILP32</strong></td><td>Windows x86, Linux x86</td><td>4</td><td>4</td><td>8</td><td>4</td></tr>
+                <tr><td><strong>LLP64</strong></td><td>Windows x64</td><td>4</td><td>4</td><td>8</td><td>8</td></tr>
+                <tr><td><strong>LP64</strong></td><td>Linux / macOS x64</td><td>4</td><td>8</td><td>8</td><td>8</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Ключевые правила</span>
+            <p>1. В Windows x64 действует <strong>LLP64</strong>. Тип <code>long</code> остаётся 4 байта. Растут только <code>long long</code> и указатели. Microsoft сделала так, чтобы старый 32-битный код продолжал компилироваться без правок.</p>
+            <p>2. В Linux x64 действует <strong>LP64</strong>. Тип <code>long</code> равен 8 байтам. Тот же код под Linux даст другой <code>sizeof(long)</code>. Не заучивайте размеры типов «вообще». Заучивайте размеры только для конкретной платформы.</p>
+            <p>3. Типы <code>ULONG_PTR</code>, <code>DWORD_PTR</code> и <code>INT_PTR</code> — целые числа шириной с указатель. В x86 они занимают 4 байта. В x64 они занимают 8 байт. Они безопасно хранят адреса в целых числах.</p>
+            <p>4. <code>DWORD</code> и <code>LONG</code> всегда занимают 4 байта. Это верно в обеих архитектурах. Не используйте их для хранения указателей.</p>
+          </div>
+
+          <div class="callout-warn"><strong>Типичная ошибка:</strong> Не считайте, что <code>long</code> — это «длинное, значит 8 байт». В Windows это неверно. <code>sizeof(long) == 4</code> и в x86, и в x64. Для гарантированных 8 байт используйте <code>long long</code> или <code>int64_t</code>.</div>
+          <p style="font-size: 13.5px;">Тема применяется в файле <code>1_lab2_word/task1_types_sizeof.cpp</code>. Программа печатает реальные размеры на машине, где запущена. Запустите её в x86- и x64-сборках. Сравните вывод.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 3. УСЕЧЕНИЕ УКАЗАТЕЛЯ ============ -->
+    <section id="t-truncation" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag tag-lab2">Тема 3 • task2_ptr_truncation_fix.cpp</span>
+        <h2>Усечение указателя (pointer truncation)</h2>
+      </div>
+
+      <div class="task-card">
+        <div class="task-body">
+          <div class="explanation-box">
+            <span class="explanation-title">Что это</span>
+            <p>Указатель в x64 занимает 8 байт. 8 байт хранят 64 бита адреса, например <code>0x00007FF7A1B2C3D4</code>. Если записать такой адрес в 32-битное целое (<code>DWORD</code>, 4 байта), старшие 32 бита отбрасываются. Адрес «усекается» до <code>0xA1B2C3D4</code>. Обратное преобразование даёт другой, мусорный адрес.</p>
+            <p>В x86 проблемы нет. Указатель и <code>DWORD</code> занимают по 4 байта. Ошибка проявляется только при переходе на 64 бита. Это классический баг портирования старого кода.</p>
+          </div>
+
+          <div class="table-responsive wrap-table">
+            <table>
+              <thead><tr><th>Шаг</th><th>Что происходит</th><th>Результат</th></tr></thead>
+              <tbody>
+                <tr><td>Ошибочный код</td><td><code>DWORD t = (DWORD)lpContext;</code> в x64</td><td>Старшие 32 бита адреса потеряны. Компилятор даёт предупреждение C4311.</td></tr>
+                <tr><td>Обратный каст</td><td><code>int* p = (int*)t;</code> внутри функции</td><td>Программа восстанавливает чужой адрес вида <code>0x00000000A1B2C3D4</code>.</td></tr>
+                <tr><td>Разыменование</td><td><code>*p</code> читает по битому адресу.</td><td>Программа падает: Access Violation, код <strong>0xC0000005</strong>.</td></tr>
+                <tr><td>Исправление</td><td><code>DWORD_PTR t = (DWORD_PTR)lpContext;</code></td><td>В x64 — 8 байт, адрес цел. В x86 — 4 байта, адрес тоже цел.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Ключевые правила</span>
+            <p>1. Храните адрес только в указателе или в целом «шириной с указатель». Используйте <code>DWORD_PTR</code>, <code>ULONG_PTR</code>, <code>INT_PTR</code> (Win32) или <code>uintptr_t</code>, <code>intptr_t</code>. Никогда не храните адрес в <code>DWORD</code>, <code>int</code> или <code>long</code>.</p>
+            <p>2. <code>reinterpret_cast&lt;int*&gt;(x)</code> — явное низкоуровневое преобразование целого в указатель. Компилятор доверяет программисту. Компилятор не проверяет адрес. Проверка <code>if (pNumber != nullptr)</code> ловит только ноль. Битый ненулевой адрес проверка не ловит.</p>
+            <p>3. Предупреждение компилятора C4311 («pointer truncation») — это не косметика. Это сигнал о потере данных. Сборка с <code>/W4</code> и <code>/WX</code> ловит такие баги до запуска. Флаг <code>/WX</code> делает предупреждения ошибками.</p>
+          </div>
+
+          <div class="callout-warn"><strong>Типичная ошибка:</strong> «На моём компьютере работает». Усечённый адрес может случайно указывать на доступную память. Программа проработает, пока не получит другой адрес. Например, после перезапуска из-за ASLR — случайного базового адреса. Баг плавающий. Ловите его по предупреждению компилятора, а не по тестам.</div>
+          <p style="font-size: 13.5px;">Тема применяется в файле <code>1_lab2_word/task2_ptr_truncation_fix.cpp</code>. Это исправленная версия. Параметр <code>ProcessData</code> и переменная <code>SAFE_PTR</code> имеют тип <code>DWORD_PTR</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 4. ХЭНДЛЫ ЯДРА ============ -->
+    <section id="t-handles" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag tag-lab2">Тема 4 • task3_kernel_handles.cpp</span>
+        <h2>Хэндлы объектов ядра Windows (HANDLE)</h2>
+      </div>
+
+      <div class="task-card">
+        <div class="task-body">
+          <div class="explanation-box">
+            <span class="explanation-title">Что это</span>
+            <p>Ядро Windows не даёт программам прямых указателей на свои внутренние структуры. Прямые указатели — это дыра в безопасности. Вместо этого программа получает <strong>хэндл (HANDLE)</strong>. Хэндл — небольшое число. Хэндл — индекс в таблице хэндлов процесса. По этому индексу ядро само находит объект: файл, событие, процесс или поток.</p>
+            <p>Хэндл — не адрес и не «магическое число». Его нельзя разыменовать. С ним нельзя делать арифметику. Это просто «пропуск». Программа предъявляет пропуск системным функциям.</p>
+          </div>
+
+          <div class="table-responsive wrap-table">
+            <table>
+              <thead><tr><th>Функция</th><th>Что создаёт / возвращает</th><th>Ошибка</th><th>Закрывать?</th></tr></thead>
+              <tbody>
+                <tr><td><code>CreateFileW</code></td><td>Хэндл файла (объект ядра File)</td><td><code>INVALID_HANDLE_VALUE</code> (−1)</td><td>Да, <code>CloseHandle</code></td></tr>
+                <tr><td><code>CreateEventW</code></td><td>Хэндл события (объект ядра Event)</td><td><code>NULL</code> (0)</td><td>Да, <code>CloseHandle</code></td></tr>
+                <tr><td><code>GetCurrentProcess</code></td><td>Псевдо-хэндл текущего процесса (−1)</td><td>Не бывает</td><td>Нет, никогда</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Ключевые правила</span>
+            <p>1. <strong>Почему хэндлы малы и кратны 4.</strong> Записи таблицы хэндлов идут с шагом 4 байта. Ядро резервирует 2 младших бита под служебные флаги. Поэтому реальные хэндлы — 4, 8, 12, 16… (0x4, 0x8, 0xC, 0x10…). Хэндл — это индекс, а не адрес.</p>
+            <p>2. <strong>Псевдо-хэндл −1.</strong> <code>GetCurrentProcess()</code> возвращает константу <code>((HANDLE)(LONG_PTR)-1)</code>. Записи в таблице под неё нет. Счётчик ссылок не растёт. Функции Windows видят −1 и понимают: речь о текущем процессе. Не закрывайте его через <code>CloseHandle</code>. Настоящий хэндл самого себя даёт <code>DuplicateHandle</code>.</p>
+            <p>3. <strong>Разные коды ошибок.</strong> <code>CreateFileW</code> при ошибке возвращает <code>INVALID_HANDLE_VALUE</code>. Большинство других функций создания возвращают <code>NULL</code>. Среди них <code>CreateEventW</code>. Проверяйте именно тот код, который документирован для функции.</p>
+            <p>4. <strong>Каждый открытый хэндл надо закрыть.</strong> Незакрытые хэндлы — утечка. Объект ядра живёт, пока есть хоть один хэндл. Исключение — только псевдо-хэндлы.</p>
+            <p>5. <strong>Флаги из программы.</strong> <code>FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE</code> делают файл временным. Файл удалится сам при закрытии хэндла. <code>CREATE_ALWAYS</code> создаёт файл заново или обнуляет существующий. <code>TRUE</code> в <code>CreateEventW</code> задаёт событие с ручным сбросом (manual-reset). <code>FALSE</code> задаёт начальное состояние «не сигнальное».</p>
+          </div>
+
+          <div class="callout-warn"><strong>Типичная ошибка:</strong> Не закрывайте псевдо-хэндл (<code>CloseHandle(GetCurrentProcess())</code>). Не проверяйте <code>CreateFileW</code> на <code>NULL</code> вместо <code>INVALID_HANDLE_VALUE</code>. Вторая ошибка опасна. При неудаче <code>CreateFileW</code> вернёт −1. Проверка на <code>NULL</code> пропустит ошибку. Программа дальше будет работать с невалидным хэндлом.</div>
+          <p style="font-size: 13.5px;">Тема применяется в файле <code>1_lab2_word/task3_kernel_handles.cpp</code>. Программа создаёт файл <code>temp_kernel_demo.tmp</code> в рабочей папке. Программа сама удаляет файл при закрытии хэндла.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 5. УКАЗАТЕЛИ ============ -->
+    <section id="t-pointers" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag tag-lecture">Тема 5 • 2_lecture_hw/task1_pointers.cpp</span>
+        <h2>Указатели и разыменование</h2>
+      </div>
+
+      <div class="task-card">
+        <div class="task-body">
+          <div class="explanation-box">
+            <span class="explanation-title">Что это</span>
+            <p><strong>Указатель</strong> — переменная. Она хранит адрес другой переменной в памяти. Указатель имеет тип. <code>int*</code> означает «адрес ячейки с целым числом». Сам указатель тоже занимает память: 4 байта в x86 и 8 байт в x64.</p>
+            <p>Не путайте три оператора. <code>&amp;</code> означает «взять адрес». <code>*</code> в объявлении означает «это указатель». <code>*</code> в выражении означает «разыменовать». Разыменовать — значит обратиться к памяти по адресу.</p>
+          </div>
+
+          <div class="table-responsive wrap-table">
+            <table>
+              <thead><tr><th>Выражение</th><th>Что делает</th><th>Пример</th></tr></thead>
+              <tbody>
+                <tr><td><code>int* p;</code></td><td>Объявляет указатель на <code>int</code></td><td>Переменная <code>p</code> хранит адрес.</td></tr>
+                <tr><td><code>p = &amp;a;</code></td><td>Записывает адрес переменной <code>a</code> в <code>p</code>.</td><td>Теперь <code>p</code> указывает на <code>a</code>.</td></tr>
+                <tr><td><code>*p = 30;</code></td><td>Записывает 30 в память, на которую указывает <code>p</code></td><td>Значение <code>a</code> меняется. Указатель <code>p</code> не меняется.</td></tr>
+                <tr><td><code>p = &amp;b;</code></td><td>Перенаправляет указатель на <code>b</code></td><td>Указатель <code>p</code> меняется. Значения <code>a</code> и <code>b</code> не меняются.</td></tr>
+                <tr><td><code>int x = *p;</code></td><td>Читает значение по адресу из <code>p</code></td><td>Копирует значение, на которое указывает <code>p</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Состояния памяти в лекционной задаче</span>
+            <p>Начало: <code>a = 10</code>, <code>b = 20</code>. После <code>int* p = &amp;a;</code> указатель смотрит на <code>a</code>. После <code>*p = 30;</code> значения: <code>a = 30</code>, <code>b = 20</code>. После <code>p = &amp;b;</code> указатель смотрит уже на <code>b</code>. Значения не меняются. После <code>*p = 40;</code> значения: <code>a = 30</code>, <code>b = 40</code>. Вывод: <code>30 40</code>.</p>
+            <p>Главный вывод задачи: <code>*p = ...</code> меняет переменную, на которую указывает указатель. <code>p = ...</code> меняет сам указатель. Это две разные операции. В обеих участвует <code>p</code>.</p>
+          </div>
+
+          <div class="callout-warn"><strong>Типичные ошибки:</strong> (1) Не разыменовывайте неинициализированный указатель (<code>int* p; *p = 5;</code>). Адрес мусорный. Программа падает. (2) Не путайте <code>p = &amp;b</code> и <code>*p = b</code>. Первое перенаправляет указатель. Второе копирует значение. (3) Не разыменовывайте <code>nullptr</code>. Программа мгновенно падает с Access Violation.</div>
+          <p style="font-size: 13.5px;">Тема применяется в файлах <code>2_lecture_hw/task1_pointers.cpp</code> и <code>1_lab2_word/task2_ptr_truncation_fix.cpp</code>. Второй файл имеет обратный каст и разыменование <code>*pNumber</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 6. ПАМЯТЬ СТРОК ============ -->
+    <section id="t-strings" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag tag-lecture">Тема 6 • 2_lecture_hw/task2_strings_memory.cpp</span>
+        <h2>Память строк и нуль-терминатор</h2>
+      </div>
+
+      <div class="task-card">
+        <div class="task-body">
+          <div class="explanation-box">
+            <span class="explanation-title">Что это</span>
+            <p>Строка в C — это массив символов <code>char</code>. Массив заканчивается невидимым символом <code>'\0'</code> (нуль-терминатор, код 0). Функции <code>strlen</code> и <code>strcat</code> находят конец строки по этому символу. Без <code>'\0'</code> строка — просто набор байтов неизвестной длины.</p>
+            <p>Строковый литерал <code>"Hello"</code> занимает 6 байт в памяти. Это 5 букв плюс <code>'\0'</code>. Компилятор добавляет нуль автоматически.</p>
+          </div>
+
+          <div class="table-responsive wrap-table">
+            <table>
+              <thead><tr><th>Объявление</th><th>Что создаётся</th><th>Где лежит</th><th>sizeof</th><th>Можно менять?</th></tr></thead>
+              <tbody>
+                <tr><td><code>char str[] = "Hello";</code></td><td>Массив из 6 <code>char</code> (копия литерала)</td><td>Стек</td><td>6</td><td>Да, <code>str[0] = 'h';</code></td></tr>
+                <tr><td><code>const char* p = "Hello";</code></td><td>Указатель на литерал</td><td>Указатель лежит на стеке. Сам литерал лежит в секции констант (.rdata).</td><td>8 (x64) / 4 (x86)</td><td>Нет, только чтение. Запись — UB (неопределённое поведение).</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Ключевые правила</span>
+            <p>1. <code>sizeof(массив)</code> даёт размер всего массива в байтах: 6. <code>sizeof(указатель)</code> даёт размер указателя: 8 в x64. Это не длина текстовой строки. Длину даёт <code>strlen()</code>: 5 для <code>"Hello"</code>.</p>
+            <p>2. <code>char str[]</code> копирует литерал в свою память. Программа получает свою изменяемую текстовую строку. <code>const char* p</code> только указывает на общий неизменяемый литерал.</p>
+            <p>3. <code>const</code> у указателя — обещание не менять символы через него. Запись через неконстантный указатель на литерал — неопределённое поведение. Обычно программа падает, так как .rdata только для чтения.</p>
+          </div>
+
+          <div class="callout-warn"><strong>Типичная ошибка:</strong> Не думайте, что <code>sizeof(p)</code> — это длина текстовой строки. Длина текстовой строки — <code>strlen(p)</code>. <code>sizeof(p)</code> всегда равен 8 (x64) для любого указателя. Это верно и для строки из 5 символов, и для строки из 5000 символов.</div>
+          <p style="font-size: 13.5px;">Тема применяется в файле <code>2_lecture_hw/task2_strings_memory.cpp</code>. Вывод: <code>6 8</code> в x64 и <code>6 4</code> в x86. Тема применяется также во всех задачах практики с <code>char[]</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 7. ПЕРЕМЕННЫЕ И ПРИВЕДЕНИЕ ТИПОВ ============ -->
+    <section id="t-casting" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag tag-practice">Тема 7 • task1_vars_discount.cpp, task2_type_casting.cpp</span>
+        <h2>Переменные и приведение типов</h2>
+      </div>
+
+      <div class="task-card">
+        <div class="task-body">
+          <div class="explanation-box">
+            <span class="explanation-title">Что это</span>
+            <p><strong>Переменная</strong> — именованная ячейка памяти с типом. Тип решает три вещи. Первое: сколько байт занимает значение. Второе: какие операции допустимы. Третье: как компилятор преобразует значение при смешивании с другими типами. <code>int</code> — целое (4 байта). <code>double</code> — вещественное двойной точности (8 байт).</p>
+            <p><strong>Приведение типов (cast)</strong> — явное или неявное преобразование значения из одного типа в другой. Программист пишет явное приведение (<code>static_cast&lt;double&gt;(a)</code>). Компилятор делает неявное приведение сам по правилам языка.</p>
+          </div>
+
+          <div class="table-responsive wrap-table">
+            <table>
+              <thead><tr><th>Выражение (a = 7, b = 3)</th><th>Тип операции</th><th>Результат</th><th>Почему</th></tr></thead>
+              <tbody>
+                <tr><td><code>a / b</code></td><td>Целочисленное деление</td><td><code>2</code> (тип <code>int</code>)</td><td>Оба операнда имеют тип <code>int</code>. Деление отбрасывает дробную часть. Остаток 1 теряется.</td></tr>
+                <tr><td><code>static_cast&lt;double&gt;(a) / b</code></td><td>Вещественное деление</td><td><code>2.333333…</code> (тип <code>double</code>)</td><td>Один операнд имеет тип <code>double</code>. Компилятор неявно приводит второй операнд к <code>double</code>.</td></tr>
+                <tr><td><code>(double)a / b</code></td><td>То же, C-style каст</td><td><code>2.333333…</code></td><td>Эквивалентно. Но <code>static_cast</code> виднее и безопаснее.</td></tr>
+                <tr><td><code>price * (1.0 - discount)</code></td><td>Смешанная арифметика</td><td><code>297.5</code> (тип <code>double</code>)</td><td>Компилятор приводит <code>int</code> к <code>double</code>. Второй операнд имеет тип <code>double</code>.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Ключевые правила</span>
+            <p>1. <strong>Целочисленное деление отбрасывает дробь, а не округляет.</strong> <code>7 / 3 == 2</code>, а не 2.33 и не 2.5. Если нужен остаток, используйте оператор <code>%</code> (<code>7 % 3 == 1</code>).</p>
+            <p>2. <strong>Достаточно привести один операнд.</strong> Один операнд деления стал <code>double</code>. Компилятор автоматически приводит второй операнд. Приводить оба не нужно.</p>
+            <p>3. <strong><code>static_cast&lt;double&gt;(a)</code> лучше C-style <code>(double)a</code>.</strong> Каст видно в коде. Поиск находит каст. Каст не делает неожиданных низкоуровневых преобразований. <code>reinterpret_cast</code> делает такие преобразования.</p>
+            <p>4. <strong>Форматирование вывода.</strong> <code>std::fixed</code> и <code>std::setprecision(n)</code> из <code>&lt;iomanip&gt;</code> задают ровно <code>n</code> знаков после запятой. Манипуляторы «липкие». Они действуют на все следующие выводы вещественных чисел. Они не округляют сами значения. Они меняют только отображение.</p>
+            <p>5. <strong>Деньги и double.</strong> Учебные задачи допускают скидку в <code>double</code>. Реальные расчёты не хранят деньги в вещественных числах. 0.1 + 0.2 ≠ 0.3 из-за двоичных дробей. Храните копейки в <code>int</code>. Делите на 100 только при выводе.</p>
+          </div>
+
+          <div class="callout-warn"><strong>Типичная ошибка:</strong> <code>double x = a / b;</code> при <code>a = 7, b = 3</code> даст <code>2.0</code>, а не <code>2.333</code>. Деление выполняется до присваивания. Оба операнда ещё имеют тип <code>int</code>. Приводите операнды деления, а не его результат.</div>
+          <p style="font-size: 13.5px;">Тема применяется в файлах <code>3_practice_hw/task1_vars_discount.cpp</code> и <code>3_practice_hw/task2_type_casting.cpp</code>. Первый файл: сдача, скидка 15%, вывод с 2 знаками. Второй файл: деление 7/3 и вывод с 3 знаками.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 8. GETCHAR ============ -->
+    <section id="t-getchar" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag tag-practice">Тема 8 • task3_char_reading.cpp</span>
+        <h2>getchar и посимвольный ввод</h2>
+      </div>
+
+      <div class="task-card">
+        <div class="task-body">
+          <div class="explanation-box">
+            <span class="explanation-title">Что это</span>
+            <p><code>getchar()</code> (из <code>&lt;cstdio&gt;</code>) читает из стандартного ввода <code>stdin</code> ровно один символ. Функция возвращает его код. Это самый низкий уровень символьного ввода в C. Функция не разбирает числа или слова. Она читает только байты один за другим.</p>
+            <p>Цикл <code>while ((ch = getchar()) != '\n' &amp;&amp; ch != EOF)</code> — классический идиом. Цикл читает, пока не встретится конец строки или конец ввода. Нажатие Enter даёт <code>'\n'</code>.</p>
+          </div>
+
+          <div class="table-responsive wrap-table">
+            <table>
+              <thead><tr><th>Вопрос</th><th>Ответ</th></tr></thead>
+              <tbody>
+                <tr><td>Почему <code>ch</code> — <code>int</code>, а не <code>char</code>?</td><td><code>getchar()</code> возвращает любое значение символа (0–255) плюс особое значение <code>EOF</code> (обычно −1) для конца ввода. В <code>char</code> эти значения не помещаются одновременно. −1 совпал бы с символом 0xFF. Поэтому тип возвращаемого значения — <code>int</code>.</td></tr>
+                <tr><td>Что такое <code>EOF</code>?</td><td>Это константа «конец файла/ввода» (обычно −1). В консоли Windows нажмите Ctrl+Z, затем Enter. В Linux/macOS нажмите Ctrl+D.</td></tr>
+                <tr><td>Зачем скобки вокруг присваивания?</td><td>Присваивание <code>=</code> имеет низкий приоритет. Без скобок <code>ch = getchar() != '\n'</code> прочиталось бы как <code>ch = (getchar() != '\n')</code>. В <code>ch</code> попал бы 0 или 1. Скобки заставляют сначала присвоить символ, потом сравнить.</td></tr>
+                <tr><td>Почему символы приходят только после Enter?</td><td>Консоль Windows буферизует ввод построчно. Программа получает символы, только когда пользователь нажал Enter. Это свойство терминала, а не <code>getchar()</code>. Для чтения клавиш без Enter используйте другие функции (<code>_getch()</code>).</td></tr>
+                <tr><td>Что делает <code>if (ch == ' ')</code>?</td><td>Строка сравнивает код символа с кодом пробела (ASCII 32). Строка увеличивает счётчик. Табуляция (<code>'\t'</code>) и другие пробельные символы пробелом не считаются.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout-warn"><strong>Типичные ошибки:</strong> (1) Не пишите <code>char ch;</code> вместо <code>int ch;</code>. Тогда <code>EOF</code> (−1) неотличим от символа с кодом 255. Цикл может не завершиться или завершиться раньше времени. (2) Не забывайте скобки в <code>while (ch = getchar() != '\n')</code>. Без скобок присваивается результат сравнения, а не символ. (3) Не смешивайте <code>getchar()</code> и <code>std::cin</code> без синхронизации. Потоки C и C++ могут конфликтовать.</div>
+          <p style="font-size: 13.5px;">Тема применяется в файле <code>3_practice_hw/task3_char_reading.cpp</code>. Программа интерактивная. Она ждёт ввода текстовой строки. Она считает пробелы в строке.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 9. SPRINTF / STRCAT ============ -->
+    <section id="t-strfuncs" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag tag-practice">Тема 9 • task4_num_to_string.cpp, task4b_move_letter_n.cpp</span>
+        <h2>sprintf, strcat и безопасность строк</h2>
+      </div>
+
+      <div class="task-card">
+        <div class="task-body">
+          <div class="explanation-box">
+            <span class="explanation-title">Что это</span>
+            <p>В C нет встроенного типа «строка». Строка — это массив <code>char</code> с нулём на конце. Работа со строкой — это функции из <code>&lt;cstring&gt;</code> и <code>&lt;cstdio&gt;</code>. Две главные функции здесь: <code>sprintf</code> и <code>strcat</code>. <code>sprintf</code> пишет форматированный вывод в массив вместо экрана. <code>strcat</code> дописывает одну текстовую строку в конец другой.</p>
+          </div>
+
+          <div class="table-responsive wrap-table">
+            <table>
+              <thead><tr><th>Функция</th><th>Что делает</th><th>Что важно знать</th></tr></thead>
+              <tbody>
+                <tr><td><code>sprintf(buf, "%d", ID)</code></td><td>Пишет число <code>ID</code> как текст в массив <code>buf</code>. Функция добавляет <code>'\0'</code>.</td><td><code>"%d"</code> — формат десятичного целого. Результат для 245 — символы <code>'2','4','5','\0'</code>.</td></tr>
+                <tr><td><code>strcat(dst, src)</code></td><td>Функция ищет <code>'\0'</code> в <code>dst</code>. Функция копирует туда <code>src</code> вместе с её <code>'\0'</code>.</td><td>В <code>dst</code> должно быть достаточно места. Иначе произойдёт переполнение буфера.</td></tr>
+                <tr><td><code>strncat(dst, src, n)</code></td><td>Как <code>strcat</code>. Но копирует не более <code>n</code> символов.</td><td>Задача 4b копирует начало слова без буквы «н».</td></tr>
+                <tr><td><code>strstr(haystack, needle)</code></td><td>Функция ищет подстроку. Функция возвращает указатель на неё или <code>nullptr</code>.</td><td>Задача 4b ищет букву «н» в слове «Клиент».</td></tr>
+                <tr><td><code>strlen(s)</code></td><td>Длина текстовой строки в байтах (без <code>'\0'</code>).</td><td>Для «н» в UTF-8 функция вернёт 2. Это байты, а не символы.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Ключевые правила</span>
+            <p>1. <strong>Запас памяти обязателен.</strong> Массив <code>char clientStr[128] = "Клиент №";</code> в разы больше текстовой строки. Запас даёт место для <code>strcat</code>. Массив «впритык» дал бы переполнение буфера. Переполнение роняет программу или портит соседние данные.</p>
+            <p>2. <strong><code>_CRT_SECURE_NO_WARNINGS</code> — до всех строк <code>#include</code>.</strong> MSVC считает <code>sprintf</code> и <code>strcat</code> небезопасными. MSVC выдаёт предупреждение C4996. Макрос отключает предупреждение. Строка стоит самой первой в файле. Иначе макрос не работает. В MinGW макрос ни на что не влияет.</p>
+            <p>3. <strong>Безопасные аналоги.</strong> Современный код использует <code>snprintf</code> вместо <code>sprintf</code>. Функция имеет лимит размера. Код использует <code>strcat_s</code> вместо <code>strcat</code> (MSVC). Код использует <code>std::string</code> и <code>std::to_string(ID)</code>. Учебные задачи допускают старые функции. Знайте их опасность.</p>
+            <p>4. <strong>Байты ≠ символы в UTF-8.</strong> Русские буквы в UTF-8 занимают по 2 байта. Буква «н» — это байты 0xD0 0xBD. Поэтому <code>strlen("н") == 2</code>. Арифметика указателей (<code>posN - clientStr</code>) считает байты. <code>strncat(result, clientStr, 8)</code> копирует 4 буквы «Клие» (8 байт). Задача 4b целиком построена на этом. Программа вырезает «н» по байтовым смещениям, а не по номерам символов.</p>
+            <p>5. <strong><code>const char[]</code> не меняется.</strong> В задаче 4b исходная текстовая строка имеет <code>const</code>. Программа собирает новую текстовую строку <code>result</code>. Это и есть требование задачи: исходную переменную не трогаем.</p>
+          </div>
+
+          <div class="callout-warn"><strong>Типичные ошибки:</strong> (1) Не используйте <code>strcat</code> в массив без запаса. Это переполнение. (2) Не забывайте <code>'\0'</code> в массиве, заполненном вручную. Функции строк читают дальше по памяти. (3) Не считайте <code>strlen</code> числом символов для русского текста. Это байты. (4) Не используйте <code>sprintf</code> без проверки размера буфера. Число может не влезть. Для <code>int</code> достаточно 12 байт. В задачах взят запас 32.</div>
+          <p style="font-size: 13.5px;">Тема применяется в файлах <code>3_practice_hw/task4_num_to_string.cpp</code> и <code>3_practice_hw/task4b_move_letter_n.cpp</code>. Первый файл даёт «Клиент №245». Второй файл даёт «нКлиет245». Исходная текстовая строка не изменена.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 10. УСЛОВИЯ ЗАПУСКА ============ -->
+    <section id="t-run" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag tag-lab2">Общий раздел</span>
+        <h2>Условия запуска: компиляторы, команды, требования</h2>
+      </div>
+
+      <div class="task-card">
+        <div class="task-body">
+          <div class="explanation-box">
+            <span class="explanation-title">Чем компилировать</span>
+            <p><strong>MSVC (Visual Studio, Windows):</strong> Откройте «Developer Command Prompt for VS». Перейдите в папку с файлом. Соберите файл командой <code>cl /EHsc /W4 имя.cpp</code>. Флаг <code>/W4</code> включает предупреждения. Он ловит, например, C4311 про усечение указателя. Получится <code>имя.exe</code> в той же папке.</p>
+            <p><strong>MinGW-w64 (g++, Windows):</strong> Соберите файл командой <code>g++ -Wall -Wextra -o имя.exe имя.cpp</code>. MinGW-w64 имеет <code>windows.h</code> и Win32 API. Поэтому задачи 1–3 из лабы собираются и там.</p>
+            <p><strong>Запуск:</strong> в cmd введите <code>имя.exe</code>. В PowerShell введите <code>.\имя.exe</code>. Запускайте из папки с исходником. Тогда вы увидите файлы, которые создаёт программа (задача с хэндлами).</p>
+            <p><strong>Кодировка:</strong> Все Win32-программы лабы имеют <code>system("chcp 65001 &gt; nul")</code>. Команда переключает консоль на UTF-8. Консоль показывает русский текст правильно. Сохраните исходники в UTF-8. Если консоль показывает знаки вопроса вместо букв, проверьте кодировку файла и шрифт консоли.</p>
+          </div>
+
+          <div class="table-responsive wrap-table">
+            <table>
+              <thead><tr><th>Программа</th><th>Только Windows?</th><th>Нужен ввод?</th><th>Файлы заранее?</th><th>Что создаёт / ожидаемый вывод</th></tr></thead>
+              <tbody>
+                <tr><td><code>task1_types_sizeof.cpp</code></td><td>Да (<code>windows.h</code>)</td><td>Нет</td><td>Нет</td><td>Таблица sizeof. В x64 типы int, long, DWORD и LONG занимают 4 байта. Остальные типы занимают 8 байт.</td></tr>
+                <tr><td><code>task2_ptr_truncation_fix.cpp</code></td><td>Да (<code>windows.h</code>)</td><td>Нет</td><td>Нет</td><td><code>Value: 2026</code></td></tr>
+                <tr><td><code>task3_kernel_handles.cpp</code></td><td>Да (<code>windows.h</code>)</td><td>Нет</td><td>Нет</td><td>Программа сама создаёт <code>temp_kernel_demo.tmp</code> в рабочей папке. Программа удаляет файл при закрытии. Программа печатает 3 хэндла. Третий хэндл — −1.</td></tr>
+                <tr><td><code>task1_pointers.cpp</code></td><td>Нет, везде</td><td>Нет</td><td>Нет</td><td><code>30 40</code></td></tr>
+                <tr><td><code>task2_strings_memory.cpp</code></td><td>Нет, везде</td><td>Нет</td><td>Нет</td><td><code>6 8</code> в x64. <code>6 4</code> в x86.</td></tr>
+                <tr><td><code>task1_vars_discount.cpp</code></td><td>Нет, везде</td><td>Нет</td><td>Нет</td><td>Сдача 150 руб. Скидка 15.00%. Цена со скидкой 297.50 руб.</td></tr>
+                <tr><td><code>task2_type_casting.cpp</code></td><td>Нет, везде</td><td>Нет</td><td>Нет</td><td><code>2</code> и <code>2.333</code></td></tr>
+                <tr><td><code>task3_char_reading.cpp</code></td><td>Нет, везде</td><td>Да, строка + Enter</td><td>Нет</td><td><code>Количество введенных пробелов: N</code></td></tr>
+                <tr><td><code>task4_num_to_string.cpp</code></td><td>Нет, везде</td><td>Нет</td><td>Нет</td><td><code>Клиент №245</code></td></tr>
+                <tr><td><code>task4b_move_letter_n.cpp</code></td><td>Нет, везде</td><td>Нет</td><td>Нет</td><td><code>нКлиет245</code>. Исходная текстовая строка «Клиент» не изменена.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Что сломается, если что-то не так</span>
+            <p>— <strong>«windows.h: No such file»</strong> — задача собирается не под Windows. Или в MinGW не установлен пакет win32. Переносимые задачи (лекция, практика) собираются везде. Win32-задачи собираются только под Windows.</p>
+            <p>— <strong>Предупреждение C4996 про sprintf/strcat</strong> — в MSVC без первой строки <code>#define _CRT_SECURE_NO_WARNINGS</code> сборка задач 4 и 4b даст предупреждение. С флагом <code>/WX</code> предупреждение станет ошибкой. Макрос уже стоит в файлах. Не удаляйте его.</p>
+            <p>— <strong>Кракозябры вместо русского текста</strong> — исходник сохранён не в UTF-8. Или консоль не в UTF-8. Сохраните файл в UTF-8. Убедитесь, что выполняется <code>chcp 65001</code>.</p>
+            <p>— <strong>Задача 3 (хэндлы): CreateFile вернул ошибку</strong> — нет прав на запись в рабочей папке. Запустите из папки, куда разрешена запись. Например, из папки с исходником. Не запускайте из системного каталога.</p>
+            <p>— <strong>Задача 3 (getchar): программа «висит»</strong> — она ждёт ввода. Введите текст и нажмите Enter. Завершить ввод без Enter нельзя. Консоль буферизует ввод построчно.</p>
+            <p>— <strong>Нет файлов для подготовки ни в одной задаче лабы 2</strong> — проверено по коду. Все 10 программ работают без заранее созданных файлов. Единственный файл (<code>temp_kernel_demo.tmp</code>) программа создаёт и удаляет сама.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    Лабораторная работа №2 • Теория по задачам • 2026 • STE-версия • <a href="index_ste.html">Шпаргалка с кодом и построчным разбором</a>
+  </footer>
+
+</body>
+</html>

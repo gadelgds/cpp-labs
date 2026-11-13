@@ -4,6 +4,7 @@
 
 > **Мобильная веб-шпаргалка**: Откройте [`index.html`](index.html) на смартфоне или ПК — чистый светлый дизайн, кнопки быстрого копирования чистого C++ кода и подробный построчный разбор каждой команды.
 > **Теория отдельным файлом**: [`theory.html`](theory.html) — небуферизированный I/O и ошибка 87, file mapping и TLB Flush, виртуальная память и VirtualAlloc, замер времени, условия запуска.
+> **Словарь терминов**: [`glossary.html`](glossary.html) — обычный словарь (17 терминов, коротко и простыми словами); [`glossary_ste.html`](glossary_ste.html) — тот же словарь в стиле ASD-STE100.
 > **Чистый код без комментариев + полный разбор**: [`lab5_clean_no_comments.html`](lab5_clean_no_comments.html).
 
 ---
@@ -14,6 +15,10 @@
 | :--- | :--- |
 | [`index.html`](index.html) | Мобильная шпаргалка с кнопками копирования и построчным разбором |
 | [`theory.html`](theory.html) | Теория по каждой задаче + условия запуска (отдельный файл) |
+| [`glossary.html`](glossary.html) | Словарь терминов (версия А, обычный): 17 терминов, коротко и простыми словами |
+| [`glossary_ste.html`](glossary_ste.html) | Словарь терминов (версия Б, стиль ASD-STE100): те же 17 терминов |
+| [`index_ste.html`](index_ste.html) | Шпаргалка в стиле ASD-STE100: тот же разбор, проза переписана короткими предложениями |
+| [`theory_ste.html`](theory_ste.html) | Теория в стиле ASD-STE100: те же разделы, проза переписана короткими предложениями |
 | [`task1_no_buffering_bench.cpp`](task1_no_buffering_bench.cpp) | Задача №1: Небуферизированный I/O, демонстрация ошибки 87, выравнивание через `VirtualAlloc` и бенчмарк |
 | [`task2_dbms_sim_filemapping_tlb.cpp`](task2_dbms_sim_filemapping_tlb.cpp) | Задача №2: Симуляция СУБД (10 000 операций), сравнение `ReadFile/WriteFile` со скользящим окном `MapViewOfFile` и сбросом TLB |
 | [`task3_direct_kernel_memory.cpp`](task3_direct_kernel_memory.cpp) | Задача №3: Прямое выделение памяти у ядра Windows через `VirtualAlloc` под массив, заполнение квадратами и `VirtualFree` |

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Словарь терминов: небуферизированный I/O, TLB и VirtualAlloc</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --accent-red: #dc2626;
+      --accent-red-bg: #fef2f2;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-page); color: var(--text-main); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; padding-bottom: 80px; }
+    header { background: rgba(255, 255, 255, 0.96); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(8px); padding: 12px 16px; box-shadow: var(--shadow-sm); }
+    .header-content { max-width: 760px; margin: 0 auto; }
+    .badge-sub { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    h1 { font-size: 19px; font-weight: 800; color: var(--text-main); line-height: 1.25; }
+    h2 { font-size: 17px; font-weight: 800; margin: 4px 0 6px 0; }
+    h3 { font-size: 15px; font-weight: 700; margin: 12px 0 4px 0; }
+    p { margin: 6px 0; }
+    ul, ol { margin: 6px 0 6px 20px; }
+    li { margin: 3px 0; }
+    .nav-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px 0; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+    .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
+    main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+    .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .task-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .task-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .task-path { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-subtle); background: var(--bg-code); padding: 3px 7px; border-radius: 4px; }
+    .task-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .code-container { position: relative; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-code); overflow: hidden; }
+    .code-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: #e2e8f0; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); }
+    .copy-btn { background: #ffffff; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: var(--text-main); transition: all 0.2s; }
+    .copy-btn:hover { background: var(--primary); color: #ffffff; border-color: var(--primary); }
+    .copy-btn.copied { background: var(--accent-green); color: #ffffff; border-color: var(--accent-green); }
+    pre { padding: 12px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.45; color: #0f172a; }
+    pre.cmd { background: #0f172a; color: #e2e8f0; border-radius: var(--radius-sm); }
+    .explanation-box { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .explanation-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); }
+    .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
+    .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
+    .callout-error { background: var(--accent-red-bg); border-left: 3px solid var(--accent-red); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #991b1b; }
+    .callout-info { background: var(--primary-light); border-left: 3px solid var(--primary); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #1e3a8a; }
+    table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+    table.tbl th, table.tbl td { border: 1px solid var(--border); padding: 6px 8px; text-align: left; vertical-align: top; }
+    table.tbl th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    table.tbl td code, .task-body code { font-family: var(--font-mono); font-size: 12px; background: var(--bg-code); padding: 1px 4px; border-radius: 3px; }
+    table.tbl tr:nth-child(even) td { background: #f8fafc; }
+    table.tbl td.ln { white-space: nowrap; font-family: var(--font-mono); font-weight: 700; font-size: 12px; }
+    footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Лабораторная работа №5 • Словарь — версия А</span>
+      <h1>Словарь терминов: небуферизированный I/O, TLB и VirtualAlloc</h1>
+      <div class="nav-scroll">
+        <a href="index.html" class="nav-chip">Шпаргалка с кодом</a><a href="theory.html" class="nav-chip">Теория → theory.html</a><a href="glossary_ste.html" class="nav-chip">Версия Б (стиль STE) →</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <div class="callout-info"><strong>Как читать словарь.</strong> Здесь объяснены все трудные слова из лабы 5 — коротко и простыми словами. <strong>Буфер</strong> — это кусок памяти, куда программа кладёт данные. <strong>Диск</strong> — это устройство, где файлы хранятся постоянно (жёсткий диск или SSD). <strong>Смещение</strong> — это номер байта в файле, с которого начинается чтение. <strong>Ядро Windows</strong> — это главная часть Windows, которая управляет памятью и дисками. <strong>Физическая память</strong> — это настоящая память компьютера.</div>
+
+
+    <div class="task-card">
+      <div class="task-header"><div class="task-title">Термины по алфавиту — 17 терминов</div><span class="task-path">Сначала кириллица, потом латиница</span></div>
+      <div class="task-body">
+        <ol>
+        <li><a href="#t01">Виртуальная память</a></li>
+        <li><a href="#t02">Выравнивание</a></li>
+        <li><a href="#t03">Гранулярность распределения</a></li>
+        <li><a href="#t04">Небуферизированный ввод-вывод</a></li>
+        <li><a href="#t05">Ошибка 87 (ERROR_INVALID_PARAMETER)</a></li>
+        <li><a href="#t06">Проецирование файла в память</a></li>
+        <li><a href="#t07">Сброс TLB</a></li>
+        <li><a href="#t08">Сектор</a></li>
+        <li><a href="#t09">Системный кэш</a></li>
+        <li><a href="#t10">Страница памяти</a></li>
+        <li><a href="#t11">СУБД</a></li>
+        <li><a href="#t12">TLB</a></li>
+        <li><a href="#t13">VirtualAlloc</a></li>
+        <li><a href="#t14">FILE_FLAG_NO_BUFFERING</a></li>
+        <li><a href="#t15">MEM_COMMIT</a></li>
+        <li><a href="#t16">MEM_RESERVE</a></li>
+        <li><a href="#t17">QueryPerformanceCounter</a></li>
+        </ol>
+      </div>
+    </div>
+
+    <div id="t01" class="task-card">
+      <div class="task-header"><div class="task-title">Виртуальная память</div><span class="task-path">Задача №3</span></div>
+      <div class="task-body">
+        <p>Каждая программа видит своё собственное адресное пространство, как будто вся память компьютера принадлежит только ей. На самом деле Windows переводит адреса программы в настоящую физическую память, поэтому две программы могут использовать один и тот же адрес и не мешать друг другу.</p>
+        <div class="callout-success"><strong>Пример:</strong> Два человека живут в разных квартирах с одинаковым номером — почтальон (Windows) знает, кому какое письмо нести.</div>
+      </div>
+    </div>
+
+    <div id="t02" class="task-card">
+      <div class="task-header"><div class="task-title">Выравнивание</div><span class="task-path">Задача №1</span></div>
+      <div class="task-body">
+        <p>Буфер считается выровненным, когда его адрес делится на 4096 без остатка. Диск работает только целыми секторами, поэтому программа должна ставить буфер точно на границу сектора.</p>
+        <div class="callout-success"><strong>Пример:</strong> Книги на полке ставят с края полки, а не с середины.</div>
+      </div>
+    </div>
+
+    <div id="t03" class="task-card">
+      <div class="task-header"><div class="task-title">Гранулярность распределения</div><span class="task-path">Задача №2</span></div>
+      <div class="task-body">
+        <p>Шаг в 64 КБ, с которым Windows выдаёт адреса: начало любого выделенного участка памяти всегда кратно 64 КБ. Программа не может попросить участок с произвольного адреса.</p>
+        <div class="callout-success"><strong>Пример:</strong> Забор ставят только по столбам, расстояние между столбами всегда одинаковое.</div>
+      </div>
+    </div>
+
+    <div id="t04" class="task-card">
+      <div class="task-header"><div class="task-title">Небуферизированный ввод-вывод</div><span class="task-path">Задача №1</span></div>
+      <div class="task-body">
+        <p>Чтение и запись файла напрямую, без системного кэша: данные идут с диска сразу в буфер программы. Так работают базы данных, которым не нужна вторая копия данных в памяти Windows.</p>
+        <div class="callout-success"><strong>Пример:</strong> Покупатель забирает товар прямо со склада, а не ждёт, пока его выложат на полку магазина.</div>
+      </div>
+    </div>
+
+    <div id="t05" class="task-card">
+      <div class="task-header"><div class="task-title">Ошибка 87 (ERROR_INVALID_PARAMETER)</div><span class="task-path">Задача №1</span></div>
+      <div class="task-body">
+        <p>Ответ Windows «неверные параметры»: программа попросила прочитать файл, но буфер, смещение в файле или размер чтения не кратны 4096. Чтение не выполняется, программа получает код 87 и должна исправить параметры.</p>
+        <div class="callout-success"><strong>Пример:</strong> Ключ не подходит к замку — дверь не открывается, и виноват не замок, а ключ.</div>
+      </div>
+    </div>
+
+    <div id="t06" class="task-card">
+      <div class="task-header"><div class="task-title">Проецирование файла в память</div><span class="task-path">Задача №2</span></div>
+      <div class="task-body">
+        <p>Способ работать с файлом как с обычной памятью: Windows показывает файл в адресном пространстве программы, и программа читает и пишет его обычными действиями с памятью, без отдельных команд чтения и записи файла.</p>
+        <div class="callout-success"><strong>Пример:</strong> Книга лежит открытой на столе — читатель сразу берёт любую страницу, а не ходит за ней в библиотеку.</div>
+      </div>
+    </div>
+
+    <div id="t07" class="task-card">
+      <div class="task-header"><div class="task-title">Сброс TLB</div><span class="task-path">Задача №2</span></div>
+      <div class="task-body">
+        <p>Очистка маленького кэша в процессоре, где хранятся переводы адресов в физическую память. Windows очищает этот кэш, когда меняет адреса программы, и после очистки процессор ищет переводы заново, поэтому работа замедляется.</p>
+        <div class="callout-success"><strong>Пример:</strong> Учитель стирает шпаргалку с доски, и ученикам приходится писать её заново.</div>
+      </div>
+    </div>
+
+    <div id="t08" class="task-card">
+      <div class="task-header"><div class="task-title">Сектор</div><span class="task-path">Задача №1</span></div>
+      <div class="task-body">
+        <p>Самый маленький кусок диска, который диск читает или пишет за один раз; в этой лабе его размер — 4096 байт. Меньше одного сектора диск прочитать не может, поэтому программа всегда просит целое число секторов.</p>
+        <div class="callout-success"><strong>Пример:</strong> Кирпич — самая маленькая часть стены, стену строят только из целых кирпичей.</div>
+      </div>
+    </div>
+
+    <div id="t09" class="task-card">
+      <div class="task-header"><div class="task-title">Системный кэш</div><span class="task-path">Задачи №1, №2</span></div>
+      <div class="task-body">
+        <p>Память, где Windows хранит копии данных из файлов, чтобы второй раз не ходить на диск. Первый раз файл читается с диска, а потом программа берёт данные из кэша — это гораздо быстрее.</p>
+        <div class="callout-success"><strong>Пример:</strong> Повар держит нож под рукой, а не ходит за ним на склад каждый раз.</div>
+      </div>
+    </div>
+
+    <div id="t10" class="task-card">
+      <div class="task-header"><div class="task-title">Страница памяти</div><span class="task-path">Задачи №1–№3</span></div>
+      <div class="task-body">
+        <p>Кусок памяти размером 4096 байт; Windows делит всю память на такие куски и выдаёт программе память только целыми страницами.</p>
+        <div class="callout-success"><strong>Пример:</strong> Тетрадь состоит из листов, и продавец продаёт только целые листы, а не половинки.</div>
+      </div>
+    </div>
+
+    <div id="t11" class="task-card">
+      <div class="task-header"><div class="task-title">СУБД</div><span class="task-path">Задача №2</span></div>
+      <div class="task-body">
+        <p>Программа для хранения данных и быстрого поиска среди них, например база данных с таблицами. СУБД хранит данные в файлах на диске и сама решает, какие данные держать в памяти.</p>
+        <div class="callout-success"><strong>Пример:</strong> Библиотекарь хранит книги и находит нужную книгу, не перебирая все полки.</div>
+      </div>
+    </div>
+
+    <div id="t12" class="task-card">
+      <div class="task-header"><div class="task-title">TLB</div><span class="task-path">Задача №2</span></div>
+      <div class="task-body">
+        <p>Маленький и очень быстрый кэш в процессоре, где хранятся переводы адресов в физическую память. Процессор сначала смотрит в TLB, и только если перевода там нет, ищет адрес дольше.</p>
+        <div class="callout-success"><strong>Пример:</strong> Телефонная книга — человек звонит сразу, не вспоминая номер.</div>
+      </div>
+    </div>
+
+    <div id="t13" class="task-card">
+      <div class="task-header"><div class="task-title">VirtualAlloc</div><span class="task-path">Задачи №1, №3</span></div>
+      <div class="task-body">
+        <p>Функция Windows, которая просит память напрямую у ядра Windows. Ядро даёт программе страницы памяти, а адрес начала всегда кратен 64 КБ — поэтому память от VirtualAlloc автоматически подходит для небуферизированного чтения.</p>
+        <div class="callout-success"><strong>Пример:</strong> Человек арендует склад напрямую у хозяина, а не через посредника.</div>
+      </div>
+    </div>
+
+    <div id="t14" class="task-card">
+      <div class="task-header"><div class="task-title">FILE_FLAG_NO_BUFFERING</div><span class="task-path">Задача №1</span></div>
+      <div class="task-body">
+        <p>Флаг для открытия файла: говорит Windows не использовать системный кэш и передавать данные напрямую с диска в буфер программы. За это приходится платить строгими правилами: буфер, смещение и размер чтения должны быть кратны 4096, иначе Windows вернёт ошибку 87.</p>
+        <div class="callout-success"><strong>Пример:</strong> Курьер везёт посылку прямо покупателю, минуя склад.</div>
+      </div>
+    </div>
+
+    <div id="t15" class="task-card">
+      <div class="task-header"><div class="task-title">MEM_COMMIT</div><span class="task-path">Задачи №1, №3</span></div>
+      <div class="task-body">
+        <p>Флаг для VirtualAlloc: говорит ядру Windows выделить настоящие физические страницы памяти. Без этого флага программа получает только забронированные адреса, а памяти под ними нет.</p>
+        <div class="callout-success"><strong>Пример:</strong> Хозяин не только бронирует стол, но и ставит на стол еду.</div>
+      </div>
+    </div>
+
+    <div id="t16" class="task-card">
+      <div class="task-header"><div class="task-title">MEM_RESERVE</div><span class="task-path">Задачи №1, №3</span></div>
+      <div class="task-body">
+        <p>Флаг для VirtualAlloc: говорит ядру Windows забронировать диапазон адресов в адресном пространстве программы, чтобы никто другой его не занял. Физическая память при этом не выделяется — только адреса.</p>
+        <div class="callout-success"><strong>Пример:</strong> Человек бронирует стол в кафе, но еда на столе ещё не стоит.</div>
+      </div>
+    </div>
+
+    <div id="t17" class="task-card">
+      <div class="task-header"><div class="task-title">QueryPerformanceCounter</div><span class="task-path">Задачи №1, №2</span></div>
+      <div class="task-body">
+        <p>Функция Windows для точного замера времени: программа вызывает её до и после работы, а потом делит разницу отметок таймера на частоту таймера и получает время в миллисекундах. Обычные часы для таких замеров слишком грубые.</p>
+        <div class="callout-success"><strong>Пример:</strong> Судья включает секундомер на старте забега и выключает на финише.</div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    Лабораторная работа №5 • Словарь • Системное программирование C++ и Win32 API • 2026 • Код и построчный разбор — <a href="index.html">index.html</a>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Словарь терминов (STE) — Лабораторная работа №3</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-page); color: var(--text-main); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; padding-bottom: 80px; }
+
+    header {
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-content { max-width: 760px; margin: 0 auto; }
+    .badge-sub { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    h1 { font-size: 19px; font-weight: 800; color: var(--text-main); line-height: 1.25; }
+
+    .nav-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px 0; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+    .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
+
+    main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+    .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .task-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .task-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .task-path { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-subtle); background: var(--bg-code); padding: 3px 7px; border-radius: 4px; }
+    .task-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+    .code-container { position: relative; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-code); overflow: hidden; }
+    .code-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: #e2e8f0; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); }
+    .copy-btn { background: #ffffff; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: var(--text-main); transition: all 0.2s; }
+    .copy-btn:hover { background: var(--primary); color: #ffffff; border-color: var(--primary); }
+    .copy-btn.copied { background: var(--accent-green); color: #ffffff; border-color: var(--accent-green); }
+
+    pre { padding: 12px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.45; color: #0f172a; }
+
+    .explanation-box { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .explanation-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); }
+    .line-breakdown { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .line-item { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 13px; }
+    .line-code { font-family: var(--font-mono); font-weight: 700; color: #1e293b; margin-bottom: 3px; display: block; }
+    .line-desc { color: var(--text-muted); line-height: 1.45; }
+
+    .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
+    .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
+
+    footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
+  
+    .break-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+    .break-table th, .break-table td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; line-height: 1.45; }
+    .break-table th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    .break-table td.ln { white-space: nowrap; font-family: var(--font-mono); font-weight: 700; color: var(--primary); font-size: 12px; }
+    .break-table td.code { font-family: var(--font-mono); font-size: 12px; color: #1e293b; word-break: break-word; }
+    .break-table tr:nth-child(even) td { background: #f8fafc; }
+    .run-box { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .run-box h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent-green); }
+    .run-box code, .theory-body code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-code); padding: 1px 5px; border-radius: 4px; }
+    .run-box pre.cmd { background: #0f172a; color: #e2e8f0; padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
+    .run-box pre.cmd code { background: none; padding: 0; color: inherit; }
+    .theory-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; font-size: 14px; color: var(--text-muted); }
+    .theory-body h2 { font-size: 16px; color: var(--text-main); margin-top: 6px; }
+    .theory-body h3 { font-size: 14px; color: var(--text-main); margin-top: 4px; }
+    .theory-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .theory-body th, .theory-body td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; line-height: 1.45; }
+    .theory-body th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    .theory-body ul, .theory-body ol { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+    .toc { display: flex; flex-direction: column; gap: 6px; }
+    .toc a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+  
+    .break-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+    .break-table th, .break-table td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; line-height: 1.45; }
+    .break-table th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    .break-table td.ln { white-space: nowrap; font-family: var(--font-mono); font-weight: 700; color: var(--primary); font-size: 12px; }
+    .break-table td.code { font-family: var(--font-mono); font-size: 12px; color: #1e293b; word-break: break-word; }
+    .break-table tr:nth-child(even) td { background: #f8fafc; }
+    .run-box { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .run-box h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent-green); }
+    .run-box code, .theory-body code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-code); padding: 1px 5px; border-radius: 4px; }
+    .run-box pre.cmd { background: #0f172a; color: #e2e8f0; padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
+    .run-box pre.cmd code { background: none; padding: 0; color: inherit; }
+    .theory-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; font-size: 14px; color: var(--text-muted); }
+    .theory-body h2 { font-size: 16px; color: var(--text-main); margin-top: 6px; }
+    .theory-body h3 { font-size: 14px; color: var(--text-main); margin-top: 4px; }
+    .theory-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .theory-body th, .theory-body td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; line-height: 1.45; }
+    .theory-body th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    .theory-body ul, .theory-body ol { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+    .toc { display: flex; flex-direction: column; gap: 6px; }
+    .toc a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+  </style>
+  <style>
+    .term-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .term-head { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .term-name { font-size: 16px; font-weight: 800; color: var(--text-main); }
+    .term-name code { font-family: var(--font-mono); font-size: 14px; }
+    .term-tasks { font-size: 11.5px; font-weight: 700; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+    .term-body { padding: 14px 16px; }
+    .term-body p { margin-bottom: 8px; }
+    .term-body p:last-child { margin-bottom: 0; }
+    .intro { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px 16px; box-shadow: var(--shadow-sm); }
+    .intro p { margin-bottom: 8px; }
+    .intro p:last-child { margin-bottom: 0; }
+    .alpha { display: flex; flex-wrap: wrap; gap: 6px; }
+    .alpha a { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 16px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; }
+    .alpha a:hover { background: var(--primary); color: #fff; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Лабораторная №3 · Словарь STE</span>
+      <h1>Словарь терминов (STE) — Лабораторная работа №3</h1>
+      <div class="nav-scroll">
+        <a class="nav-chip" href="index.html">← Шпаргалка</a>
+        <a class="nav-chip" href="theory.html">Теория</a>
+        <a class="nav-chip" href="glossary.html">Словарь (обычный)</a>
+        <a class="nav-chip" href="glossary_ste.html">Словарь (STE)</a>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div class="intro"><p><strong>Словарь терминов лабораторной работы №3 в стиле ASD-STE100.</strong> Набор терминов и их порядок — те же, что в обычном словаре <a href="glossary.html">glossary.html</a>.</p><p><strong>Какие правила применены (примерно на 60%):</strong></p><ul><li>Одна мысль — одно предложение.</li><li>Описание — не больше 25 слов в предложении, инструкция — не больше 20 слов.</li><li>Действительный залог: пишется, кто что делает («Windows выделяет кластер», а не «кластер выделяется»).</li><li>Одно понятие — всегда одно и то же слово: «файл» — всегда «файл», «Windows» — всегда «Windows», без синонимов.</li><li>Сначала ответ, потом подробности: первое предложение — само определение.</li><li>Один абзац — одна тема, не больше шести предложений.</li></ul><p><strong>Что не применено:</strong> собственные имена функций из кода (ReadFile, DeviceIoControl, ERROR_HANDLE_EOF) оставлены как есть, названия граф проводника даны в кавычках, а вступление и этот список правил написаны обычным языком — правила действуют на сами определения.</p></div>
+    <div class="term-card" id="data"><div class="term-head"><span class="term-name">$DATA</span><span class="term-tasks">Задачи 2, 3</span></div><div class="term-body"><p>$DATA — это часть записи MFT, которая хранит данные файла. У маленького файла данные лежат в этой части. У большого файла эта часть хранит карту кластеров.</p></div></div>
+    <div class="term-card" id="fsctl-get-retrieval-pointers"><div class="term-head"><span class="term-name">FSCTL_GET_RETRIEVAL_POINTERS</span><span class="term-tasks">Задача 2</span></div><div class="term-body"><p>FSCTL_GET_RETRIEVAL_POINTERS — это команда, которая спрашивает у Windows карту кластеров файла. Программа посылает эту команду через DeviceIoControl. Windows отвечает списком экстентов. Если файл резидентный, Windows отвечает ошибкой ERROR_HANDLE_EOF.</p></div></div>
+    <div class="term-card" id="irp"><div class="term-head"><span class="term-name">IRP</span><span class="term-tasks">Задача 4</span></div><div class="term-body"><p>IRP — это пакет, который описывает одну операцию с диском. Программа читает файл. Windows создаёт IRP. Windows передаёт IRP диску. Диск выполняет операцию. Диск возвращает IRP с результатом.</p></div></div>
+    <div class="term-card" id="lcn"><div class="term-head"><span class="term-name">LCN</span><span class="term-tasks">Задача 2</span></div><div class="term-body"><p>LCN — это номер кластера на диске. Windows нумерует кластеры тома подряд. Первый кластер имеет номер 0. LCN показывает, где на диске лежит кусок файла.</p></div></div>
+    <div class="term-card" id="mft"><div class="term-head"><span class="term-name">MFT</span><span class="term-tasks">Задачи 2, 3</span></div><div class="term-body"><p>MFT — это главная таблица NTFS. MFT хранит одну запись для каждого файла. Запись хранит имя файла и размеры файла. У маленького файла запись хранит данные файла. У большого файла запись хранит карту кластеров.</p></div></div>
+    <div class="term-card" id="overlapped"><div class="term-head"><span class="term-name">OVERLAPPED</span><span class="term-tasks">Задача 1</span></div><div class="term-body"><p>OVERLAPPED — это структура для асинхронного вызова. Программа передаёт OVERLAPPED в ReadFile или WriteFile. OVERLAPPED хранит номер байта для чтения или записи. OVERLAPPED хранит событие hEvent. Windows сообщает через событие о конце операции.</p></div></div>
+    <div class="term-card" id="slack"><div class="term-head"><span class="term-name">Slack</span><span class="term-tasks">Задача 3</span></div><div class="term-body"><p>Slack — это пустой хвост последнего кластера файла. Файл занимает кластер целиком. Данные файла меньше кластера. Остаток кластера принадлежит файлу. Данных в остатке нет.</p></div></div>
+    <div class="term-card" id="vcn"><div class="term-head"><span class="term-name">VCN</span><span class="term-tasks">Задача 2</span></div><div class="term-body"><p>VCN — это номер кластера внутри файла. Первый кусок файла имеет номер 0. Второй кусок файла имеет номер 1. VCN показывает порядок кусков файла. LCN показывает место куска на диске.</p></div></div>
+    <div class="term-card" id="асинхронный-вызов"><div class="term-head"><span class="term-name">Асинхронный вызов</span><span class="term-tasks">Задача 1</span></div><div class="term-body"><p>Асинхронный вызов — это вызов, который не ждёт конца операции. Программа отдаёт операцию Windows. Программа сразу продолжает работу. Windows сообщает о готовности через событие. Пример: человек отправляет письмо и идёт дальше.</p></div></div>
+    <div class="term-card" id="блокировка-потока"><div class="term-head"><span class="term-name">Блокировка потока</span><span class="term-tasks">Задача 4</span></div><div class="term-body"><p>Блокировка потока — это остановка потока до конца операции. Поток — это одна линия выполнения программы. Поток читает большой файл. Поток ждёт конца чтения. Программа замирает на это время.</p></div></div>
+    <div class="term-card" id="кластер"><div class="term-head"><span class="term-name">Кластер</span><span class="term-tasks">Задачи 2, 3</span></div><div class="term-body"><p>Кластер — это наименьшая единица диска для файла. Windows выдаёт файл кластерами. Обычно кластер равен 4096 байт. Файл занимает целое число кластеров. Данные файла меньше кластера. Файл всё равно занимает целый кластер.</p></div></div>
+    <div class="term-card" id="логический-размер"><div class="term-head"><span class="term-name">Логический размер</span><span class="term-tasks">Задача 3</span></div><div class="term-body"><p>Логический размер — это число байт данных в файле. Проводник показывает это число в графе «Размер». Файл из 2000 байт имеет логический размер 2000.</p></div></div>
+    <div class="term-card" id="нерезидентный-атрибут"><div class="term-head"><span class="term-name">Нерезидентный атрибут</span><span class="term-tasks">Задача 2</span></div><div class="term-body"><p>Нерезидентный атрибут — это часть записи MFT без данных файла. Эта часть хранит карту кластеров файла. Большие файлы имеют нерезидентный атрибут. Данные большого файла лежат на диске.</p></div></div>
+    <div class="term-card" id="резидентный-атрибут"><div class="term-head"><span class="term-name">Резидентный атрибут</span><span class="term-tasks">Задача 2</span></div><div class="term-body"><p>Резидентный атрибут — это часть записи MFT с данными файла. Маленькие файлы имеют резидентный атрибут. Данные маленького файла лежат в записи MFT. Файл не занимает кластеры на диске.</p></div></div>
+    <div class="term-card" id="синхронный-вызов"><div class="term-head"><span class="term-name">Синхронный вызов</span><span class="term-tasks">Задачи 1, 4</span></div><div class="term-body"><p>Синхронный вызов — это вызов, который ждёт конца операции. Программа вызывает ReadFile. Программа ждёт, пока Windows прочитает данные. Потом программа продолжает работу. Пример: человек стоит у кассы и ждёт кассира.</p></div></div>
+    <div class="term-card" id="смещение"><div class="term-head"><span class="term-name">Смещение</span><span class="term-tasks">Задача 1</span></div><div class="term-body"><p>Смещение — это номер байта в файле. Смещение показывает, где начинается чтение или запись. Смещение 0 показывает начало файла. Смещение 4096 показывает байт номер 4096.</p></div></div>
+    <div class="term-card" id="событие-hevent"><div class="term-head"><span class="term-name">Событие (hEvent)</span><span class="term-tasks">Задача 1</span></div><div class="term-body"><p>Событие — это сигнал о конце операции. Программа создаёт событие и кладёт событие в OVERLAPPED. Windows заканчивает чтение и включает событие. Программа проверяет событие. Программа узнаёт, что данные готовы.</p></div></div>
+    <div class="term-card" id="физический-размер"><div class="term-head"><span class="term-name">Физический размер</span><span class="term-tasks">Задача 3</span></div><div class="term-body"><p>Физический размер — это число байт на диске под данные файла. Проводник показывает это число в графе «Размер на диске». Файл из 2000 байт имеет физический размер 4096. Файл занял один кластер.</p></div></div>
+    <div class="term-card" id="экстент-data-run"><div class="term-head"><span class="term-name">Экстент (Data Run)</span><span class="term-tasks">Задача 2</span></div><div class="term-body"><p>Экстент — это один непрерывный кусок файла на диске. Файл имеет один экстент или несколько экстентов. Кластеры файла лежат в разных местах диска. Каждый экстент имеет два числа. Первое число — это LCN. Второе число — это VCN.</p></div></div>
+  </main>
+</body>
+</html>
