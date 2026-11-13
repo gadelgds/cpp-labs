@@ -416,6 +416,58 @@
       margin-bottom: 8px;
     }
 
+    /* Построчный разбор и блоки запуска (добавлено 13.11.2026) */
+    .wrap-table table {
+      white-space: normal;
+    }
+    .wrap-table td {
+      vertical-align: top;
+    }
+    .wrap-table td.code-cell {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--text-main);
+    }
+    .run-box {
+      background: var(--accent-green-bg);
+      border: 1px solid #a7f3d0;
+      border-left: 4px solid var(--accent-green);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 13.5px;
+    }
+    .run-box .run-title {
+      font-weight: 800;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent-green);
+      margin-bottom: 6px;
+      display: block;
+    }
+    .run-box code {
+      background: #ffffff;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .run-box pre {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-top: 6px;
+    }
+    .run-box ul {
+      margin-left: 18px;
+      margin-top: 6px;
+    }
+    .run-box li {
+      margin-bottom: 4px;
+      color: var(--text-muted);
+    }
+
     footer {
       text-align: center;
       font-size: 12px;
@@ -435,11 +487,16 @@
         <a href="#sec-lab2" class="nav-chip">1. Лаб 2 (Word)</a>
         <a href="#sec-lecture" class="nav-chip">2. ДЗ Лекции (Фото 1 & 3)</a>
         <a href="#sec-practice" class="nav-chip">3. ДЗ Практики (Фото 2)</a>
+        <a href="theory.html" class="nav-chip">Теория по задачам</a>
       </div>
     </div>
   </header>
 
   <main>
+
+    <div class="callout-success">
+      <strong>Новое:</strong> к каждой программе добавлен построчный разбор каждой строки, а отдельный файл <a href="theory.html">theory.html</a> содержит теорию по каждой задаче и условия запуска.
+    </div>
 
     <!-- ======================================================== -->
     <!-- РАЗДЕЛ 1: ЛАБОРАТОРНАЯ РАБОТА №2 (ИЗ WORD ФАЙЛА)          -->
@@ -522,7 +579,7 @@
 
 int main() {
     #if defined(_WIN32)
-    system("chcp 65001 > nul");
+    system("chcp 65001 &gt; nul");
     #endif
 
     std::cout &lt;&lt; "=== Исследование моделей данных C++ и Win32 ===" &lt;&lt; std::endl;
@@ -547,8 +604,74 @@ int main() {
     std::cout &lt;&lt; "sizeof(INT_PTR):   " &lt;&lt; sizeof(INT_PTR)   &lt;&lt; " байт (" &lt;&lt; sizeof(INT_PTR) * 8   &lt;&lt; " бит)" &lt;&lt; std::endl;
 
     return 0;
-}</code></pre>
+}
+</code></pre>
           </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Построчный разбор — каждая строка кода</span>
+            <p style="font-size: 12.5px; color: var(--text-subtle); margin-bottom: 4px;">Строки сверены с файлом .cpp. Однотипные строки вывода сгруппированы в один ряд с перечислением каждой.</p>
+            <div class="table-responsive wrap-table">
+              <table>
+                <thead><tr><th>Строка / блок</th><th>Что делает</th><th>Зачем / почему так</th></tr></thead>
+                <tbody>
+<tr><td class="code-cell">#include &lt;windows.h&gt;</td><td>Подключает Win32 API</td><td>Даёт типы <code>DWORD</code>, <code>LONG</code>, <code>ULONG_PTR</code>, <code>DWORD_PTR</code>, <code>INT_PTR</code> и макросы <code>_WIN32</code> / <code>_WIN64</code>; без него вторая половина программы не скомпилируется.</td></tr>
+<tr><td class="code-cell">#include &lt;iostream&gt;</td><td>Подключает ввод-вывод C++</td><td>Нужен для <code>std::cout</code> и <code>std::endl</code>.</td></tr>
+<tr><td class="code-cell">#include &lt;iomanip&gt;</td><td>Подключает манипуляторы форматирования</td><td>В этой программе фактически <b>не используется</b> — остался от шаблона; на работу не влияет, можно убрать.</td></tr>
+<tr><td class="code-cell">(пустая строка)</td><td>Разделитель</td><td>Только читаемость кода.</td></tr>
+<tr><td class="code-cell">int main() {</td><td>Точка входа программы</td><td>Сюда попадает управление при запуске; скобка открывает тело функции.</td></tr>
+<tr><td class="code-cell">#if defined(_WIN32)</td><td>Условная компиляция: блок ниже — только под Windows</td><td>На других системах команда <code>chcp</code> не имеет смысла и не компилируется.</td></tr>
+<tr><td class="code-cell">system("chcp 65001 &gt; nul");</td><td>Переключает консоль на кодировку UTF-8 (65001)</td><td>Чтобы русские буквы в выводе не превращались в кракозябры; <code>&gt; nul</code> прячет служебный вывод самой команды chcp.</td></tr>
+<tr><td class="code-cell">#endif</td><td>Конец условного блока</td><td>Закрывает <code>#if</code>; без него — ошибка компиляции.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "=== Исследование моделей данных C++ и Win32 ===" &lt;&lt; std::endl;</td><td>Печатает заголовок и переводит строку</td><td>Заголовок раздела в выводе; <code>endl</code> — перевод строки и сброс буфера.</td></tr>
+<tr><td class="code-cell">#if defined(_WIN64)</td><td>Ветка только для 64-битной сборки</td><td>Макрос <code>_WIN64</code> определён только в x64-сборке.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "Архитектура: x64 (64-битная система)" &lt;&lt; std::endl;</td><td>Печатает, что сборка 64-битная</td><td>Поясняет, к какой архитектуре относятся размеры ниже.</td></tr>
+<tr><td class="code-cell">#elif defined(_WIN32)</td><td>Иначе, если Windows 32-битная</td><td>Вторая ветка того же условия.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "Архитектура: x86 (32-битная система)" &lt;&lt; std::endl;</td><td>Печатает, что сборка 32-битная</td><td>В x86 размеры указателей будут другими (4 вместо 8).</td></tr>
+<tr><td class="code-cell">#endif</td><td>Конец проверки архитектуры</td><td>—</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "\n[Базовые типы C++]:" &lt;&lt; std::endl;</td><td>Печатает подзаголовок первой группы</td><td><code>\n</code> в начале — пустая строка перед подзаголовком для читаемости вывода.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "sizeof(int): ..." &lt;&lt; sizeof(int) &lt;&lt; " байт (" &lt;&lt; sizeof(int) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+(так же для long, long long, void* — 4 строки)</td><td>Четыре строки: печатают размер каждого базового типа в байтах и битах</td><td><code>sizeof</code> даёт размер в байтах, умножение на 8 переводит в биты; пробелы в тексте — выравнивание столбцов в выводе.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "\n[Типы Win32 API]:" &lt;&lt; std::endl;</td><td>Печатает подзаголовок второй группы</td><td>Аналогично: <code>\n</code> отделяет группу пустой строкой.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "sizeof(DWORD): ..." &lt;&lt; sizeof(DWORD) &lt;&lt; ...
+(так же для LONG, ULONG_PTR, DWORD_PTR, INT_PTR — 5 строк)</td><td>Пять строк: печатают размеры типов Win32 API</td><td>Показывают, что <code>DWORD</code> и <code>LONG</code> всегда 4 байта, а типы <code>*_PTR</code> меняют размер с архитектурой.</td></tr>
+<tr><td class="code-cell">return 0;</td><td>Возвращает код успешного завершения</td><td>0 — соглашение: программа завершилась без ошибок.</td></tr>
+<tr><td class="code-cell">}</td><td>Закрывает <code>main</code></td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Только Windows</strong> — нужен <code>windows.h</code>. На Linux/macOS не соберётся.</li>
+              <li><strong>MSVC</strong> (Developer Command Prompt): <code>cl /EHsc /W4 task1_types_sizeof.cpp</code></li>
+              <li><strong>MinGW-w64:</strong> <code>g++ -Wall -Wextra -o task1_types_sizeof.exe task1_types_sizeof.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong> Ввод не требуется.</li>
+              <li><strong>Запуск:</strong> <code>.\task1_types_sizeof.exe</code> (PowerShell) или <code>task1_types_sizeof.exe</code> (cmd).</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод (x64):</strong></p>
+            <pre>=== Исследование моделей данных C++ и Win32 ===
+Архитектура: x64 (64-битная система)
+
+[Базовые типы C++]:
+sizeof(int):       4 байт (32 бит)
+sizeof(long):      4 байт (32 бит)
+sizeof(long long): 8 байт (64 бит)
+sizeof(void*):     8 байт (64 бит)
+
+[Типы Win32 API]:
+sizeof(DWORD):     4 байт (32 бит)
+sizeof(LONG):      4 байт (32 бит)
+sizeof(ULONG_PTR): 8 байт (64 бит)
+sizeof(DWORD_PTR): 8 байт (64 бит)
+sizeof(INT_PTR):   8 байт (64 бит)</pre>
+            <p style="margin-top:6px;"><strong>Что сломается:</strong> в x86-сборке <code>void*</code> и все <code>*_PTR</code> будут 4 байта вместо 8, а строка архитектуры — «x86 (32-битная система)». Это нормально и есть предмет задания.</p>
+
+          </div>
+
 
           <div class="explanation-box">
             <span class="explanation-title">Подробное объяснение различий моделей памяти</span>
@@ -574,7 +697,7 @@ int main() {
             <pre><code>#include &lt;windows.h&gt;
 #include &lt;iostream&gt;
 
-// Исправлено: принимаем DWORD_PTR вместо DWORD для поддержки 64-битных адресов
+// Исправлено: замена DWORD на DWORD_PTR для предотвращения усечения адреса в x64
 void ProcessData(DWORD_PTR dataStylePointer) {
     int* pNumber = reinterpret_cast&lt;int*&gt;(dataStylePointer);
     if (pNumber != nullptr) {
@@ -584,20 +707,69 @@ void ProcessData(DWORD_PTR dataStylePointer) {
 
 int main() {
     #if defined(_WIN32)
-    system("chcp 65001 > nul");
+    system("chcp 65001 &gt; nul");
     #endif
 
     int criticalValue = 2026;
-    int* lpContext = &criticalValue;
+    int* lpContext = &amp;criticalValue;
 
-    // Исправлено: каст в DWORD_PTR (8 байт в x64) вместо DWORD (4 байта)
+    // Исправлено: каст указателя в 64-битный тип DWORD_PTR вместо 32-битного DWORD
     DWORD_PTR SAFE_PTR = (DWORD_PTR)lpContext;
 
     ProcessData(SAFE_PTR);
 
     return 0;
-}</code></pre>
+}
+</code></pre>
           </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Построчный разбор — каждая строка кода</span>
+            <p style="font-size: 12.5px; color: var(--text-subtle); margin-bottom: 4px;">Строки сверены с файлом .cpp. Однотипные строки вывода сгруппированы в один ряд с перечислением каждой.</p>
+            <div class="table-responsive wrap-table">
+              <table>
+                <thead><tr><th>Строка / блок</th><th>Что делает</th><th>Зачем / почему так</th></tr></thead>
+                <tbody>
+<tr><td class="code-cell">#include &lt;windows.h&gt;</td><td>Подключает Win32 API</td><td>Даёт тип <code>DWORD_PTR</code>.</td></tr>
+<tr><td class="code-cell">#include &lt;iostream&gt;</td><td>Подключает ввод-вывод C++</td><td>Нужен для <code>std::cout</code> и <code>std::endl</code>.</td></tr>
+<tr><td class="code-cell">// Исправлено: замена DWORD на DWORD_PTR для предотвращения усечения адреса в x64</td><td>Комментарий</td><td>Поясняет, что именно исправлено относительно исходного кода задания.</td></tr>
+<tr><td class="code-cell">void ProcessData(DWORD_PTR dataStylePointer) {</td><td>Функция принимает адрес как целое число шириной с указатель</td><td>Так задумано заданием: адрес передаётся через целое; <code>DWORD_PTR</code> в x64 — 8 байт, адрес не усекается.</td></tr>
+<tr><td class="code-cell">int* pNumber = reinterpret_cast&lt;int*&gt;(dataStylePointer);</td><td>Преобразует целое обратно в указатель на <code>int</code></td><td><code>reinterpret_cast</code> — явный низкоуровневый каст; компилятор не проверяет, валиден ли адрес.</td></tr>
+<tr><td class="code-cell">if (pNumber != nullptr) {</td><td>Проверка на нулевой адрес</td><td>Защита от разыменования нуля; битый ненулевой адрес эта проверка не ловит.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "Value: " &lt;&lt; *pNumber &lt;&lt; std::endl;</td><td>Разыменовывает указатель и печатает значение</td><td><code>*pNumber</code> — значение по адресу, то есть <code>criticalValue</code>.</td></tr>
+<tr><td class="code-cell">}</td><td>Закрывает <code>if</code></td><td>—</td></tr>
+<tr><td class="code-cell">}</td><td>Закрывает <code>ProcessData</code></td><td>—</td></tr>
+<tr><td class="code-cell">int main() {</td><td>Точка входа программы</td><td>—</td></tr>
+<tr><td class="code-cell">#if defined(_WIN32)</td><td>Условная компиляция: блок ниже — только под Windows</td><td>—</td></tr>
+<tr><td class="code-cell">system("chcp 65001 &gt; nul");</td><td>Переключает консоль на UTF-8 (65001)</td><td>В этой программе русского вывода нет, но блок — часть общего шаблона лабы.</td></tr>
+<tr><td class="code-cell">#endif</td><td>Конец условного блока</td><td>—</td></tr>
+<tr><td class="code-cell">int criticalValue = 2026;</td><td>Переменная на стеке со значением 2026</td><td>Её адрес будем передавать через функцию.</td></tr>
+<tr><td class="code-cell">int* lpContext = &amp;criticalValue;</td><td>Указатель на <code>criticalValue</code></td><td><code>&amp;</code> — взятие адреса; префикс <code>lp</code> — венгерская нотация (long pointer).</td></tr>
+<tr><td class="code-cell">// Исправлено: каст указателя в 64-битный тип DWORD_PTR вместо 32-битного DWORD</td><td>Комментарий</td><td>Поясняет суть исправления в следующей строке.</td></tr>
+<tr><td class="code-cell">DWORD_PTR SAFE_PTR = (DWORD_PTR)lpContext;</td><td>C-style каст указателя в целое шириной с указатель</td><td>В x64 в <code>DWORD_PTR</code> помещаются все 64 бита адреса. В старом коде здесь был <code>DWORD</code> (4 байта) — старшие биты терялись. Имя заглавными — стиль константы, хотя это обычная переменная.</td></tr>
+<tr><td class="code-cell">ProcessData(SAFE_PTR);</td><td>Вызов функции с сохранённым адресом</td><td>Проверяет, что адрес дошёл без потерь и значение читается.</td></tr>
+<tr><td class="code-cell">return 0;</td><td>Успешное завершение</td><td>—</td></tr>
+<tr><td class="code-cell">}</td><td>Конец <code>main</code></td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Только Windows</strong> — нужен <code>windows.h</code> (тип <code>DWORD_PTR</code>).</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task2_ptr_truncation_fix.cpp</code></li>
+              <li><strong>MinGW-w64:</strong> <code>g++ -Wall -Wextra -o task2_ptr_truncation_fix.exe task2_ptr_truncation_fix.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong> Ввод не требуется.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод:</strong></p>
+            <pre>Value: 2026</pre>
+            <p style="margin-top:6px;"><strong>Что сломается:</strong> если вернуть старый тип <code>DWORD</code>, в x64-сборке компилятор выдаст предупреждение C4311 (pointer truncation), а программа упадёт с Access Violation (0xC0000005) при разыменовании битого адреса.</p>
+
+          </div>
+
 
           <div class="explanation-box">
             <span class="explanation-title">Разбор ошибки и решения</span>
@@ -621,13 +793,14 @@ int main() {
             </div>
             <pre><code>#include &lt;windows.h&gt;
 #include &lt;iostream&gt;
+#include &lt;iomanip&gt;
 
 int main() {
     #if defined(_WIN32)
-    system("chcp 65001 > nul");
+    system("chcp 65001 &gt; nul");
     #endif
 
-    // 1. Создание/открытие файла
+    // 1. Создание/открытие файла (объект ядра File)
     HANDLE hFile = CreateFileW(
         L"temp_kernel_demo.tmp",
         GENERIC_READ | GENERIC_WRITE,
@@ -638,25 +811,96 @@ int main() {
         NULL
     );
 
-    // 2. Создание события
+    // 2. Создание события (объект ядра Event)
     HANDLE hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
 
-    // 3. Получение дескриптора текущего процесса
+    // 3. Получение дескриптора текущего процесса (псевдо-хэндл)
     HANDLE hProcess = GetCurrentProcess();
 
-    std::cout &lt;&lt; "=== Дескрипторы объектов ядра Windows ===" &lt;&lt; std::endl;
-    std::cout &lt;&lt; "1. File Handle (CreateFile):            " &lt;&lt; (void*)hFile    &lt;&lt; " (" &lt;&lt; (UINT_PTR)hFile    &lt;&lt; ")" &lt;&lt; std::endl;
-    std::cout &lt;&lt; "2. Event Handle (CreateEvent):          " &lt;&lt; (void*)hEvent   &lt;&lt; " (" &lt;&lt; (UINT_PTR)hEvent   &lt;&lt; ")" &lt;&lt; std::endl;
-    std::cout &lt;&lt; "3. Current Process (GetCurrentProcess):   " &lt;&lt; (void*)hProcess &lt;&lt; " (" &lt;&lt; (UINT_PTR)hProcess &lt;&lt; ")" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "=== Объекты ядра Windows и их дескрипторы ===" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "1. File Handle (CreateFile):          " &lt;&lt; (void*)hFile    &lt;&lt; " (UINT_PTR: " &lt;&lt; (UINT_PTR)hFile    &lt;&lt; ")" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "2. Event Handle (CreateEvent):        " &lt;&lt; (void*)hEvent   &lt;&lt; " (UINT_PTR: " &lt;&lt; (UINT_PTR)hEvent   &lt;&lt; ")" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "3. Current Process (GetCurrentProcess): " &lt;&lt; (void*)hProcess &lt;&lt; " (UINT_PTR: " &lt;&lt; (UINT_PTR)hProcess &lt;&lt; ")" &lt;&lt; std::endl;
 
-    // Корректное закрытие дескрипторов
-    if (hFile != INVALID_HANDLE_VALUE) CloseHandle(hFile);
-    if (hEvent != NULL) CloseHandle(hEvent);
-    // Псевдо-хэндл hProcess закрывать НЕ нужно!
+    // Закрытие реальных дескрипторов
+    if (hFile != INVALID_HANDLE_VALUE) {
+        CloseHandle(hFile);
+    }
+    if (hEvent != NULL) {
+        CloseHandle(hEvent);
+    }
+    // Псевдо-дескриптор hProcess закрывать через CloseHandle не нужно!
 
     return 0;
-}</code></pre>
+}
+</code></pre>
           </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Построчный разбор — каждая строка кода</span>
+            <p style="font-size: 12.5px; color: var(--text-subtle); margin-bottom: 4px;">Строки сверены с файлом .cpp. Однотипные строки вывода сгруппированы в один ряд с перечислением каждой.</p>
+            <div class="table-responsive wrap-table">
+              <table>
+                <thead><tr><th>Строка / блок</th><th>Что делает</th><th>Зачем / почему так</th></tr></thead>
+                <tbody>
+<tr><td class="code-cell">#include &lt;windows.h&gt;</td><td>Подключает Win32 API</td><td>Даёт <code>HANDLE</code>, <code>CreateFileW</code>, <code>CreateEventW</code>, <code>GetCurrentProcess</code>, <code>CloseHandle</code>.</td></tr>
+<tr><td class="code-cell">#include &lt;iostream&gt;</td><td>Подключает ввод-вывод C++</td><td>Нужен для <code>std::cout</code>.</td></tr>
+<tr><td class="code-cell">#include &lt;iomanip&gt;</td><td>Подключает манипуляторы форматирования</td><td>В этой программе фактически <b>не используется</b> — остался от шаблона.</td></tr>
+<tr><td class="code-cell">int main() {</td><td>Точка входа программы</td><td>—</td></tr>
+<tr><td class="code-cell">#if defined(_WIN32)</td><td>Условная компиляция: блок ниже — только под Windows</td><td>—</td></tr>
+<tr><td class="code-cell">system("chcp 65001 &gt; nul");</td><td>Переключает консоль на UTF-8 (65001)</td><td>Чтобы русские буквы в выводе не превращались в кракозябры.</td></tr>
+<tr><td class="code-cell">#endif</td><td>Конец условного блока</td><td>—</td></tr>
+<tr><td class="code-cell">// 1. Создание/открытие файла (объект ядра File)</td><td>Комментарий-нумерация шагов</td><td>—</td></tr>
+<tr><td class="code-cell">HANDLE hFile = CreateFileW(</td><td>Начало вызова: создаёт/открывает файл, результат — дескриптор</td><td>При ошибке возвращает <code>INVALID_HANDLE_VALUE</code> (−1), а не <code>NULL</code>. Аргументы — в следующих строках.</td></tr>
+<tr><td class="code-cell">L"temp_kernel_demo.tmp",</td><td>Имя файла (широкая строка, префикс L — <code>wchar_t</code>)</td><td>Файл создаётся в рабочей папке, откуда запущена программа.</td></tr>
+<tr><td class="code-cell">GENERIC_READ | GENERIC_WRITE,</td><td>Права доступа: чтение и запись</td><td>Побитовое ИЛИ объединяет флаги доступа.</td></tr>
+<tr><td class="code-cell">FILE_SHARE_READ,</td><td>Разрешить другим открывать файл на чтение</td><td>Без этого файл был бы заблокирован для всех остальных.</td></tr>
+<tr><td class="code-cell">NULL,</td><td>Атрибуты безопасности по умолчанию</td><td>Без наследования хэндла и особых прав.</td></tr>
+<tr><td class="code-cell">CREATE_ALWAYS,</td><td>Создать файл заново (существующий — обнулить)</td><td>Каждый запуск начинает с пустого файла.</td></tr>
+<tr><td class="code-cell">FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,</td><td>Временный файл, удалить при закрытии хэндла</td><td>Файл не останется на диске после завершения программы.</td></tr>
+<tr><td class="code-cell">NULL</td><td>Нет файла-шаблона</td><td>Последний параметр не используется.</td></tr>
+<tr><td class="code-cell">);</td><td>Конец вызова <code>CreateFileW</code></td><td>—</td></tr>
+<tr><td class="code-cell">// 2. Создание события (объект ядра Event)</td><td>Комментарий-нумерация шагов</td><td>—</td></tr>
+<tr><td class="code-cell">HANDLE hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);</td><td>Создаёт безымянное событие ядра</td><td><code>NULL</code> — защита по умолчанию; <code>TRUE</code> — ручной сброс (manual-reset); <code>FALSE</code> — начальное состояние «не сигнальное»; <code>NULL</code> — без имени. При ошибке возвращает <code>NULL</code>.</td></tr>
+<tr><td class="code-cell">// 3. Получение дескриптора текущего процесса (псевдо-хэндл)</td><td>Комментарий-нумерация шагов</td><td>—</td></tr>
+<tr><td class="code-cell">HANDLE hProcess = GetCurrentProcess();</td><td>Псевдо-хэндл текущего процесса</td><td>Возвращает константу −1; записи в таблице дескрипторов не создаёт, счётчик ссылок не растёт.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "=== Объекты ядра Windows и их дескрипторы ===" &lt;&lt; std::endl;</td><td>Печатает заголовок</td><td>—</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "1. File Handle (CreateFile): ..." &lt;&lt; (void*)hFile &lt;&lt; " (UINT_PTR: " &lt;&lt; (UINT_PTR)hFile &lt;&lt; ")" &lt;&lt; std::endl;
+(так же для hEvent и hProcess — 3 строки)</td><td>Три строки: печатают каждый хэндл дважды — как <code>(void*)</code> (hex) и как <code>(UINT_PTR)</code> (десятичное число)</td><td>Так видно, что <code>hFile</code> и <code>hEvent</code> — малые числа, кратные 4, а <code>hProcess</code> — это −1 (в x64 как <code>UINT_PTR</code> это 18446744073709551615).</td></tr>
+<tr><td class="code-cell">// Закрытие реальных дескрипторов</td><td>Комментарий</td><td>—</td></tr>
+<tr><td class="code-cell">if (hFile != INVALID_HANDLE_VALUE) {</td><td>Проверка перед закрытием файла</td><td><code>CreateFile</code> при ошибке возвращает именно <code>INVALID_HANDLE_VALUE</code>; проверка на <code>NULL</code> ошибку бы пропустила.</td></tr>
+<tr><td class="code-cell">CloseHandle(hFile);</td><td>Закрывает хэндл файла</td><td>Счётчик ссылок объекта уменьшается; из-за <code>FILE_FLAG_DELETE_ON_CLOSE</code> файл при этом удаляется с диска.</td></tr>
+<tr><td class="code-cell">}</td><td>Конец <code>if</code></td><td>—</td></tr>
+<tr><td class="code-cell">if (hEvent != NULL) {</td><td>Проверка перед закрытием события</td><td><code>CreateEvent</code> при ошибке возвращает <code>NULL</code>.</td></tr>
+<tr><td class="code-cell">CloseHandle(hEvent);</td><td>Закрывает хэндл события</td><td>—</td></tr>
+<tr><td class="code-cell">}</td><td>Конец <code>if</code></td><td>—</td></tr>
+<tr><td class="code-cell">// Псевдо-дескриптор hProcess закрывать через CloseHandle не нужно!</td><td>Комментарий-предупреждение</td><td>Псевдо-хэндл не занимает запись в таблице; его закрытие — ошибка.</td></tr>
+<tr><td class="code-cell">return 0;</td><td>Успешное завершение</td><td>—</td></tr>
+<tr><td class="code-cell">}</td><td>Конец <code>main</code></td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Только Windows</strong> — нужен <code>windows.h</code>.</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task3_kernel_handles.cpp</code></li>
+              <li><strong>MinGW-w64:</strong> <code>g++ -Wall -Wextra -o task3_kernel_handles.exe task3_kernel_handles.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно</strong> — программа сама создаёт <code>temp_kernel_demo.tmp</code> в рабочей папке (где лежит exe) и сама удаляет его при закрытии хэндла.</li>
+              <li><strong>Нужно право на запись</strong> в рабочей папке, иначе <code>CreateFileW</code> вернёт ошибку. Запускайте из папки с исходником, а не из системного каталога.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод</strong> (числа хэндлов различаются при каждом запуске):</p>
+            <pre>=== Объекты ядра Windows и их дескрипторы ===
+1. File Handle (CreateFile):          0x... (UINT_PTR: ...)
+2. Event Handle (CreateEvent):        0x... (UINT_PTR: ...)
+3. Current Process (GetCurrentProcess): 0xffffffffffffffff (UINT_PTR: 18446744073709551615)</pre>
+            <p style="margin-top:6px;"><strong>Что сломается:</strong> если после запуска в папке остался файл <code>temp_kernel_demo.tmp</code> — значит, хэндл не был закрыт (программа завершена аварийно). Третья строка всегда показывает −1 — это псевдо-хэндл, а не ошибка.</p>
+
+          </div>
+
 
           <div class="explanation-box">
             <span class="explanation-title">Ответы на вопросы задания</span>
@@ -694,16 +938,55 @@ int main() {
 int main() {
     int a = 10;
     int b = 20;
-    int* p = &a;
+    int* p = &amp;a;
     *p = 30;
-    p = &b;
+    p = &amp;b;
     *p = 40;
 
     std::cout &lt;&lt; a &lt;&lt; " " &lt;&lt; b &lt;&lt; std::endl;
 
     return 0;
-}</code></pre>
+}
+</code></pre>
           </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Построчный разбор — каждая строка кода</span>
+            <p style="font-size: 12.5px; color: var(--text-subtle); margin-bottom: 4px;">Строки сверены с файлом .cpp. Однотипные строки вывода сгруппированы в один ряд с перечислением каждой.</p>
+            <div class="table-responsive wrap-table">
+              <table>
+                <thead><tr><th>Строка / блок</th><th>Что делает</th><th>Зачем / почему так</th></tr></thead>
+                <tbody>
+<tr><td class="code-cell">#include &lt;iostream&gt;</td><td>Подключает ввод-вывод C++</td><td>Нужен для <code>std::cout</code> и <code>std::endl</code>.</td></tr>
+<tr><td class="code-cell">int main() {</td><td>Точка входа программы</td><td>—</td></tr>
+<tr><td class="code-cell">int a = 10;</td><td>Объявляет целую переменную <code>a</code> со значением 10</td><td>Под неё выделяется ячейка памяти на стеке.</td></tr>
+<tr><td class="code-cell">int b = 20;</td><td>Объявляет целую переменную <code>b</code> со значением 20</td><td>Вторая ячейка памяти на стеке.</td></tr>
+<tr><td class="code-cell">int* p = &amp;a;</td><td>Объявляет указатель <code>p</code> и записывает в него адрес <code>a</code></td><td><code>*</code> в объявлении — «это указатель», <code>&amp;</code> — «взять адрес». Теперь <code>p</code> указывает на <code>a</code>.</td></tr>
+<tr><td class="code-cell">*p = 30;</td><td>Разыменовывает <code>p</code> и записывает 30 в ячейку, на которую он указывает</td><td>Меняется <code>a</code> (стало 30), сам указатель <code>p</code> не меняется. Теперь: a = 30, b = 20.</td></tr>
+<tr><td class="code-cell">p = &amp;b;</td><td>Перенаправляет указатель <code>p</code> на переменную <code>b</code></td><td>Меняется сам указатель, значения <code>a</code> и <code>b</code> не меняются. Без звёздочки — это присваивание адреса, а не значения.</td></tr>
+<tr><td class="code-cell">*p = 40;</td><td>Разыменовывает <code>p</code> и записывает 40 в ячейку <code>b</code></td><td>Теперь: a = 30, b = 40.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; a &lt;&lt; " " &lt;&lt; b &lt;&lt; std::endl;</td><td>Выводит итоговые значения <code>a</code> и <code>b</code> через пробел</td><td>Печатает <code>30 40</code>.</td></tr>
+<tr><td class="code-cell">return 0;</td><td>Успешное завершение</td><td>—</td></tr>
+<tr><td class="code-cell">}</td><td>Конец <code>main</code></td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Собирается везде</strong> (Windows, Linux, macOS) — только стандартный C++.</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task1_pointers.cpp</code></li>
+              <li><strong>MinGW-w64 / g++:</strong> <code>g++ -Wall -Wextra -o task1_pointers.exe task1_pointers.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong> Ввод не требуется.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод:</strong></p>
+            <pre>30 40</pre>
+
+          </div>
+
 
           <div class="callout-success">
             <strong>Вывод программы:</strong> <code>30 40</code>
@@ -744,8 +1027,44 @@ int main() {
     std::cout &lt;&lt; sizeof(str) &lt;&lt; " " &lt;&lt; sizeof(p) &lt;&lt; std::endl;
 
     return 0;
-}</code></pre>
+}
+</code></pre>
           </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Построчный разбор — каждая строка кода</span>
+            <p style="font-size: 12.5px; color: var(--text-subtle); margin-bottom: 4px;">Строки сверены с файлом .cpp. Однотипные строки вывода сгруппированы в один ряд с перечислением каждой.</p>
+            <div class="table-responsive wrap-table">
+              <table>
+                <thead><tr><th>Строка / блок</th><th>Что делает</th><th>Зачем / почему так</th></tr></thead>
+                <tbody>
+<tr><td class="code-cell">#include &lt;iostream&gt;</td><td>Подключает ввод-вывод C++</td><td>Нужен для <code>std::cout</code> и <code>std::endl</code>.</td></tr>
+<tr><td class="code-cell">int main() {</td><td>Точка входа программы</td><td>—</td></tr>
+<tr><td class="code-cell">char str[] = "Hello";</td><td>Создаёт массив из 6 символов на стеке</td><td>Литерал <code>"Hello"</code> — 5 букв плюс завершающий нуль-терминатор <code>'\0'</code>; компилятор копирует все 6 байт в массив <code>str</code>. Массив можно менять.</td></tr>
+<tr><td class="code-cell">const char* p = "Hello";</td><td>Создаёт указатель на строковый литерал</td><td>Сам литерал лежит в секции констант (.rdata), а переменная <code>p</code> хранит только его адрес. <code>const</code> запрещает менять символы через указатель.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; sizeof(str) &lt;&lt; " " &lt;&lt; sizeof(p) &lt;&lt; std::endl;</td><td>Печатает размеры: массива и указателя</td><td><code>sizeof(str)</code> — размер всего массива (6 байт), <code>sizeof(p)</code> — размер самого указателя: 8 байт в x64, 4 байта в x86. Длина самой строки здесь не измеряется — её даёт <code>strlen</code> (5).</td></tr>
+<tr><td class="code-cell">return 0;</td><td>Успешное завершение</td><td>—</td></tr>
+<tr><td class="code-cell">}</td><td>Конец <code>main</code></td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Собирается везде</strong> (Windows, Linux, macOS) — только стандартный C++.</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task2_strings_memory.cpp</code></li>
+              <li><strong>MinGW-w64 / g++:</strong> <code>g++ -Wall -Wextra -o task2_strings_memory.exe task2_strings_memory.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong> Ввод не требуется.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод:</strong></p>
+            <pre>6 8</pre>
+            <p style="margin-top:6px;"><strong>Что сломается:</strong> в 32-битной сборке вывод будет <code>6 4</code> — это нормально: размер указателя зависит от архитектуры, а размер массива — нет.</p>
+
+          </div>
+
 
           <div class="callout-success">
             <strong>Вывод в 64-битной системе:</strong> <code>6 8</code> <em>(в 32-битной: 6 4)</em>
@@ -873,7 +1192,7 @@ int main() {
 
 int main() {
     #if defined(_WIN32)
-    system("chcp 65001 > nul");
+    system("chcp 65001 &gt; nul");
     #endif
 
     int price = 350;        // Цена товара в рублях
@@ -892,8 +1211,59 @@ int main() {
     std::cout &lt;&lt; "Цена со скидкой:      " &lt;&lt; discountedPrice &lt;&lt; " руб." &lt;&lt; std::endl;
 
     return 0;
-}</code></pre>
+}
+</code></pre>
           </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Построчный разбор — каждая строка кода</span>
+            <p style="font-size: 12.5px; color: var(--text-subtle); margin-bottom: 4px;">Строки сверены с файлом .cpp. Однотипные строки вывода сгруппированы в один ряд с перечислением каждой.</p>
+            <div class="table-responsive wrap-table">
+              <table>
+                <thead><tr><th>Строка / блок</th><th>Что делает</th><th>Зачем / почему так</th></tr></thead>
+                <tbody>
+<tr><td class="code-cell">#include &lt;iostream&gt;</td><td>Подключает ввод-вывод C++</td><td>Нужен для <code>std::cout</code> и <code>std::endl</code>.</td></tr>
+<tr><td class="code-cell">#include &lt;iomanip&gt;</td><td>Подключает манипуляторы форматирования</td><td>Здесь реально используется: <code>std::fixed</code> и <code>std::setprecision</code> ниже.</td></tr>
+<tr><td class="code-cell">int main() {</td><td>Точка входа программы</td><td>—</td></tr>
+<tr><td class="code-cell">#if defined(_WIN32)</td><td>Условная компиляция: блок ниже — только под Windows</td><td>—</td></tr>
+<tr><td class="code-cell">system("chcp 65001 &gt; nul");</td><td>Переключает консоль на UTF-8 (65001)</td><td>Чтобы русские слова «руб.» и «Скидка» выводились корректно.</td></tr>
+<tr><td class="code-cell">#endif</td><td>Конец условного блока</td><td>—</td></tr>
+<tr><td class="code-cell">int price = 350;        // Цена товара в рублях</td><td>Цена товара, целое число в рублях</td><td>Тип <code>int</code>: деньги в целых рублях, дробной части нет.</td></tr>
+<tr><td class="code-cell">int money = 500;        // Купюра покупателя</td><td>Купюра покупателя, целое число</td><td>Тоже <code>int</code> — купюры целые.</td></tr>
+<tr><td class="code-cell">int change = money - price; // Сдача</td><td>Сдача: разность двух целых чисел</td><td>500 − 350 = 150. Тип <code>int</code>, потому что оба операнда — <code>int</code>.</td></tr>
+<tr><td class="code-cell">double discount = 0.15; // Скидка 15%</td><td>Скидка как дробный коэффициент</td><td>Тип <code>double</code>: 0.15 — это 15%. Целым числом долю не выразить.</td></tr>
+<tr><td class="code-cell">double discountedPrice = price * (1.0 - discount); // Цена со скидкой</td><td>Цена со скидкой: 350 × (1 − 0.15) = 297.5</td><td><code>price</code> (<code>int</code>) неявно приводится к <code>double</code>, потому что второй операнд — <code>double</code>; результат — <code>double</code>.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "Цена товара:          " &lt;&lt; price &lt;&lt; " руб." &lt;&lt; std::endl;</td><td>Печатает цену товара</td><td>Пробелы в тексте — выравнивание столбцов в выводе.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "Купюра покупателя:    " &lt;&lt; money &lt;&lt; " руб." &lt;&lt; std::endl;</td><td>Печатает купюру покупателя</td><td>—</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "Сдача:                " &lt;&lt; change &lt;&lt; " руб." &lt;&lt; std::endl;</td><td>Печатает сдачу (150 руб.)</td><td>—</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; std::fixed &lt;&lt; std::setprecision(2);</td><td>Включает вывод вещественных чисел с 2 знаками после запятой</td><td>Манипуляторы «липкие»: действуют на все последующие выводы <code>double</code>. На предыдущие три строки (целые числа) они не влияли бы и в любом случае.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "Скидка:               " &lt;&lt; (discount * 100.0) &lt;&lt; "%" &lt;&lt; std::endl;</td><td>Печатает скидку в процентах</td><td>0.15 × 100.0 = 15.0, с <code>fixed(2)</code> выводится как <code>15.00%</code>.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "Цена со скидкой:      " &lt;&lt; discountedPrice &lt;&lt; " руб." &lt;&lt; std::endl;</td><td>Печатает цену со скидкой</td><td>297.5 с двумя знаками — <code>297.50 руб.</code></td></tr>
+<tr><td class="code-cell">return 0;</td><td>Успешное завершение</td><td>—</td></tr>
+<tr><td class="code-cell">}</td><td>Конец <code>main</code></td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Собирается везде</strong> (Windows, Linux, macOS) — только стандартный C++.</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task1_vars_discount.cpp</code></li>
+              <li><strong>MinGW-w64 / g++:</strong> <code>g++ -Wall -Wextra -o task1_vars_discount.exe task1_vars_discount.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong> Ввод не требуется.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод:</strong></p>
+            <pre>Цена товара:          350 руб.
+Купюра покупателя:    500 руб.
+Сдача:                150 руб.
+Скидка:               15.00%
+Цена со скидкой:      297.50 руб.</pre>
+
+          </div>
+
 
           <div class="explanation-box">
             <span class="explanation-title">Пошаговое объяснение</span>
@@ -921,7 +1291,7 @@ int main() {
 
 int main() {
     #if defined(_WIN32)
-    system("chcp 65001 > nul");
+    system("chcp 65001 &gt; nul");
     #endif
 
     int a = 7;
@@ -937,8 +1307,55 @@ int main() {
     std::cout &lt;&lt; std::fixed &lt;&lt; std::setprecision(3) &lt;&lt; resDouble &lt;&lt; std::endl;
 
     return 0;
-}</code></pre>
+}
+</code></pre>
           </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Построчный разбор — каждая строка кода</span>
+            <p style="font-size: 12.5px; color: var(--text-subtle); margin-bottom: 4px;">Строки сверены с файлом .cpp. Однотипные строки вывода сгруппированы в один ряд с перечислением каждой.</p>
+            <div class="table-responsive wrap-table">
+              <table>
+                <thead><tr><th>Строка / блок</th><th>Что делает</th><th>Зачем / почему так</th></tr></thead>
+                <tbody>
+<tr><td class="code-cell">#include &lt;iostream&gt;</td><td>Подключает ввод-вывод C++</td><td>Нужен для <code>std::cout</code> и <code>std::endl</code>.</td></tr>
+<tr><td class="code-cell">#include &lt;iomanip&gt;</td><td>Подключает манипуляторы форматирования</td><td>Здесь реально используется: <code>std::fixed</code> и <code>std::setprecision(3)</code> ниже.</td></tr>
+<tr><td class="code-cell">int main() {</td><td>Точка входа программы</td><td>—</td></tr>
+<tr><td class="code-cell">#if defined(_WIN32)</td><td>Условная компиляция: блок ниже — только под Windows</td><td>—</td></tr>
+<tr><td class="code-cell">system("chcp 65001 &gt; nul");</td><td>Переключает консоль на UTF-8 (65001)</td><td>Чтобы русский текст в выводе не превращался в кракозябры.</td></tr>
+<tr><td class="code-cell">#endif</td><td>Конец условного блока</td><td>—</td></tr>
+<tr><td class="code-cell">int a = 7;</td><td>Первое целое число</td><td>Делимое.</td></tr>
+<tr><td class="code-cell">int b = 3;</td><td>Второе целое число</td><td>Делитель.</td></tr>
+<tr><td class="code-cell">// Вариант 1: Целочисленное деление</td><td>Комментарий</td><td>—</td></tr>
+<tr><td class="code-cell">int resInt = a / b;</td><td>Целочисленное деление: 7 / 3 = 2</td><td>Оба операнда — <code>int</code>, поэтому дробная часть отбрасывается (остаток 1 теряется). Тип результата — <code>int</code>.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "1. Целочисленное деление (a / b): " &lt;&lt; resInt &lt;&lt; std::endl;</td><td>Печатает результат первого варианта</td><td>Вывод: <code>1. Целочисленное деление (a / b): 2</code>.</td></tr>
+<tr><td class="code-cell">// Вариант 2: Явное приведение типов к double и округление до 3 знаков</td><td>Комментарий</td><td>—</td></tr>
+<tr><td class="code-cell">double resDouble = static_cast&lt;double&gt;(a) / b;</td><td>Вещественное деление: 7.0 / 3.0 = 2.333333…</td><td><code>static_cast&lt;double&gt;(a)</code> явно приводит <code>a</code> к <code>double</code>; второй операнд <code>b</code> приводится неявно по правилам обычных арифметических преобразований.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "2. Деление с явным приведением к double (3 знака): ";</td><td>Печатает подпись второго варианта без перевода строки</td><td>Без <code>endl</code> — курсор остаётся на той же строке, число допечатается следом.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; std::fixed &lt;&lt; std::setprecision(3) &lt;&lt; resDouble &lt;&lt; std::endl;</td><td>Печатает результат с 3 знаками после запятой и переводит строку</td><td><code>fixed</code> + <code>setprecision(3)</code> дают ровно три знака: <code>2.333</code>.</td></tr>
+<tr><td class="code-cell">return 0;</td><td>Успешное завершение</td><td>—</td></tr>
+<tr><td class="code-cell">}</td><td>Конец <code>main</code></td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Собирается везде</strong> (Windows, Linux, macOS) — только стандартный C++.</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task2_type_casting.cpp</code></li>
+              <li><strong>MinGW-w64 / g++:</strong> <code>g++ -Wall -Wextra -o task2_type_casting.exe task2_type_casting.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong> Ввод не требуется.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод:</strong></p>
+            <pre>1. Целочисленное деление (a / b): 2
+2. Деление с явным приведением к double (3 знака): 2.333</pre>
+            <p style="margin-top:6px;"><strong>Что сломается:</strong> если написать <code>double x = a / b;</code> без каста, получится <code>2.0</code>, а не <code>2.333</code>: деление выполнится, пока оба операнда ещё <code>int</code>.</p>
+
+          </div>
+
 
           <div class="explanation-box">
             <span class="explanation-title">Пошаговое объяснение</span>
@@ -966,7 +1383,7 @@ int main() {
 
 int main() {
     #if defined(_WIN32)
-    system("chcp 65001 > nul");
+    system("chcp 65001 &gt; nul");
     #endif
 
     std::cout &lt;&lt; "Введите строку текста и нажмите [Enter]: ";
@@ -975,7 +1392,7 @@ int main() {
     int spaceCount = 0;
 
     // Считываем символы по одному до переноса строки '\n' или конца потока EOF
-    while ((ch = getchar()) != '\n' && ch != EOF) {
+    while ((ch = getchar()) != '\n' &amp;&amp; ch != EOF) {
         if (ch == ' ') {
             spaceCount++;
         }
@@ -984,8 +1401,57 @@ int main() {
     std::cout &lt;&lt; "Количество введенных пробелов: " &lt;&lt; spaceCount &lt;&lt; std::endl;
 
     return 0;
-}</code></pre>
+}
+</code></pre>
           </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Построчный разбор — каждая строка кода</span>
+            <p style="font-size: 12.5px; color: var(--text-subtle); margin-bottom: 4px;">Строки сверены с файлом .cpp. Однотипные строки вывода сгруппированы в один ряд с перечислением каждой.</p>
+            <div class="table-responsive wrap-table">
+              <table>
+                <thead><tr><th>Строка / блок</th><th>Что делает</th><th>Зачем / почему так</th></tr></thead>
+                <tbody>
+<tr><td class="code-cell">#include &lt;iostream&gt;</td><td>Подключает ввод-вывод C++</td><td>Нужен для <code>std::cout</code> и <code>std::endl</code>.</td></tr>
+<tr><td class="code-cell">#include &lt;cstdio&gt;</td><td>Подключает ввод-вывод C</td><td>Даёт <code>getchar()</code> и константу <code>EOF</code>.</td></tr>
+<tr><td class="code-cell">int main() {</td><td>Точка входа программы</td><td>—</td></tr>
+<tr><td class="code-cell">#if defined(_WIN32)</td><td>Условная компиляция: блок ниже — только под Windows</td><td>—</td></tr>
+<tr><td class="code-cell">system("chcp 65001 &gt; nul");</td><td>Переключает консоль на UTF-8 (65001)</td><td>Чтобы русский текст в выводе не превращался в кракозябры.</td></tr>
+<tr><td class="code-cell">#endif</td><td>Конец условного блока</td><td>—</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "Введите строку текста и нажмите [Enter]: ";</td><td>Печатает приглашение к вводу без перевода строки</td><td>Без <code>endl</code> — курсор остаётся на той же строке, и пользователь печатает следом за приглашением.</td></tr>
+<tr><td class="code-cell">int ch;</td><td>Переменная для очередного считанного символа</td><td>Тип именно <code>int</code>, а не <code>char</code>: <code>getchar()</code> возвращает код символа (0–255) или <code>EOF</code> (−1), и в <code>char</code> они не помещаются одновременно.</td></tr>
+<tr><td class="code-cell">int spaceCount = 0;</td><td>Счётчик пробелов, начальное значение 0</td><td>Счётчик всегда инициализируют до цикла, иначе в нём был бы мусор.</td></tr>
+<tr><td class="code-cell">// Считываем символы по одному до переноса строки '\n' или конца потока EOF</td><td>Комментарий</td><td>Поясняет условие цикла ниже.</td></tr>
+<tr><td class="code-cell">while ((ch = getchar()) != '\n' &amp;&amp; ch != EOF) {</td><td>Цикл: читать по символу, пока не Enter и не конец ввода</td><td>Присваивание внутри условия: сначала <code>getchar()</code> читает символ и кладёт его в <code>ch</code>, потом идут две проверки. Скобки вокруг присваивания обязательны: без них <code>ch</code> получил бы результат сравнения (0 или 1). <code>&amp;&amp;</code> — «и»: цикл продолжается, только пока оба условия верны.</td></tr>
+<tr><td class="code-cell">if (ch == ' ') {</td><td>Проверка: очередной символ — пробел?</td><td>Пробел — символ с кодом ASCII 32. Табуляция и другие пробельные символы здесь не считаются.</td></tr>
+<tr><td class="code-cell">spaceCount++;</td><td>Увеличивает счётчик пробелов на 1</td><td>Выполняется только для пробелов.</td></tr>
+<tr><td class="code-cell">}</td><td>Конец <code>if</code></td><td>—</td></tr>
+<tr><td class="code-cell">}</td><td>Конец <code>while</code></td><td>Цикл завершается при нажатии Enter (<code>\n</code>) или при конце ввода (<code>EOF</code>).</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "Количество введенных пробелов: " &lt;&lt; spaceCount &lt;&lt; std::endl;</td><td>Печатает итоговое число пробелов</td><td>—</td></tr>
+<tr><td class="code-cell">return 0;</td><td>Успешное завершение</td><td>—</td></tr>
+<tr><td class="code-cell">}</td><td>Конец <code>main</code></td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Собирается везде</strong> (Windows, Linux, macOS) — стандартные <code>&lt;iostream&gt;</code> и <code>&lt;cstdio&gt;</code>.</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task3_char_reading.cpp</code></li>
+              <li><strong>MinGW-w64 / g++:</strong> <code>g++ -Wall -Wextra -o task3_char_reading.exe task3_char_reading.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong></li>
+              <li><strong>Ввод обязателен:</strong> программа ждёт строку текста. Введите текст и нажмите Enter. Консоль Windows буферизует ввод построчно: символы попадут в программу только после Enter.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Пример запуска:</strong></p>
+            <pre>Введите строку текста и нажмите [Enter]: hello world test
+Количество введенных пробелов: 2</pre>
+            <p style="margin-top:6px;"><strong>Что сломается:</strong> программа «висит» без вывода — она ждёт ввода, это нормально. Завершить ввод без Enter можно концом потока: Ctrl+Z, затем Enter (Windows) или Ctrl+D (Linux/macOS). Если объявить <code>ch</code> как <code>char</code> вместо <code>int</code>, <code>EOF</code> (−1) станет неотличим от символа с кодом 255.</p>
+
+          </div>
+
 
           <div class="explanation-box">
             <span class="explanation-title">Пошаговое объяснение</span>
@@ -1014,7 +1480,7 @@ int main() {
 
 int main() {
     #if defined(_WIN32)
-    system("chcp 65001 > nul");
+    system("chcp 65001 &gt; nul");
     #endif
 
     // Исходная строка с запасом памяти для добавления числа
@@ -1030,18 +1496,202 @@ int main() {
     // Добавляем символьный массив в конец исходной строки
     strcat(clientStr, idStr);
 
-    // Выводим результат: "Клиент №245"
+    // Выводим полученную строку: "Клиент №245"
     std::cout &lt;&lt; clientStr &lt;&lt; std::endl;
 
     return 0;
-}</code></pre>
+}
+</code></pre>
           </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Построчный разбор — каждая строка кода</span>
+            <p style="font-size: 12.5px; color: var(--text-subtle); margin-bottom: 4px;">Строки сверены с файлом .cpp. Однотипные строки вывода сгруппированы в один ряд с перечислением каждой.</p>
+            <div class="table-responsive wrap-table">
+              <table>
+                <thead><tr><th>Строка / блок</th><th>Что делает</th><th>Зачем / почему так</th></tr></thead>
+                <tbody>
+<tr><td class="code-cell">#define _CRT_SECURE_NO_WARNINGS</td><td>Отключает предупреждения MSVC о «небезопасных» функциях C</td><td>MSVC считает <code>sprintf</code>/<code>strcat</code> небезопасными (C4996). Макрос должен стоять <b>до всех</b> <code>#include</code>, иначе не сработает. В MinGW (g++) он ни на что не влияет.</td></tr>
+<tr><td class="code-cell">#include &lt;iostream&gt;</td><td>Подключает ввод-вывод C++</td><td>Нужен для <code>std::cout</code> и <code>std::endl</code>.</td></tr>
+<tr><td class="code-cell">#include &lt;cstdio&gt;</td><td>Подключает ввод-вывод C</td><td>Даёт <code>sprintf</code>.</td></tr>
+<tr><td class="code-cell">#include &lt;cstring&gt;</td><td>Подключает строковые функции C</td><td>Даёт <code>strcat</code>.</td></tr>
+<tr><td class="code-cell">int main() {</td><td>Точка входа программы</td><td>—</td></tr>
+<tr><td class="code-cell">#if defined(_WIN32)</td><td>Условная компиляция: блок ниже — только под Windows</td><td>—</td></tr>
+<tr><td class="code-cell">system("chcp 65001 &gt; nul");</td><td>Переключает консоль на UTF-8 (65001)</td><td>Чтобы «Клиент №» выводился корректно.</td></tr>
+<tr><td class="code-cell">#endif</td><td>Конец условного блока</td><td>—</td></tr>
+<tr><td class="code-cell">// Исходная строка с запасом памяти для добавления числа</td><td>Комментарий</td><td>—</td></tr>
+<tr><td class="code-cell">char clientStr[128] = "Клиент №";</td><td>Исходная строка в массиве из 128 байт</td><td>«Клиент №» в UTF-8 занимает 11 байт + нуль-терминатор. Остаток массива — запас, чтобы <code>strcat</code> было куда дописывать число; массив «впритык» дал бы переполнение буфера.</td></tr>
+<tr><td class="code-cell">int ID = 245;</td><td>Номер клиента — целое число</td><td>Его переведём в текст и допишем к строке.</td></tr>
+<tr><td class="code-cell">// Символьный массив для записи числа</td><td>Комментарий</td><td>—</td></tr>
+<tr><td class="code-cell">char idStr[32];</td><td>Буфер под число как текст (без начального значения)</td><td>32 байта с запасом: любое <code>int</code> помещается в 12 байт, остальное — страховка.</td></tr>
+<tr><td class="code-cell">// Переводим число ID в символьный массив с помощью sprintf</td><td>Комментарий</td><td>—</td></tr>
+<tr><td class="code-cell">sprintf(idStr, "%d", ID);</td><td>Форматирует число 245 в символы <code>"245"</code> и добавляет нуль-терминатор</td><td><code>"%d"</code> — формат десятичного целого. После вызова <code>idStr</code> содержит символы <code>'2', '4', '5', '\0'</code>.</td></tr>
+<tr><td class="code-cell">// Добавляем символьный массив в конец исходной строки</td><td>Комментарий</td><td>—</td></tr>
+<tr><td class="code-cell">strcat(clientStr, idStr);</td><td>Дописывает <code>"245"</code> в конец <code>clientStr</code></td><td><code>strcat</code> находит нуль-терминатор в <code>clientStr</code> и копирует туда символы из <code>idStr</code> вместе с их нулём. Получается <code>"Клиент №245"</code>.</td></tr>
+<tr><td class="code-cell">// Выводим полученную строку: "Клиент №245"</td><td>Комментарий</td><td>—</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; clientStr &lt;&lt; std::endl;</td><td>Печатает итоговую строку</td><td>—</td></tr>
+<tr><td class="code-cell">return 0;</td><td>Успешное завершение</td><td>—</td></tr>
+<tr><td class="code-cell">}</td><td>Конец <code>main</code></td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Собирается везде</strong> (Windows, Linux, macOS). В MSVC обязательна первая строка файла <code>#define _CRT_SECURE_NO_WARNINGS</code> — без неё предупреждение C4996 (а с флагом <code>/WX</code> — ошибка сборки).</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task4_num_to_string.cpp</code></li>
+              <li><strong>MinGW-w64 / g++:</strong> <code>g++ -Wall -Wextra -o task4_num_to_string.exe task4_num_to_string.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong> Ввод не требуется.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод:</strong></p>
+            <pre>Клиент №245</pre>
+
+          </div>
+
 
           <div class="explanation-box">
             <span class="explanation-title">Пошаговое объяснение</span>
             <p>1. Массив <code>clientStr[128]</code> создается с запасом памяти для предотвращения Buffer Overflow при дозаписи.</p>
             <p>2. <code>sprintf(idStr, "%d", ID)</code> форматирует число 245 в символы <code>"245"</code> с нуль-терминатором.</p>
             <p>3. <code>strcat(clientStr, idStr)</code> дописывает строку в конец исходной: получается <code>"Клиент №245"</code>.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Практика Задача 4б -->
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Задача 4б: Перенос буквы «н» в начало (исходная строка не меняется)</div>
+          <span class="task-path">3_practice_hw/task4b_move_letter_n.cpp</span>
+        </div>
+        <div class="task-body">
+          <div class="code-container">
+            <div class="code-top-bar">
+              <span>task4b_move_letter_n.cpp</span>
+              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+            </div>
+            <pre><code>#define _CRT_SECURE_NO_WARNINGS
+#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+#include &lt;cstring&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    // Исходная переменная объявлена const — её НИКТО не меняет
+    const char clientStr[] = "Клиент";
+    int ID = 245;
+
+    // Число -&gt; строка
+    char idStr[32];
+    sprintf(idStr, "%d", ID);
+
+    // Буква 'н' (в UTF-8 это два байта)
+    const char letterN[] = "н";
+
+    // НОВАЯ строка-результат, исходную переменную не трогаем
+    char result[128] = "";
+
+    // 1. Кладём букву 'н' в НАЧАЛО результата
+    strcat(result, letterN);
+
+    // 2. Ищем букву 'н' в исходном слове
+    const char* posN = strstr(clientStr, letterN);
+    if (posN != nullptr) {
+        int before = (int)(posN - clientStr);      // байт до буквы 'н'
+
+        // 3. Копируем начало слова ("Клие") — уже без буквы 'н'
+        strncat(result, clientStr, before);
+
+        // 4. Копируем остаток после буквы 'н' ("т")
+        strcat(result, posN + strlen(letterN));
+    }
+
+    // 5. Приклеиваем число
+    strcat(result, idStr);
+
+    std::cout &lt;&lt; "Исходная строка (не изменена): " &lt;&lt; clientStr &lt;&lt; std::endl;
+    std::cout &lt;&lt; "Результат:                     " &lt;&lt; result &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+          </div>
+
+          <div class="explanation-box">
+            <span class="explanation-title">Построчный разбор — каждая строка кода</span>
+            <p style="font-size: 12.5px; color: var(--text-subtle); margin-bottom: 4px;">Строки сверены с файлом .cpp. Однотипные строки вывода сгруппированы в один ряд с перечислением каждой.</p>
+            <div class="table-responsive wrap-table">
+              <table>
+                <thead><tr><th>Строка / блок</th><th>Что делает</th><th>Зачем / почему так</th></tr></thead>
+                <tbody>
+<tr><td class="code-cell">#define _CRT_SECURE_NO_WARNINGS</td><td>Отключает предупреждения MSVC о «небезопасных» функциях C</td><td>Нужен для <code>sprintf</code>/<code>strcat</code>/<code>strncat</code>; должен стоять до всех <code>#include</code>.</td></tr>
+<tr><td class="code-cell">#include &lt;iostream&gt;</td><td>Подключает ввод-вывод C++</td><td>Нужен для <code>std::cout</code>.</td></tr>
+<tr><td class="code-cell">#include &lt;cstdio&gt;</td><td>Подключает ввод-вывод C</td><td>Даёт <code>sprintf</code>.</td></tr>
+<tr><td class="code-cell">#include &lt;cstring&gt;</td><td>Подключает строковые функции C</td><td>Даёт <code>strcat</code>, <code>strncat</code>, <code>strstr</code>, <code>strlen</code>.</td></tr>
+<tr><td class="code-cell">int main() {</td><td>Точка входа программы</td><td>—</td></tr>
+<tr><td class="code-cell">#if defined(_WIN32)</td><td>Условная компиляция: блок ниже — только под Windows</td><td>—</td></tr>
+<tr><td class="code-cell">system("chcp 65001 &gt; nul");</td><td>Переключает консоль на UTF-8 (65001)</td><td>Чтобы русские буквы выводились корректно.</td></tr>
+<tr><td class="code-cell">#endif</td><td>Конец условного блока</td><td>—</td></tr>
+<tr><td class="code-cell">// Исходная переменная объявлена const — её НИКТО не меняет</td><td>Комментарий</td><td>Требование задачи: исходную строку не трогаем.</td></tr>
+<tr><td class="code-cell">const char clientStr[] = "Клиент";</td><td>Исходная строка, размер вычислен компилятором</td><td>В UTF-8 каждая русская буква — 2 байта: 6 букв × 2 + нуль-терминатор = 13 байт. <code>const</code> запрещает изменение.</td></tr>
+<tr><td class="code-cell">int ID = 245;</td><td>Номер клиента — целое число</td><td>Допишется в конец результата.</td></tr>
+<tr><td class="code-cell">// Число -&gt; строка</td><td>Комментарий</td><td>—</td></tr>
+<tr><td class="code-cell">char idStr[32];</td><td>Буфер под число как текст</td><td>32 байта с запасом.</td></tr>
+<tr><td class="code-cell">sprintf(idStr, "%d", ID);</td><td>Число 245 → символы <code>"245"</code> + нуль-терминатор</td><td>—</td></tr>
+<tr><td class="code-cell">// Буква 'н' (в UTF-8 это два байта)</td><td>Комментарий</td><td>Ключевой момент задачи: считать надо байты, а не символы.</td></tr>
+<tr><td class="code-cell">const char letterN[] = "н";</td><td>Строка из одной буквы «н»</td><td>2 байта + нуль-терминатор = 3 байта в памяти.</td></tr>
+<tr><td class="code-cell">// НОВАЯ строка-результат, исходную переменную не трогаем</td><td>Комментарий</td><td>—</td></tr>
+<tr><td class="code-cell">char result[128] = "";</td><td>Пустой буфер результата с запасом</td><td><code>""</code> — первый байт сразу <code>'\0'</code>: строка пустая, но готова к <code>strcat</code>.</td></tr>
+<tr><td class="code-cell">// 1. Кладём букву 'н' в НАЧАЛО результата</td><td>Комментарий шага 1</td><td>—</td></tr>
+<tr><td class="code-cell">strcat(result, letterN);</td><td>Дописывает «н» в пустую строку</td><td>Теперь <code>result</code> = <code>"н"</code>.</td></tr>
+<tr><td class="code-cell">// 2. Ищем букву 'н' в исходном слове</td><td>Комментарий шага 2</td><td>—</td></tr>
+<tr><td class="code-cell">const char* posN = strstr(clientStr, letterN);</td><td>Ищет «н» в «Клиент», возвращает указатель на неё</td><td>Если бы буквы не было, вернул бы <code>nullptr</code>.</td></tr>
+<tr><td class="code-cell">if (posN != nullptr) {</td><td>Проверка, что буква найдена</td><td>Без неё вычитание указателей ниже было бы невалидным.</td></tr>
+<tr><td class="code-cell">int before = (int)(posN - clientStr);      // байт до буквы 'н'</td><td>Байтов от начала слова до буквы «н»</td><td>Вычитание указателей даёт разность в байтах: 4 буквы «Клие» × 2 байта = 8. Каст к <code>int</code> — разность имеет тип <code>ptrdiff_t</code>.</td></tr>
+<tr><td class="code-cell">// 3. Копируем начало слова ("Клие") — уже без буквы 'н'</td><td>Комментарий шага 3</td><td>—</td></tr>
+<tr><td class="code-cell">strncat(result, clientStr, before);</td><td>Дописывает первые 8 байт — «Клие»</td><td><code>strncat</code> с лимитом <code>before</code> не трогает саму «н». Теперь <code>result</code> = <code>"нКлие"</code>.</td></tr>
+<tr><td class="code-cell">// 4. Копируем остаток после буквы 'н' ("т")</td><td>Комментарий шага 4</td><td>—</td></tr>
+<tr><td class="code-cell">strcat(result, posN + strlen(letterN));</td><td>Дописывает всё после буквы «н»</td><td><code>posN + 2</code> пропускает оба байта буквы «н» (<code>strlen("н") == 2</code>). Остаток — «т». Теперь <code>result</code> = <code>"нКлиет"</code>.</td></tr>
+<tr><td class="code-cell">}</td><td>Конец <code>if</code></td><td>—</td></tr>
+<tr><td class="code-cell">// 5. Приклеиваем число</td><td>Комментарий шага 5</td><td>—</td></tr>
+<tr><td class="code-cell">strcat(result, idStr);</td><td>Дописывает <code>"245"</code> в конец результата</td><td>Итог: <code>result</code> = <code>"нКлиет245"</code>.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "Исходная строка (не изменена): " &lt;&lt; clientStr &lt;&lt; std::endl;</td><td>Печатает исходную строку для проверки</td><td>Доказывает, что <code>clientStr</code> не изменилась.</td></tr>
+<tr><td class="code-cell">std::cout &lt;&lt; "Результат:                     " &lt;&lt; result &lt;&lt; std::endl;</td><td>Печатает результат</td><td>Пробелы в тексте — выравнивание со строкой выше.</td></tr>
+<tr><td class="code-cell">return 0;</td><td>Успешное завершение</td><td>—</td></tr>
+<tr><td class="code-cell">}</td><td>Конец <code>main</code></td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Собирается везде</strong> (Windows, Linux, macOS). В MSVC обязательна первая строка файла <code>#define _CRT_SECURE_NO_WARNINGS</code>.</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task4b_move_letter_n.cpp</code></li>
+              <li><strong>MinGW-w64 / g++:</strong> <code>g++ -Wall -Wextra -o task4b_move_letter_n.exe task4b_move_letter_n.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong> Ввод не требуется.</li>
+              <li><strong>Важно:</strong> файл должен быть сохранён в UTF-8 — иначе буква «н» займёт не 2 байта, и байтовые смещения дадут другой результат.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод:</strong></p>
+            <pre>Исходная строка (не изменена): Клиент
+Результат:                     нКлиет245</pre>
+
+          </div>
+
+
+          <div class="explanation-box">
+            <span class="explanation-title">Пошаговое объяснение</span>
+            <p>1. Исходная строка <code>clientStr</code> объявлена <code>const</code> — её никто не меняет; результат собирается в новом массиве <code>result[128]</code>.</p>
+            <p>2. Буква «н» кладётся в начало результата, затем из слова «Клиент» копируется начало «Клие» (8 байт) и остаток после «н» («т»), затем число 245.</p>
+            <p>3. Ключевой момент: «н» в UTF-8 — это два байта, поэтому все смещения считаются в байтах (<code>strlen("н") == 2</code>), а не в символах.</p>
           </div>
         </div>
       </div>

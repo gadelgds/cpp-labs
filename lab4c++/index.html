@@ -48,6 +48,7 @@
     .nav-scroll::-webkit-scrollbar { display: none; }
     .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
     .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
+    .nav-chip.theory { background: var(--primary-light); color: var(--primary); }
 
     main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
     .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
@@ -74,6 +75,31 @@
     .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
     .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
 
+    /* Табличный построчный разбор: строка/блок -> что делает -> зачем */
+    .breakdown-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .breakdown-table th, .breakdown-table td { border: 1px solid var(--border); padding: 7px 9px; vertical-align: top; text-align: left; }
+    .breakdown-table th { background: var(--primary-light); color: var(--primary); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .breakdown-table td code, .line-desc code, .run-box code, .theory-text code { font-family: var(--font-mono); font-size: 12px; background: var(--bg-code); padding: 1px 4px; border-radius: 3px; }
+    .breakdown-table td:first-child { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: #1e293b; white-space: normal; word-break: break-word; }
+    .breakdown-table td:nth-child(2) { color: var(--text-main); }
+    .breakdown-table td:nth-child(3) { color: var(--text-muted); }
+    .table-wrap { overflow-x: auto; }
+
+    /* Блок «Как запустить» */
+    .run-box { background: #f8fafc; border: 1px solid var(--border); border-left: 4px solid var(--accent-green); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .run-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent-green); }
+    .run-box p, .run-box li { color: var(--text-muted); line-height: 1.5; }
+    .run-box ul, .run-box ol { padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+    .cmd { background: #0f172a; color: #e2e8f0; padding: 10px 12px; border-radius: 6px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.5; overflow-x: auto; white-space: pre; }
+    .output { background: #1e293b; color: #bbf7d0; padding: 10px 12px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; line-height: 1.5; overflow-x: auto; white-space: pre; }
+
+    .theory-text { font-size: 14px; color: var(--text-muted); line-height: 1.6; display: flex; flex-direction: column; gap: 10px; }
+    .theory-text h3 { color: var(--text-main); font-size: 15px; margin-top: 6px; }
+    .theory-text ul, .theory-text ol { padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+    .theory-text table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .theory-text table th, .theory-text table td { border: 1px solid var(--border); padding: 7px 9px; vertical-align: top; text-align: left; }
+    .theory-text table th { background: var(--primary-light); color: var(--primary); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.4px; }
+
     footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
   </style>
 </head>
@@ -87,6 +113,7 @@
         <a href="#task1" class="nav-chip">1. static_cast</a>
         <a href="#task2" class="nav-chip">2. void* в x64</a>
         <a href="#task3" class="nav-chip">3. MapViewOfFile со смещением</a>
+        <a href="theory.html" class="nav-chip theory">Теория по всем задачам →</a>
       </div>
     </div>
   </header>
@@ -102,7 +129,7 @@
       <div class="task-body">
         <div class="code-container">
           <div class="code-top-bar">
-            <span>task1_explicit_casting.cpp</span>
+            <span>task1_explicit_casting.cpp — полный код (37 строк)</span>
             <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
           </div>
           <pre><code>#include &lt;iostream&gt;
@@ -110,39 +137,107 @@
 
 int main() {
     #if defined(_WIN32)
-    system("chcp 65001 > nul");
+    system("chcp 65001 &gt; nul");
     #endif
 
-    // Часть 1: long - static_cast<long>(int)
+    std::cout &lt;&lt; "=== НАИЗУСТЬ: ЯВНОЕ ПРИВЕДЕНИЕ ТИПОВ ЧЕРЕЗ static_cast ===" &lt;&lt; std::endl;
+
+    // ЧАСТЬ 1: Вычитание int из long с явным приведением к long
     long valLong = 100000L;
     int valInt = 25000;
+
+    // Вычитание с явным приведением static_cast&lt;long&gt;()
     long resultLong = valLong - static_cast&lt;long&gt;(valInt);
 
-    // Часть 2: double - static_cast<double>(float)
+    std::cout &lt;&lt; "\n[Целочисленное вычитание]:" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Переменная long:                 " &lt;&lt; valLong &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Переменная int:                  " &lt;&lt; valInt &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Результат (long - static_cast&lt;long&gt;(int)): " &lt;&lt; resultLong &lt;&lt; std::endl;
+
+    // ЧАСТЬ 2: Вычитание float из double с явным приведением к double
     double valDouble = 125.75;
     float valFloat = 25.25f;
+
+    // Вычитание с явным приведением static_cast&lt;double&gt;()
     double resultDouble = valDouble - static_cast&lt;double&gt;(valFloat);
 
-    std::cout &lt;&lt; "resultLong: " &lt;&lt; resultLong &lt;&lt; std::endl;
+    std::cout &lt;&lt; "\n[Вещественное вычитание с плавающей точкой]:" &lt;&lt; std::endl;
     std::cout &lt;&lt; std::fixed &lt;&lt; std::setprecision(4);
-    std::cout &lt;&lt; "resultDouble: " &lt;&lt; resultDouble &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Переменная double:               " &lt;&lt; valDouble &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Переменная float:                " &lt;&lt; valFloat &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Результат (double - static_cast&lt;double&gt;(float)): " &lt;&lt; resultDouble &lt;&lt; std::endl;
 
     return 0;
 }</code></pre>
         </div>
 
         <div class="explanation-box">
-          <span class="explanation-title">Подробный построчный разбор команд</span>
-          <div class="line-breakdown">
-            <div class="line-item">
-              <span class="line-code">static_cast&lt;long&gt;(valInt)</span>
-              <span class="line-desc">Явное приведение типов времени компиляции (Compile-Time Cast). Гарантирует приведение типа <code>int</code> к типу <code>long</code> перед вычитанием.</span>
-            </div>
-            <div class="line-item">
-              <span class="line-code">static_cast&lt;double&gt;(valFloat)</span>
-              <span class="line-desc">Расширяющее приведение 32-битного вещественного числа <code>float</code> к 64-битному представлению <code>double</code> стандарта IEEE 754.</span>
-            </div>
+          <span class="explanation-title">Полный построчный разбор — буквально каждая строка</span>
+          <div class="table-wrap">
+          <table class="breakdown-table">
+            <tr><th style="width:34%">Строка / блок</th><th style="width:33%">Что делает</th><th>Зачем / почему так</th></tr>
+            <tr><td>#include &lt;iostream&gt;</td><td>Подключает стандартный ввод-вывод: <code>std::cout</code>, <code>std::endl</code>.</td><td>Без этого заголовка вывод на экран недоступен — компилятор не знает, что такое <code>cout</code>.</td></tr>
+            <tr><td>#include &lt;iomanip&gt;</td><td>Подключает манипуляторы форматирования: <code>std::fixed</code>, <code>std::setprecision</code>.</td><td>Нужен только для второй части программы — вывода вещественных чисел с фиксированным числом знаков после запятой.</td></tr>
+            <tr><td>int main() {</td><td>Точка входа программы. Возвращаемое значение <code>int</code> — код завершения для операционной системы.</td><td>Так требует стандарт C++: выполнение всегда начинается с <code>main</code>, а код возврата сообщает ОС, успешно ли завершилась программа.</td></tr>
+            <tr><td>#if defined(_WIN32)</td><td>Директива условной компиляции: следующий код попадёт в сборку, только если компилятор определил макрос <code>_WIN32</code>, то есть идёт сборка под Windows.</td><td>Команда <code>chcp</code> существует только в Windows. На Linux/macOS этот блок просто исчезнет на этапе препроцессора, и программа останется переносимой.</td></tr>
+            <tr><td>system("chcp 65001 &gt; nul");</td><td>Выполняет консольную команду Windows <code>chcp 65001</code> — переводит кодовую страницу консоли на UTF-8. Перенаправление <code>&gt; nul</code> прячет служебный вывод самой команды («Active code page: 65001»).</td><td>Иначе кириллица в заголовках («НАИЗУСТЬ», «Целочисленное вычитание») в консоли Windows показала бы кракозябры. Строго по стандарту функция <code>system</code> объявлена в <code>&lt;cstdlib&gt;</code> — здесь она доступна через транзитивное включение из <code>&lt;iostream&gt;</code>, но для чистоты кода <code>#include &lt;cstdlib&gt;</code> стоило бы добавить явно.</td></tr>
+            <tr><td>#endif</td><td>Закрывает условный блок, начатый <code>#if defined(_WIN32)</code>.</td><td>Без него препроцессор считал бы весь остаток файла частью условия — ошибка компиляции.</td></tr>
+            <tr><td>std::cout &lt;&lt; "=== НАИЗУСТЬ: ..." &lt;&lt; std::endl;</td><td>Печатает баннер-заголовок программы и переводит курсор на новую строку (<code>endl</code> заодно сбрасывает буфер вывода).</td><td>Маркирует начало вывода задачи 1, чтобы при запуске трёх программ подряд было видно, где чья работа.</td></tr>
+            <tr><td>// ЧАСТЬ 1: ...</td><td>Комментарий: поясняет, что дальше идёт целочисленная часть задания.</td><td>Комментарии не влияют на выполнение, но на защите нужно уметь объяснить структуру программы по частям.</td></tr>
+            <tr><td>long valLong = 100000L;</td><td>Объявляет переменную типа <code>long</code> со значением 100000. Суффикс <code>L</code> явно указывает, что литерал имеет тип <code>long</code>, а не <code>int</code>.</td><td>В Windows (модель данных LLP64) <code>long</code> — 4 байта, как и <code>int</code>, но по заданию нужен именно тип <code>long</code>: это «старший» целочисленный тип в паре. Без суффикса литерал 100000 всё равно влез бы в <code>int</code> и был бы неявно преобразован, суффикс делает намерение явным.</td></tr>
+            <tr><td>int valInt = 25000;</td><td>Объявляет переменную типа <code>int</code> со значением 25000.</td><td>Второй операнд вычитания — «младший» тип, который по заданию надо явно привести к <code>long</code>.</td></tr>
+            <tr><td>// Вычитание с явным приведением static_cast&lt;long&gt;()</td><td>Комментарий к ключевой строке задания.</td><td>Фиксирует, что приведение выполняется именно оператором <code>static_cast</code>, а не C-style кастом <code>(long)valInt</code>.</td></tr>
+            <tr><td>long resultLong = valLong - static_cast&lt;long&gt;(valInt);</td><td>Приводит <code>valInt</code> к типу <code>long</code> во время компиляции, затем вычитает: 100000 − 25000 = 75000. Результат имеет тип <code>long</code>.</td><td>Это и есть суть задания: приведение делается ЯВНО, до операции, поэтому оба операнда вычитания уже одного типа и компилятор не выполняет никаких скрытых неявных преобразований. Без <code>static_cast</code> компилятор сам неявно расширил бы <code>int</code> до <code>long</code> — результат был бы тем же, но требование задания («явно») не выполнялось бы, а намерение программиста не было бы видно в коде.</td></tr>
+            <tr><td>std::cout &lt;&lt; "\n[Целочисленное вычитание]:" &lt;&lt; std::endl;</td><td>Печатает подзаголовок первой части. <code>\n</code> в начале строки — пустая строка-отступ перед заголовком.</td><td>Разделяет вывод на читаемые блоки; без <code>\n</code> заголовок «прилип» бы к баннеру программы.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  Переменная long: ..." &lt;&lt; valLong &lt;&lt; std::endl;</td><td>Выводит значение <code>valLong</code> — 100000.</td><td>Показывает исходные данные до операции: на защите по выводу должно быть видно, из чего получился результат.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  Переменная int: ..." &lt;&lt; valInt &lt;&lt; std::endl;</td><td>Выводит значение <code>valInt</code> — 25000.</td><td>То же: фиксация второго операнда в выводе.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  Результат (long - static_cast&lt;long&gt;(int)): " &lt;&lt; resultLong &lt;&lt; std::endl;</td><td>Выводит результат — 75000, а в самой подписи повторяет формулу вычисления.</td><td>Подпись содержит формулу, поэтому вывод самодокументирован: проверяющий видит не просто число, а то, как оно получено.</td></tr>
+            <tr><td>// ЧАСТЬ 2: ...</td><td>Комментарий: дальше вещественная часть задания.</td><td>Структурирует программу на две симметричные части, как в условии.</td></tr>
+            <tr><td>double valDouble = 125.75;</td><td>Объявляет переменную двойной точности (64 бита по IEEE 754) со значением 125.75.</td><td>«Старший» вещественный тип в паре; литерал с точкой по умолчанию и так имеет тип <code>double</code>, суффикс не нужен.</td></tr>
+            <tr><td>float valFloat = 25.25f;</td><td>Объявляет переменную одинарной точности (32 бита) со значением 25.25. Суффикс <code>f</code> делает литерал типом <code>float</code>.</td><td>Без суффикса литерал 25.25 имел бы тип <code>double</code>, и присваивание в <code>float</code> было бы СУЖАЮЩИМ преобразованием — компилятор выдал бы предупреждение, а значение могло бы потерять точность. Суффикс <code>f</code> убирает сужение.</td></tr>
+            <tr><td>// Вычитание с явным приведением static_cast&lt;double&gt;()</td><td>Комментарий к ключевой строке второй части.</td><td>Аналогично части 1: фиксирует использование именно <code>static_cast</code>.</td></tr>
+            <tr><td>double resultDouble = valDouble - static_cast&lt;double&gt;(valFloat);</td><td>Расширяет <code>float</code> до <code>double</code> и вычитает: 125.75 − 25.25 = 100.5.</td><td>Расширяющее приведение (32 → 64 бита) безопасно: значение сохраняется точно, новой точности не появляется — <code>double</code> просто хранит то же самое число, которое было во <code>float</code>. Здесь результат ровно 100.5, потому что 25.25 = 25 + 1/4 точно представимо в двоичной системе. С числами вроде 0.1 так не было бы: <code>float</code> хранит 0.1 лишь приближённо, и расширение до <code>double</code> показало бы «хвост» (0.100000001490116...).</td></tr>
+            <tr><td>std::cout &lt;&lt; "\n[Вещественное вычитание ...]:" &lt;&lt; std::endl;</td><td>Печатает подзаголовок второй части с пустой строкой-отступом перед ним.</td><td>Отделяет вещественный блок от целочисленного в выводе.</td></tr>
+            <tr><td>std::cout &lt;&lt; std::fixed &lt;&lt; std::setprecision(4);</td><td>Включает режим фиксированной записи (<code>fixed</code>) и задаёт 4 знака после запятой для всех последующих вещественных выводов. Эта строка сама ничего не печатает.</td><td>Манипуляторы «липкие»: один раз установленные, они действуют на все дальнейшие выводы в этот поток. Поэтому три следующие строки напечатают числа как 125.7500, 25.2500, 100.5000. Без <code>fixed</code> по умолчанию выводилось бы до 6 значащих цифр (125.75, 25.25, 100.5).</td></tr>
+            <tr><td>std::cout &lt;&lt; "  Переменная double: ..." &lt;&lt; valDouble &lt;&lt; std::endl;</td><td>Выводит 125.7500 (уже с 4 знаками после запятой из-за <code>fixed</code>).</td><td>Фиксация первого операнда вещественного вычитания.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  Переменная float: ..." &lt;&lt; valFloat &lt;&lt; std::endl;</td><td>Выводит 25.2500. Обратите внимание: значение <code>float</code> при выводе неявно расширяется до <code>double</code>, но формат задают манипуляторы, поэтому печатается 4 знака.</td><td>Фиксация второго операнда; формат вывода единый для всего блока.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  Результат (double - static_cast&lt;double&gt;(float)): " &lt;&lt; resultDouble &lt;&lt; std::endl;</td><td>Выводит результат — 100.5000.</td><td>Итог второй части; подпись снова содержит формулу.</td></tr>
+            <tr><td>return 0;</td><td>Возвращает операционной системе код 0 — «программа завершилась успешно».</td><td>По соглашению код 0 означает успех, любое ненулевое значение — ошибку. В <code>main</code> <code>return 0</code> можно опустить (компилятор подставит сам), но явный возврат нагляднее.</td></tr>
+            <tr><td>}</td><td>Закрывающая фигурная скобка тела <code>main</code>.</td><td>Конец программы; все локальные переменные (<code>valLong</code>, <code>valInt</code>, <code>resultLong</code> и т.д.) уничтожаются при выходе из функции.</td></tr>
+          </table>
           </div>
+          <div class="callout-success">Итог: оба приведения в задаче — РАСШИРЯЮЩИЕ (int → long, float → double), поэтому данные не теряются. Обратное направление (long → int, double → float) было бы СУЖАЮЩИМ и могло бы потерять значение — именно поэтому в теории разбирается разница между ними.</div>
+        </div>
+
+        <div class="run-box">
+          <span class="run-title">Как запустить — задача 1</span>
+          <p><strong>Файлы заранее не нужны.</strong> Программа только печатает в консоль, ничего не читает с диска.</p>
+          <p><strong>Компиляция (Windows):</strong></p>
+          <div class="cmd">:: MSVC — в Developer Command Prompt for VS:
+cl /EHsc /std:c++17 task1_explicit_casting.cpp
+
+:: MinGW-w64 (g++) — в PowerShell / cmd:
+g++ -std=c++17 -o task1.exe task1_explicit_casting.cpp</div>
+          <p><strong>Запуск:</strong> в той же папке, где лежит exe-файл:</p>
+          <div class="cmd">.\task1.exe</div>
+          <p><strong>Ожидаемый вывод:</strong></p>
+          <div class="output">=== НАИЗУСТЬ: ЯВНОЕ ПРИВЕДЕНИЕ ТИПОВ ЧЕРЕЗ static_cast ===
+
+[Целочисленное вычитание]:
+  Переменная long:                 100000
+  Переменная int:                  25000
+  Результат (long - static_cast&lt;long&gt;(int)): 75000
+
+[Вещественное вычитание с плавающей точкой]:
+  Переменная double:               125.7500
+  Переменная float:                25.2500
+  Результат (double - static_cast&lt;double&gt;(float)): 100.5000</div>
+          <p><strong>Типичные ошибки:</strong></p>
+          <ul>
+            <li>Кракозябры вместо кириллицы — запустили exe не из консоли, а двойным кликом, либо консоль не в UTF-8. Лечится запуском из терминала Windows; строка <code>chcp 65001</code> в коде уже решает это при запуске из cmd/PowerShell.</li>
+            <li>Предупреждение о сужении при <code>float valFloat = 25.25;</code> без суффикса <code>f</code> — в коде суффикс есть, не убирайте его.</li>
+            <li>На Linux/macOS программа тоже соберётся (блок <code>#if defined(_WIN32)</code> просто не включится), но заголовок <code>chcp</code> не выполнится — кириллица в терминале Linux и так обычно в UTF-8.</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -156,56 +251,123 @@ int main() {
       <div class="task-body">
         <div class="code-container">
           <div class="code-top-bar">
-            <span>task2_void_pointers_x64.cpp</span>
+            <span>task2_void_pointers_x64.cpp — полный код (38 строк)</span>
             <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
           </div>
           <pre><code>#include &lt;iostream&gt;
 
 int main() {
     #if defined(_WIN32)
-    system("chcp 65001 > nul");
+    system("chcp 65001 &gt; nul");
     #endif
 
+    std::cout &lt;&lt; "=== САМОСТОЯТЕЛЬНО 1: УКАЗАТЕЛИ void* И РАЗМЕРЫ В x64 ===" &lt;&lt; std::endl;
+
+    // 1. Создание переменных типов int и long со значениями
     int numInt = 42;
     long numLong = 123456L;
 
-    // Универсальные указатели void*
-    void* ptrVoid1 = &numInt;
-    void* ptrVoid2 = &numLong;
+    // 2. Создание независимых универсальных указателей типа void*
+    void* ptrVoid1 = &amp;numInt;
+    void* ptrVoid2 = &amp;numLong;
 
-    // Обратное преобразование в типизированные указатели
+    // 3. Обратное преобразование указателей void* в исходные типы int* и long*
     int* ptrInt = static_cast&lt;int*&gt;(ptrVoid1);
     long* ptrLong = static_cast&lt;long*&gt;(ptrVoid2);
 
-    std::cout &lt;&lt; "Значение numInt: " &lt;&lt; *ptrInt &lt;&lt; " (адрес: " &lt;&lt; ptrInt &lt;&lt; ")" &lt;&lt; std::endl;
-    std::cout &lt;&lt; "Значение numLong: " &lt;&lt; *ptrLong &lt;&lt; " (адрес: " &lt;&lt; ptrLong &lt;&lt; ")" &lt;&lt; std::endl;
+    // 4. Извлечение значений из памяти (разыменование) и вывод на экран
+    std::cout &lt;&lt; "\n[Извлеченные значения]:" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Значение из ptrInt:  " &lt;&lt; *ptrInt &lt;&lt; " (адрес: " &lt;&lt; ptrInt &lt;&lt; ")" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Значение из ptrLong: " &lt;&lt; *ptrLong &lt;&lt; " (адрес: " &lt;&lt; ptrLong &lt;&lt; ")" &lt;&lt; std::endl;
 
-    std::cout &lt;&lt; "\n[Размеры в x64]:" &lt;&lt; std::endl;
-    std::cout &lt;&lt; "sizeof(void*): " &lt;&lt; sizeof(void*) &lt;&lt; " байт (8 байт)" &lt;&lt; std::endl;
-    std::cout &lt;&lt; "sizeof(int*):  " &lt;&lt; sizeof(int*) &lt;&lt; " байт (8 байт)" &lt;&lt; std::endl;
-    std::cout &lt;&lt; "sizeof(int):   " &lt;&lt; sizeof(int) &lt;&lt; " байт (4 байта)" &lt;&lt; std::endl;
-    std::cout &lt;&lt; "sizeof(long):  " &lt;&lt; sizeof(long) &lt;&lt; " байт (4 байта в Windows LLP64)" &lt;&lt; std::endl;
+    // 5. Определение размеров указателей и типов в архитектуре сборки (x64)
+    std::cout &lt;&lt; "\n[Размеры типов и указателей в текущей системе]:" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Разрядность сборки:    " &lt;&lt; (sizeof(void*) * 8) &lt;&lt; "-бит" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  sizeof(int):           " &lt;&lt; sizeof(int) &lt;&lt; " байт (" &lt;&lt; sizeof(int) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  sizeof(long):          " &lt;&lt; sizeof(long) &lt;&lt; " байт (" &lt;&lt; sizeof(long) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  sizeof(long long):     " &lt;&lt; sizeof(long long) &lt;&lt; " байт (" &lt;&lt; sizeof(long long) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  sizeof(void*):         " &lt;&lt; sizeof(void*) &lt;&lt; " байт (" &lt;&lt; sizeof(void*) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  sizeof(int*):          " &lt;&lt; sizeof(int*) &lt;&lt; " байт (" &lt;&lt; sizeof(int*) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  sizeof(long*):         " &lt;&lt; sizeof(long*) &lt;&lt; " байт (" &lt;&lt; sizeof(long*) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
 
     return 0;
 }</code></pre>
         </div>
 
         <div class="explanation-box">
-          <span class="explanation-title">Построчный разбор</span>
-          <div class="line-breakdown">
-            <div class="line-item">
-              <span class="line-code">void* ptrVoid1 = &numInt;</span>
-              <span class="line-desc">Универсальный указатель. Принимает адрес любого типа. Разыменование <code>*ptrVoid1</code> напрямую запрещено компилятором, так как размер типа <code>void</code> не определен.</span>
-            </div>
-            <div class="line-item">
-              <span class="line-code">static_cast&lt;int*&gt;(ptrVoid1)</span>
-              <span class="line-desc">Явное обратное приведение к <code>int*</code>, после которого становится доступен оператор разыменования <code>*ptrInt</code>.</span>
-            </div>
-            <div class="line-item">
-              <span class="line-code">sizeof(void*) == 8 байт</span>
-              <span class="line-desc">В 64-битной архитектуре (x64) любой указатель занимает ровно 8 байт (64 бита), независимо от типа данных, на которые он ссылается.</span>
-            </div>
+          <span class="explanation-title">Полный построчный разбор — буквально каждая строка</span>
+          <div class="table-wrap">
+          <table class="breakdown-table">
+            <tr><th style="width:34%">Строка / блок</th><th style="width:33%">Что делает</th><th>Зачем / почему так</th></tr>
+            <tr><td>#include &lt;iostream&gt;</td><td>Подключает <code>std::cout</code> и <code>std::endl</code> для вывода.</td><td>Вся программа — это вывод значений и размеров типов, без ввода-вывода она не имеет смысла.</td></tr>
+            <tr><td>int main() {</td><td>Точка входа программы.</td><td>Стандартная точка старта; код возврата <code>int</code> сообщает ОС об успехе (0) или ошибке.</td></tr>
+            <tr><td>#if defined(_WIN32)</td><td>Условная компиляция: блок ниже собирается только под Windows.</td><td>Команда <code>chcp</code> — только для консоли Windows; на других системах блок исчезает на этапе препроцессора.</td></tr>
+            <tr><td>system("chcp 65001 &gt; nul");</td><td>Переводит консоль Windows в кодировку UTF-8 (65001), скрывая служебный вывод команды (<code>&gt; nul</code>).</td><td>Чтобы кириллица в заголовках («САМОСТОЯТЕЛЬНО», «Извлеченные значения») отображалась корректно. Формально <code>system</code> объявлена в <code>&lt;cstdlib&gt;</code> — здесь она доступна транзитивно через <code>&lt;iostream&gt;</code>, явное включение <code>&lt;cstdlib&gt;</code> сделало бы код строже.</td></tr>
+            <tr><td>#endif</td><td>Закрывает условный блок <code>#if</code>.</td><td>Без парного <code>#endif</code> — ошибка препроцессора.</td></tr>
+            <tr><td>std::cout &lt;&lt; "=== САМОСТОЯТЕЛЬНО 1: ..." &lt;&lt; std::endl;</td><td>Печатает баннер-заголовок программы.</td><td>Отделяет вывод этой задачи от других при последовательном запуске всех трёх программ.</td></tr>
+            <tr><td>// 1. Создание переменных типов int и long со значениями</td><td>Комментарий: шаг 1 по условию задачи.</td><td>Номера шагов (1–5) повторяют пункты условия — на защите удобно сверять код с заданием пункт в пункт.</td></tr>
+            <tr><td>int numInt = 42;</td><td>Создаёт на стеке переменную <code>int</code> (4 байта) со значением 42.</td><td>Первый «подопытный» объект: у него берут адрес, кладут в <code>void*</code>, потом возвращают значение обратно. Значение 42 — произвольное, легко узнать в выводе.</td></tr>
+            <tr><td>long numLong = 123456L;</td><td>Создаёт на стеке переменную <code>long</code> со значением 123456. Суффикс <code>L</code> — литерал типа <code>long</code>.</td><td>Второй объект другого типа, чтобы показать: один и тот же <code>void*</code> может хранить адрес и <code>int</code>, и <code>long</code>. В Windows <code>long</code> — тоже 4 байта (модель LLP64), но тип у переменной другой, и это важно для приведения обратно.</td></tr>
+            <tr><td>// 2. Создание независимых универсальных указателей типа void*</td><td>Комментарий: шаг 2 по условию.</td><td>Структурирует код по пунктам задания.</td></tr>
+            <tr><td>void* ptrVoid1 = &amp;numInt;</td><td>Создаёт универсальный указатель и записывает в него адрес <code>numInt</code>. Оператор <code>&amp;</code> берёт адрес переменной.</td><td>Преобразование «любой указатель → <code>void*</code>» в C++ выполняется НЕЯВНО и безопасно: адрес просто копируется, информация о типе «забывается». Поэтому здесь нет <code>static_cast</code> — он не нужен. После этого <code>ptrVoid1</code> знает, ГДЕ лежит значение, но не знает, ЧТО там лежит и сколько байт читать.</td></tr>
+            <tr><td>void* ptrVoid2 = &amp;numLong;</td><td>То же для адреса <code>numLong</code>.</td><td>Два независимых указателя — по одному на каждую переменную, как требует условие («независимые указатели»).</td></tr>
+            <tr><td>// 3. Обратное преобразование указателей void* в исходные типы int* и long*</td><td>Комментарий: шаг 3 по условию.</td><td>Ключевой шаг задачи: без обратного приведения значения из <code>void*</code> не извлечь.</td></tr>
+            <tr><td>int* ptrInt = static_cast&lt;int*&gt;(ptrVoid1);</td><td>Явно приводит <code>void*</code> обратно к <code>int*</code>. Адрес не меняется — меняется только «взгляд» компилятора на память по этому адресу.</td><td>Обратное направление «<code>void*</code> → типизированный указатель» НЕЯВНО запрещено: компилятор не позволит написать <code>int* p = ptrVoid1;</code> — это ошибка. Нужен именно <code>static_cast</code>: программист берёт на себя ответственность, что по этому адресу действительно лежит <code>int</code>. Если бы там лежал <code>long</code> или <code>double</code>, компилятор не остановил бы, а значение прочиталось бы неверно — это главный риск <code>void*</code>.</td></tr>
+            <tr><td>long* ptrLong = static_cast&lt;long*&gt;(ptrVoid2);</td><td>То же: <code>void*</code> → <code>long*</code>.</td><td>Симметричная операция для второй переменной. Тип приведения должен совпадать с исходным типом переменной, иначе разыменование даст мусор.</td></tr>
+            <tr><td>// 4. Извлечение значений из памяти (разыменование) и вывод на экран</td><td>Комментарий: шаг 4 по условию.</td><td>Структурирует код по пунктам задания.</td></tr>
+            <tr><td>std::cout &lt;&lt; "\n[Извлеченные значения]:" &lt;&lt; std::endl;</td><td>Печатает подзаголовок блока результатов с пустой строкой-отступом (<code>\n</code>).</td><td>Отделяет блок значений от баннера программы.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  Значение из ptrInt:  " &lt;&lt; *ptrInt &lt;&lt; " (адрес: " &lt;&lt; ptrInt &lt;&lt; ")" &lt;&lt; std::endl;</td><td>Разыменовывает <code>ptrInt</code> (<code>*ptrInt</code> — прочитать 4 байта по адресу и истолковать как <code>int</code>) и печатает значение 42 вместе с самим адресом.</td><td>Демонстрирует два разных смысла указателя в одной строке: <code>*ptrInt</code> — значение ПО адресу, <code>ptrInt</code> без звёздочки — сам адрес. Адрес при каждом запуске разный (ASLR), поэтому в выводе он будет отличаться от примера — это нормально.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  Значение из ptrLong: " &lt;&lt; *ptrLong &lt;&lt; " (адрес: " &lt;&lt; ptrLong &lt;&lt; ")" &lt;&lt; std::endl;</td><td>То же для <code>long</code>: печатает 123456 и адрес <code>numLong</code>.</td><td>Подтверждает, что оба обратных приведения сработали и значения извлечены верно.</td></tr>
+            <tr><td>// 5. Определение размеров указателей и типов в архитектуре сборки (x64)</td><td>Комментарий: шаг 5 по условию.</td><td>Второй смысловой блок задачи — размеры типов.</td></tr>
+            <tr><td>std::cout &lt;&lt; "\n[Размеры типов и указателей в текущей системе]:" &lt;&lt; std::endl;</td><td>Печатает подзаголовок блока размеров.</td><td>Отделяет блок размеров от блока значений.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  Разрядность сборки:    " &lt;&lt; (sizeof(void*) * 8) &lt;&lt; "-бит" &lt;&lt; std::endl;</td><td>Вычисляет разрядность сборки как размер указателя в битах: <code>sizeof(void*)</code> — 8 байт в x64, × 8 = 64 бита.</td><td>Хитрый способ «спросить» у компилятора разрядность: размер указателя равен разрядности адресного пространства. В 32-битной сборке та же строка напечатала бы 32-бит — программа сама диагностирует архитектуру.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  sizeof(int): ..." &lt;&lt; sizeof(int) &lt;&lt; " байт (" &lt;&lt; sizeof(int) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;</td><td>Печатает <code>sizeof(int)</code> — 4 байта (32 бита). <code>sizeof</code> вычисляется во время компиляции, это не вызов функции.</td><td>Показывает размер самого значения, а не указателя на него. Умножение на 8 переводит байты в биты для наглядности.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  sizeof(long): ..." &lt;&lt; sizeof(long) &lt;&lt; " байт (" &lt;&lt; sizeof(long) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;</td><td>Печатает <code>sizeof(long)</code> — 4 байта (32 бита) в Windows.</td><td>Ключевой момент для защиты: в Windows <code>long</code> остаётся 4-байтным даже в x64 (модель данных LLP64). В Linux x64 <code>long</code> был бы 8 байт (LP64) — та же программа на Linux напечатала бы другое число.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  sizeof(long long): ..." &lt;&lt; sizeof(long long) &lt;&lt; " байт (" &lt;&lt; sizeof(long long) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;</td><td>Печатает <code>sizeof(long long)</code> — 8 байт (64 бита).</td><td>В Windows именно <code>long long</code> — 64-битный целый тип, а не <code>long</code>. Строка добавлена для контраста с предыдущей.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  sizeof(void*): ..." &lt;&lt; sizeof(void*) &lt;&lt; " байт (" &lt;&lt; sizeof(void*) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;</td><td>Печатает <code>sizeof(void*)</code> — 8 байт (64 бита) в x64.</td><td>Главный вывод задачи: размер указателя зависит только от архитектуры, а не от типа, на который он указывает. <code>void*</code> занимает столько же, сколько любой другой указатель.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  sizeof(int*): ..." &lt;&lt; sizeof(int*) &lt;&lt; " байт (" &lt;&lt; sizeof(int*) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;</td><td>Печатает <code>sizeof(int*)</code> — 8 байт (64 бита).</td><td>Подтверждение: указатель на 4-байтный <code>int</code> сам занимает 8 байт — размер указателя НЕ равен размеру данных, на которые он указывает.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  sizeof(long*): ..." &lt;&lt; sizeof(long*) &lt;&lt; " байт (" &lt;&lt; sizeof(long*) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;</td><td>Печатает <code>sizeof(long*)</code> — 8 байт (64 бита).</td><td>Третье подтверждение того же правила на другом типе указателя.</td></tr>
+            <tr><td>return 0;</td><td>Возвращает ОС код 0 — успешное завершение.</td><td>По соглашению 0 = успех.</td></tr>
+            <tr><td>}</td><td>Закрывающая скобка <code>main</code>; локальные переменные и указатели уничтожаются.</td><td>Конец программы. Сами значения <code>numInt</code>/<code>numLong</code> жили на стеке и освобождаются автоматически.</td></tr>
+          </table>
           </div>
+          <div class="callout-warn">Главный подвох: <code>*ptrVoid1</code> написать НЕЛЬЗЯ — разыменовать <code>void*</code> напрямую компилятор не даст, потому что у <code>void</code> нет размера и непонятно, сколько байт читать. Сначала <code>static_cast</code> к конкретному типу — только потом <code>*</code>.</div>
+          <div class="callout-success">Итог: все указатели в x64 — по 8 байт, независимо от типа данных. А вот сами типы различаются: <code>int</code> и <code>long</code> в Windows — по 4 байта, <code>long long</code> — 8 байт.</div>
+        </div>
+
+        <div class="run-box">
+          <span class="run-title">Как запустить — задача 2</span>
+          <p><strong>Файлы заранее не нужны.</strong> Программа работает только со стеком и консолью.</p>
+          <p><strong>Компиляция (Windows, обязательно 64-битная сборка):</strong></p>
+          <div class="cmd">:: MSVC — в Developer Command Prompt for VS (цель x64):
+cl /EHsc /std:c++17 task2_void_pointers_x64.cpp
+
+:: MinGW-w64 (g++) — в PowerShell / cmd:
+g++ -std=c++17 -o task2.exe task2_void_pointers_x64.cpp</div>
+          <p><strong>Запуск:</strong></p>
+          <div class="cmd">.\task2.exe</div>
+          <p><strong>Ожидаемый вывод (адреса при каждом запуске разные — это нормально):</strong></p>
+          <div class="output">=== САМОСТОЯТЕЛЬНО 1: УКАЗАТЕЛИ void* И РАЗМЕРЫ В x64 ===
+
+[Извлеченные значения]:
+  Значение из ptrInt:  42 (адрес: 0x000000A1B2C3D4E5)
+  Значение из ptrLong: 123456 (адрес: 0x000000A1B2C3D4E9)
+
+[Размеры типов и указателей в текущей системе]:
+  Разрядность сборки:    64-бит
+  sizeof(int):           4 байт (32 бит)
+  sizeof(long):          4 байт (32 бит)
+  sizeof(long long):     8 байт (64 бит)
+  sizeof(void*):         8 байт (64 бит)
+  sizeof(int*):          8 байт (64 бит)
+  sizeof(long*):         8 байт (64 бит)</div>
+          <p><strong>Типичные ошибки:</strong></p>
+          <ul>
+            <li>Собрали в 32-битном режиме (цель x86 / <code>-m32</code>) — тогда <code>sizeof(void*)</code> будет 4, а разрядность 32-бит. Это не ошибка программы, а другая архитектура сборки: для задачи нужна именно x64.</li>
+            <li><code>sizeof(long)</code> = 8 — значит, собрали под Linux (модель LP64), а не под Windows. В Windows <code>long</code> всегда 4 байта.</li>
+            <li>Ошибка компиляции <code>int* p = ptrVoid1;</code> — так и должно быть: неявное приведение <code>void*</code> → <code>int*</code> запрещено, нужен <code>static_cast</code>.</li>
+            <li>Ошибка компиляции при <code>*ptrVoid1</code> — разыменование <code>void*</code> запрещено стандартом, сначала приведите к конкретному типу.</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -219,53 +381,223 @@ int main() {
       <div class="task-body">
         <div class="code-container">
           <div class="code-top-bar">
-            <span>task3_memory_mapped_offset.cpp</span>
+            <span>task3_memory_mapped_offset.cpp — полный код (104 строки)</span>
             <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
           </div>
           <pre><code>#include &lt;windows.h&gt;
 #include &lt;iostream&gt;
+#include &lt;string&gt;
 
 int main() {
     #if defined(_WIN32)
-    system("chcp 65001 > nul");
+    system("chcp 65001 &gt; nul");
     #endif
 
+    std::cout &lt;&lt; "=== САМОСТОЯТЕЛЬНО 2: ПРОЕЦИРОВАНИЕ ФАЙЛА С ФИКСИРОВАННЫМ СМЕЩЕНИЕМ ===" &lt;&lt; std::endl;
+
+    const wchar_t* filename = L"mapped_large_test.txt";
+
+    // 1. Получаем информацию об архитектуре и гранулярности распределения памяти Windows
     SYSTEM_INFO sysInfo;
-    GetSystemInfo(&sysInfo);
-    DWORD allocGranularity = sysInfo.dwAllocationGranularity; // 64 КБ (65536)
+    GetSystemInfo(&amp;sysInfo);
+    DWORD allocGranularity = sysInfo.dwAllocationGranularity; // Обычно 65536 байт (64 КБ)
 
-    HANDLE hFile = CreateFileW(L"mapped_large_test.txt", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    HANDLE hMapping = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+    std::cout &lt;&lt; "Системная гранулярность выделения памяти (Allocation Granularity): "
+              &lt;&lt; allocGranularity &lt;&lt; " байт (" &lt;&lt; (allocGranularity / 1024) &lt;&lt; " КБ)" &lt;&lt; std::endl;
 
-    // Смещение ОБЯЗАНО быть строго кратно allocGranularity (64 КБ)!
-    size_t targetOffset = 2 * allocGranularity; // 128 КБ
-    DWORD offsetLow = (DWORD)(targetOffset & 0xFFFFFFFF);
-    DWORD offsetHigh = (DWORD)(targetOffset &gt;&gt; 32);
+    // 2. Создаем тестовый файл достаточного размера (например, 256 КБ = 4 * 64 КБ)
+    HANDLE hFile = CreateFileW(
+        filename,
+        GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
 
-    const char* pView = (const char*)MapViewOfFile(hMapping, FILE_MAP_READ, offsetHigh, offsetLow, 1024);
-    if (pView) {
-        std::cout &lt;&lt; "Спроецировано по виртуальному адресу: " &lt;&lt; (void*)pView &lt;&lt; std::endl;
-        UnmapViewOfFile(pView);
+    if (hFile == INVALID_HANDLE_VALUE) {
+        std::cout &lt;&lt; "Ошибка создания файла: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return 1;
     }
 
+    // Заполняем файл данными: 4 блока по 64 КБ с уникальными маркерами
+    const DWORD totalFileSize = 4 * allocGranularity; // 256 КБ
+    std::string fillData(totalFileSize, '.');
+
+    // Размещаем маркер во 2-м блоке (смещение 2 * allocGranularity = 128 КБ)
+    std::string secretMessage = "[СЕКРЕТНЫЙ ТЕКСТ НА СМЕЩЕНИИ 128 КБ]";
+    size_t targetOffset = 2 * allocGranularity;
+    memcpy(&amp;fillData[targetOffset], secretMessage.c_str(), secretMessage.length());
+
+    DWORD bytesWritten = 0;
+    WriteFile(hFile, fillData.data(), totalFileSize, &amp;bytesWritten, NULL);
+
+    // 3. Создаем объект проекции файла (File Mapping Object)
+    HANDLE hMapping = CreateFileMappingW(
+        hFile,
+        NULL,
+        PAGE_READONLY,
+        0,
+        0,
+        NULL
+    );
+
+    if (hMapping == NULL) {
+        std::cout &lt;&lt; "Ошибка CreateFileMapping: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        CloseHandle(hFile);
+        return 1;
+    }
+
+    // 4. Смещение для MapViewOfFile ОБЯЗАНО быть строго кратным allocGranularity!
+    // Демонстрируем расчет смещения:
+    DWORD offsetLow = (DWORD)(targetOffset &amp; 0xFFFFFFFF);
+    DWORD offsetHigh = (DWORD)(((ULONGLONG)targetOffset &gt;&gt; 32) &amp; 0xFFFFFFFF);
+    SIZE_T viewSize = 1024; // Отображаем окно размером 1024 байта
+
+    std::cout &lt;&lt; "\nЗапрос проецирования участка файла:" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Смещение: " &lt;&lt; targetOffset &lt;&lt; " байт (кратно " &lt;&lt; allocGranularity &lt;&lt; ")" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "  Размер проецируемого окна: " &lt;&lt; viewSize &lt;&lt; " байт" &lt;&lt; std::endl;
+
+    // 5. Проецируем срез файла в виртуальную память процесса
+    const char* pView = static_cast&lt;const char*&gt;(MapViewOfFile(
+        hMapping,
+        FILE_MAP_READ,
+        offsetHigh,
+        offsetLow,
+        viewSize
+    ));
+
+    if (pView == NULL) {
+        std::cout &lt;&lt; "Ошибка MapViewOfFile: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+    } else {
+        std::cout &lt;&lt; "  Успешно спроецировано по виртуальному адресу: " &lt;&lt; (void*)pView &lt;&lt; std::endl;
+
+        // Читаем данные из памяти спроецированного окна
+        std::string readChunk(pView, secretMessage.length());
+        std::cout &lt;&lt; "  Прочитанные данные: \"" &lt;&lt; readChunk &lt;&lt; "\"" &lt;&lt; std::endl;
+
+        // Отмонтируем проекцию
+        UnmapViewOfFile(pView);
+        std::cout &lt;&lt; "Окно проекции успешно размонтировано (UnmapViewOfFile)." &lt;&lt; std::endl;
+    }
+
+    // 6. Закрытие дескрипторов
     CloseHandle(hMapping);
     CloseHandle(hFile);
+
     return 0;
 }</code></pre>
         </div>
 
         <div class="explanation-box">
-          <span class="explanation-title">Почему смещение не может быть случайным?</span>
-          <div class="line-breakdown">
-            <div class="line-item">
-              <span class="line-code">Allocation Granularity = 64 КБ (65 536 байт)</span>
-              <span class="line-desc">Подсистема виртуальной памяти Windows отображает страницы файлов кратно аппаратной гранулярности распределения.</span>
-            </div>
-            <div class="line-item">
-              <span class="line-code">ERROR_MAPPED_ALIGNMENT (код 1132)</span>
-              <span class="line-desc">Ошибка, которая немедленно возвращается функцией <code>MapViewOfFile</code>, если смещение (<code>dwFileOffsetLow/High</code>) не кратно 64 КБ.</span>
-            </div>
+          <span class="explanation-title">Полный построчный разбор — буквально каждая строка</span>
+          <div class="table-wrap">
+          <table class="breakdown-table">
+            <tr><th style="width:34%">Строка / блок</th><th style="width:33%">Что делает</th><th>Зачем / почему так</th></tr>
+            <tr><td>#include &lt;windows.h&gt;</td><td>Подключает Win32 API: типы <code>HANDLE</code>, <code>DWORD</code>, <code>SYSTEM_INFO</code> и функции <code>GetSystemInfo</code>, <code>CreateFileW</code>, <code>CreateFileMappingW</code>, <code>MapViewOfFile</code>, <code>UnmapViewOfFile</code>, <code>CloseHandle</code>, <code>GetLastError</code>.</td><td>Без этого заголовка ни один вызов Windows API в программе не скомпилируется. Именно поэтому задача 3 — только для Windows, в отличие от задач 1 и 2.</td></tr>
+            <tr><td>#include &lt;iostream&gt;</td><td>Подключает <code>std::cout</code> и <code>std::endl</code>.</td><td>Весь отчёт о работе программы идёт в консоль.</td></tr>
+            <tr><td>#include &lt;string&gt;</td><td>Подключает <code>std::string</code> — строки для буфера файла и маркера.</td><td>Буфер <code>fillData</code> и маркер <code>secretMessage</code> — это <code>std::string</code>. Замечание: <code>memcpy</code> формально объявлена в <code>&lt;cstring&gt;</code> — здесь она доступна транзитивно через <code>&lt;string&gt;</code> и <code>&lt;windows.h&gt;</code>, но строгое включение <code>#include &lt;cstring&gt;</code> сделало бы код корректнее.</td></tr>
+            <tr><td>int main() {</td><td>Точка входа программы.</td><td>Стандартный старт; код возврата 0 — успех, 1 — ошибка на одном из шагов.</td></tr>
+            <tr><td>#if defined(_WIN32)</td><td>Условная компиляция: блок ниже собирается только под Windows.</td><td>Команда <code>chcp</code> существует только в Windows.</td></tr>
+            <tr><td>system("chcp 65001 &gt; nul");</td><td>Переводит консоль Windows в UTF-8 (65001), скрывая служебный вывод команды.</td><td>Чтобы кириллица в заголовках и в маркере «[СЕКРЕТНЫЙ ТЕКСТ...]» отображалась корректно. Формально <code>system</code> — из <code>&lt;cstdlib&gt;</code>, здесь доступна транзитивно.</td></tr>
+            <tr><td>#endif</td><td>Закрывает условный блок <code>#if</code>.</td><td>Парная директива, без неё — ошибка препроцессора.</td></tr>
+            <tr><td>std::cout &lt;&lt; "=== САМОСТОЯТЕЛЬНО 2: ..." &lt;&lt; std::endl;</td><td>Печатает баннер-заголовок программы.</td><td>Отделяет вывод этой задачи от других при последовательном запуске.</td></tr>
+            <tr><td>const wchar_t* filename = L"mapped_large_test.txt";</td><td>Задаёт имя тестового файла как широкую строку (<code>wchar_t</code>, префикс <code>L</code> — каждый символ 2 байта в UTF-16).</td><td><code>CreateFileW</code> — wide-версия функции, она принимает только <code>LPCWSTR</code> (указатель на широкую строку). Обычный <code>const char*</code> сюда не подошёл бы — ошибка типов. <code>const</code> означает, что имя файла не меняется в ходе программы.</td></tr>
+            <tr><td>// 1. Получаем информацию об архитектуре и гранулярности...</td><td>Комментарий: шаг 1 — узнать гранулярность у системы.</td><td>Номера шагов (1–6) повторяют логику программы и помогают на защите.</td></tr>
+            <tr><td>SYSTEM_INFO sysInfo;</td><td>Объявляет структуру <code>SYSTEM_INFO</code> на стеке. Пока она не инициализирована — в ней мусор.</td><td>Структура-приёмник: следующий вызов заполнит её данными о системе. Объявлять её нужно до вызова <code>GetSystemInfo</code>.</td></tr>
+            <tr><td>GetSystemInfo(&amp;sysInfo);</td><td>Вызывает Win32-функцию, которая заполняет структуру информацией о процессоре, числе ядер, размере страницы и гранулярности. Передаётся адрес структуры (<code>&amp;</code>).</td><td>Функция ничего не возвращает — результат она «кладёт» в структуру по указателю. Именно так программа узнаёт гранулярность, вместо того чтобы захардкодить 65536: на другой системе значение теоретически может отличаться.</td></tr>
+            <tr><td>DWORD allocGranularity = sysInfo.dwAllocationGranularity; // Обычно 65536 байт (64 КБ)</td><td>Достаёт из структуры поле <code>dwAllocationGranularity</code> — гранулярность распределения памяти. <code>DWORD</code> — 32-битное беззнаковое целое Win32.</td><td>Это центральное число всей задачи: все смещения для <code>MapViewOfFile</code> обязаны быть ему кратны. На x86/x64 Windows оно равно 65536 байт (64 КБ). Комментарий фиксирует ожидаемое значение.</td></tr>
+            <tr><td>std::cout &lt;&lt; "Системная гранулярность ..." &lt;&lt; allocGranularity &lt;&lt; " байт (" &lt;&lt; (allocGranularity / 1024) &lt;&lt; " КБ)" &lt;&lt; std::endl;</td><td>Печатает гранулярность: «65536 байт (64 КБ)». Выражение разбито на две строки исходника, но это один оператор вывода. Деление на 1024 переводит байты в килобайты.</td><td>Показывает проверяющему, что программа действительно спросила значение у системы, а не взяла его из головы. Разбивка длинной строки на две — только для читаемости кода.</td></tr>
+            <tr><td>// 2. Создаем тестовый файл достаточного размера (например, 256 КБ = 4 * 64 КБ)</td><td>Комментарий: шаг 2 — подготовить файл для проецирования.</td><td>Файл нужен непустым и достаточно большим: смещение 128 КБ должно лежать ВНУТРИ файла, иначе проецировать будет нечего.</td></tr>
+            <tr><td>HANDLE hFile = CreateFileW( filename, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );</td><td>Создаёт (или перезаписывает) файл <code>mapped_large_test.txt</code> в рабочей папке и возвращает его дескриптор <code>HANDLE</code>. Аргументы по порядку: имя; доступ на чтение И запись; разрешить другим процессам только читать файл, пока он открыт; <code>NULL</code> — атрибуты безопасности по умолчанию; <code>CREATE_ALWAYS</code> — создать новый или ОБНУЛИТЬ существующий файл; обычные атрибуты; <code>NULL</code> — нет файла-шаблона.</td><td>Ключевой момент всей задачи: <code>CREATE_ALWAYS</code> означает, что файл заранее создавать НЕ нужно — программа сама его создаёт при каждом запуске, а старый файл с тем же именем перезаписывает в ноль. Именно поэтому условие «файл должен существовать заранее» к этому коду НЕ относится: оно относилось бы к режиму <code>OPEN_EXISTING</code>, которого здесь нет. Доступ <code>GENERIC_WRITE</code> нужен, чтобы дальше записать в файл данные через <code>WriteFile</code>; <code>GENERIC_READ</code> — чтобы потом создать проекцию.</td></tr>
+            <tr><td>if (hFile == INVALID_HANDLE_VALUE) {</td><td>Проверяет, удалось ли создать файл. При неудаче <code>CreateFileW</code> возвращает специальное значение <code>INVALID_HANDLE_VALUE</code> (−1), а не <code>NULL</code>.</td><td>Проверка ошибок обязательна для всех Win32-функций, возвращающих <code>HANDLE</code>. Типичные причины неудачи: нет прав на запись в папку, путь недоступен, файл занят с запретом записи.</td></tr>
+            <tr><td>std::cout &lt;&lt; "Ошибка создания файла: " &lt;&lt; GetLastError() &lt;&lt; std::endl;</td><td>Печатает код ошибки Win32 из <code>GetLastError()</code> (например, 5 — отказано в доступе).</td><td>Без кода ошибки невозможно понять, почему создание не удалось. <code>GetLastError</code> надо вызывать сразу после неудачного вызова — следующий Win32-вызов может перезаписать код.</td></tr>
+            <tr><td>return 1;</td><td>Завершает программу с кодом 1 — признак ошибки для ОС и для скриптов.</td><td>Дальше работать не с чем: без файла нет ни проекции, ни смысла продолжать. Код 1 отличается от 0, поэтому по коду возврата видно, что программа упала.</td></tr>
+            <tr><td>}</td><td>Закрывает блок <code>if</code> проверки файла.</td><td>Синтаксическая граница: дальше идёт код, который выполняется только при успешно созданном файле.</td></tr>
+            <tr><td>// Заполняем файл данными: 4 блока по 64 КБ с уникальными маркерами</td><td>Комментарий: поясняет план заполнения файла.</td><td>Файл делится на 4 блока по 64 КБ — ровно по гранулярности, чтобы маркер на смещении 128 КБ попал точно на границу третьего блока.</td></tr>
+            <tr><td>const DWORD totalFileSize = 4 * allocGranularity; // 256 КБ</td><td>Вычисляет общий размер файла: 4 × 65536 = 262144 байта (256 КБ).</td><td>Размер выбран с запасом: нужно, чтобы смещение 128 КБ + окно 1024 байта гарантированно умещались внутри файла. <code>const</code> — размер после вычисления не меняется.</td></tr>
+            <tr><td>std::string fillData(totalFileSize, '.');</td><td>Создаёт строку-буфер из 262144 символов <code>'.'</code> (точка).</td><td>Это «тело» будущего файла: точки — нейтральный фон, на котором маркер на смещении 128 КБ будет легко найти. Конструктор <code>string(размер, символ)</code> сразу выделяет память и заполняет её.</td></tr>
+            <tr><td>// Размещаем маркер во 2-м блоке (смещение 2 * allocGranularity = 128 КБ)</td><td>Комментарий: маркер кладётся на границу третьего блока (блоки нумеруются с 0: блок №2 начинается на 128 КБ).</td><td>Поясняет, почему выбрано именно это смещение: оно кратно гранулярности и лежит внутри файла.</td></tr>
+            <tr><td>std::string secretMessage = "[СЕКРЕТНЫЙ ТЕКСТ НА СМЕЩЕНИИ 128 КБ]";</td><td>Задаёт строку-маркер, которую потом будут искать через спроецированную память.</td><td>Маркер — доказательство, что проекция показывает именно нужный кусок файла: если прочитать по смещению 128 КБ и увидеть этот текст, значит, смещение посчитано верно. Кириллица здесь хранится в кодировке исходника (UTF-8), а <code>length()</code> считает БАЙТЫ — для <code>memcpy</code> это именно то, что нужно.</td></tr>
+            <tr><td>size_t targetOffset = 2 * allocGranularity;</td><td>Вычисляет целевое смещение: 2 × 65536 = 131072 байта (128 КБ).</td><td>Смещение берётся как кратное гранулярности: 131072 / 65536 = 2 ровно, без остатка. Тип <code>size_t</code> — 64-битный в x64, поэтому смещение не переполнится даже для файлов больше 4 ГБ.</td></tr>
+            <tr><td>memcpy(&amp;fillData[targetOffset], secretMessage.c_str(), secretMessage.length());</td><td>Копирует байты маркера в буфер, начиная с позиции 131072. <code>&amp;fillData[targetOffset]</code> — адрес внутри буфера, <code>c_str()</code> — указатель на байты маркера, <code>length()</code> — сколько байт копировать.</td><td>Маркер «вживляется» в буфер ДО записи на диск, поэтому в файле он окажется ровно на смещении 128 КБ. <code>memcpy</code> копирует сырые байты без учёта <code>'\0'</code> — важно, что длина берётся из <code>length()</code>, а не из <code>strlen</code>.</td></tr>
+            <tr><td>DWORD bytesWritten = 0;</td><td>Объявляет счётчик реально записанных байт, пока 0.</td><td><code>WriteFile</code> заполнит эту переменную по указателю — так узнают, записалось ли всё.</td></tr>
+            <tr><td>WriteFile(hFile, fillData.data(), totalFileSize, &amp;bytesWritten, NULL);</td><td>Записывает весь буфер (262144 байта) в файл через дескриптор <code>hFile</code>. Последний аргумент <code>NULL</code> — синхронная запись без overlapped-структуры.</td><td>После этого вызова файл на диске имеет размер 256 КБ и содержит маркер на 128 КБ. Замечание для защиты: результат <code>WriteFile</code> и равенство <code>bytesWritten == totalFileSize</code> здесь НЕ проверяются — при нехватке места на диске файл мог бы оказаться короче, а программа этого не заметила бы.</td></tr>
+            <tr><td>// 3. Создаем объект проекции файла (File Mapping Object)</td><td>Комментарий: шаг 3 — создать секцию (объект ядра для проецирования).</td><td>Проецирование идёт в два этапа: сначала создаётся объект отображения, потом из него — представление (view). Пропустить первый этап нельзя.</td></tr>
+            <tr><td>HANDLE hMapping = CreateFileMappingW( hFile, NULL, PAGE_READONLY, 0, 0, NULL );</td><td>Создаёт объект проекции файла. Аргументы: дескриптор файла; <code>NULL</code> — безопасность по умолчанию; <code>PAGE_READONLY</code> — страницы отображения только для чтения; размер отображения 0, 0 — ВЕСЬ файл (верхние и нижние 32 бита размера равны 0, что означает «размер файла»); <code>NULL</code> — безымянная секция.</td><td>Размер 0, 0 — удобный приём: не нужно заранее знать размер файла, секция покрывает его целиком. <code>PAGE_READONLY</code> сочетается с <code>GENERIC_READ</code> у файла; страницы будут только на чтение — запись через указатель <code>pView</code> вызвала бы нарушение доступа. Если бы нужен был и запись, потребовались бы <code>PAGE_READWRITE</code> и <code>FILE_MAP_WRITE</code>.</td></tr>
+            <tr><td>if (hMapping == NULL) {</td><td>Проверяет, создалась ли проекция. Для <code>CreateFileMappingW</code> признак ошибки — именно <code>NULL</code> (в отличие от <code>CreateFileW</code>, где признак — <code>INVALID_HANDLE_VALUE</code>).</td><td>Разные функции — разные коды ошибки, путать их нельзя: проверка <code>hMapping == INVALID_HANDLE_VALUE</code> здесь была бы неверной.</td></tr>
+            <tr><td>std::cout &lt;&lt; "Ошибка CreateFileMapping: " &lt;&lt; GetLastError() &lt;&lt; std::endl;</td><td>Печатает код ошибки создания проекции.</td><td>Диагностика: без кода непонятно, что именно не так (например, несовместимые флаги защиты).</td></tr>
+            <tr><td>CloseHandle(hFile);</td><td>Закрывает дескриптор файла перед выходом по ошибке.</td><td>Важно: даже на ветке ошибки нельзя «бросить» открытый дескриптор — это утечка ресурса. Файл уже создан на диске, дескриптор надо закрыть.</td></tr>
+            <tr><td>return 1;</td><td>Завершает программу с кодом ошибки 1.</td><td>Без объекта проекции проецировать нечего — продолжать бессмысленно.</td></tr>
+            <tr><td>}</td><td>Закрывает блок <code>if</code> проверки проекции.</td><td>Дальше — код, работающий только при успешном создании секции.</td></tr>
+            <tr><td>// 4. Смещение для MapViewOfFile ОБЯЗАНО быть строго кратным allocGranularity!</td><td>Комментарий-предупреждение: главное правило задачи.</td><td>Это то, что проверяется в лабораторной: смещение, не кратное 64 КБ, <code>MapViewOfFile</code> отвергнет.</td></tr>
+            <tr><td>// Демонстрируем расчет смещения:</td><td>Комментарий: дальше идёт демонстрационный расчёт младшей/старшей частей смещения.</td><td>Подчёркивает, что расчёт делается вручную, а не «магическими числами», — так видно механику Win32 API.</td></tr>
+            <tr><td>DWORD offsetLow = (DWORD)(targetOffset &amp; 0xFFFFFFFF);</td><td>Выделяет младшие 32 бита смещения: битовая маска <code>0xFFFFFFFF</code> оставляет только нижние 32 бита 64-битного числа. Для 131072 это просто 131072.</td><td><code>MapViewOfFile</code> принимает смещение не одним 64-битным числом, а двумя 32-битными параметрами (<code>dwFileOffsetHigh</code>, <code>dwFileOffsetLow</code>) — наследие 32-битного API. Поэтому 64-битное смещение приходится «разрезать» пополам вручную.</td></tr>
+            <tr><td>DWORD offsetHigh = (DWORD)(((ULONGLONG)targetOffset &gt;&gt; 32) &amp; 0xFFFFFFFF);</td><td>Выделяет старшие 32 бита смещения: сдвиг вправо на 32 бита, затем маска. Для 131072 старшая часть равна 0.</td><td>Приведение к <code>ULONGLONG</code> перед сдвигом важно: сдвиг 32-битного значения на 32 бита дал бы неопределённый результат. Пример для больших файлов: смещение 5 ГБ (0x1_40000000) дало бы <code>offsetHigh = 1</code>, <code>offsetLow = 0x40000000</code> — вместе они снова собираются как <code>high × 2³² + low</code>.</td></tr>
+            <tr><td>SIZE_T viewSize = 1024; // Отображаем окно размером 1024 байта</td><td>Задаёт размер проецируемого окна — 1024 байта (1 КБ).</td><td>Проецируется не весь файл, а только «окно» в 1 КБ начиная со смещения 128 КБ — это и есть «чтение огромного файла порциями» из условия. Окна в 1 КБ достаточно: маркер занимает всего несколько десятков байт. Читать за пределами окна (дальше 1024 байт от его начала) НЕЛЬЗЯ — будет нарушение доступа.</td></tr>
+            <tr><td>std::cout &lt;&lt; "\nЗапрос проецирования участка файла:" &lt;&lt; std::endl;</td><td>Печатает подзаголовок блока с пустой строкой-отступом.</td><td>Отделяет в выводе параметры проецирования от предыдущих шагов.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  Смещение: " &lt;&lt; targetOffset &lt;&lt; " байт (кратно " &lt;&lt; allocGranularity &lt;&lt; ")" &lt;&lt; std::endl;</td><td>Печатает «Смещение: 131072 байт (кратно 65536)».</td><td>Демонстрирует проверяющему, что смещение действительно кратно гранулярности — условие задачи выполнено явно, а не на словах.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  Размер проецируемого окна: " &lt;&lt; viewSize &lt;&lt; " байт" &lt;&lt; std::endl;</td><td>Печатает «Размер проецируемого окна: 1024 байт».</td><td>Фиксирует размер окна в выводе.</td></tr>
+            <tr><td>// 5. Проецируем срез файла в виртуальную память процесса</td><td>Комментарий: шаг 5 — собственно отображение.</td><td>Центральный вызов программы.</td></tr>
+            <tr><td>const char* pView = static_cast&lt;const char*&gt;(MapViewOfFile( hMapping, FILE_MAP_READ, offsetHigh, offsetLow, viewSize ));</td><td>Отображает 1024 байта файла, начиная со смещения 131072, в виртуальное адресное пространство процесса и возвращает указатель на начало окна. Аргументы: дескриптор секции; <code>FILE_MAP_READ</code> — доступ только на чтение; старшая и младшая части смещения; размер окна. <code>MapViewOfFile</code> возвращает <code>void*</code>, поэтому результат явно приводится к <code>const char*</code>.</td><td>После этого вызова байты файла читаются как обычная память: <code>pView[0]</code> — первый байт маркера. <code>const char*</code> выбран потому, что данные — текст, а <code>const</code> запрещает запись (отображение всё равно только для чтения). <code>static_cast</code> здесь обязателен: неявное приведение <code>void*</code> → <code>const char*</code> в C++ запрещено.</td></tr>
+            <tr><td>if (pView == NULL) {</td><td>Проверяет, удалось ли спроецировать окно.</td><td>Если смещение не кратно 64 КБ, <code>MapViewOfFile</code> вернёт <code>NULL</code>, а <code>GetLastError()</code> — 1132 (<code>ERROR_MAPPED_ALIGNMENT</code>). Если смещение + размер окна выходят за конец файла — тоже <code>NULL</code> с другим кодом.</td></tr>
+            <tr><td>std::cout &lt;&lt; "Ошибка MapViewOfFile: " &lt;&lt; GetLastError() &lt;&lt; std::endl;</td><td>Печатает код ошибки проецирования.</td><td>По коду различают причину: 1132 — неверное выравнивание смещения, другие коды — выход за конец файла или нехватка виртуальной памяти.</td></tr>
+            <tr><td>} else {</td><td>Ветка успеха: проекция создана.</td><td>Разделение на «ошибка» и «успех» — стандартный паттерн Win32: дальше код, который работает только с живым отображением.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  Успешно спроецировано по виртуальному адресу: " &lt;&lt; (void*)pView &lt;&lt; std::endl;</td><td>Печатает виртуальный адрес начала окна. Приведение <code>(void*)pView</code> нужно, чтобы <code>cout</code> напечатал АДРЕС, а не содержимое: для <code>const char*</code> оператор <code>&lt;&lt;</code> по умолчанию печатает строку до <code>'\0'</code>.</td><td>Без приведения к <code>void*</code> вывод показал бы текст маркера вместо адреса — классическая ловушка <code>char*</code> в потоках. Адрес при каждом запуске разный (ASLR) — это нормально.</td></tr>
+            <tr><td>// Читаем данные из памяти спроецированного окна</td><td>Комментарий: дальше чтение из отображения.</td><td>Показывает, что чтение идёт из ПАМЯТИ, а не через <code>ReadFile</code> — в этом и смысл проецирования.</td></tr>
+            <tr><td>std::string readChunk(pView, secretMessage.length());</td><td>Создаёт строку из ровно <code>secretMessage.length()</code> байт, начиная с адреса <code>pView</code>. Используется конструктор <code>string(const char*, size_t)</code> — чтение по длине, а не до нулевого байта.</td><td>Так читается именно маркер: он начинается на смещении 128 КБ, а его длина известна заранее. Конструктор по длине важен: в спроецированной памяти после маркера идут точки <code>'.'</code>, а не <code>'\0'</code>, поэтому чтение «до нуля» прочитало бы лишнее.</td></tr>
+            <tr><td>std::cout &lt;&lt; "  Прочитанные данные: \"" &lt;&lt; readChunk &lt;&lt; "\"" &lt;&lt; std::endl;</td><td>Печатает прочитанный маркер в кавычках: «[СЕКРЕТНЫЙ ТЕКСТ НА СМЕЩЕНИИ 128 КБ]».</td><td>Главное доказательство работы программы: текст, записанный в файл на шаге 2, прочитан обратно через спроецированную память на шаге 5. Если бы смещение было неверным, здесь был бы другой текст или ошибка.</td></tr>
+            <tr><td>// Отмонтируем проекцию</td><td>Комментарий: дальше освобождение отображения.</td><td>Структурирует завершение работы.</td></tr>
+            <tr><td>UnmapViewOfFile(pView);</td><td>Отмонтирует (unmap) представление: освобождает виртуальный адресный диапазон окна. Функция возвращает <code>BOOL</code>, здесь результат не проверяется.</td><td>Каждое <code>MapViewOfFile</code> обязано завершаться парным <code>UnmapViewOfFile</code> — иначе диапазон виртуальной памяти останется занятым до конца процесса. После этого вызова указатель <code>pView</code> становится недействительным, обращаться к нему нельзя.</td></tr>
+            <tr><td>std::cout &lt;&lt; "Окно проекции успешно размонтировано (UnmapViewOfFile)." &lt;&lt; std::endl;</td><td>Печатает подтверждение размонтирования.</td><td>Фиксирует в выводе, что ресурс освобождён корректно.</td></tr>
+            <tr><td>}</td><td>Закрывает блок <code>else</code> (ветку успеха).</td><td>Синтаксическая граница ветки.</td></tr>
+            <tr><td>// 6. Закрытие дескрипторов</td><td>Комментарий: шаг 6 — финальная очистка.</td><td>Последний шаг программы.</td></tr>
+            <tr><td>CloseHandle(hMapping);</td><td>Закрывает дескриптор объекта проекции (секции).</td><td>Порядок важен: сначала закрывается секция, потом файл. Объект ядра уничтожается, когда закрыт последний его дескриптор. Здесь закрытие идёт после <code>UnmapViewOfFile</code>, поэтому к этому моменту отображение уже снято.</td></tr>
+            <tr><td>CloseHandle(hFile);</td><td>Закрывает дескриптор файла.</td><td>После закрытия файл можно открывать другими программами без ограничений, а дескриптор не утекает. Файл <code>mapped_large_test.txt</code> остаётся на диске — его можно открыть и убедиться, что маркер действительно на смещении 128 КБ.</td></tr>
+            <tr><td>return 0;</td><td>Возвращает ОС код 0 — успешное завершение.</td><td>Выполняется, даже если <code>MapViewOfFile</code> не удался: в той ветке программа лишь печатает ошибку, но всё равно доходит сюда и возвращает 0. Строго говоря, это слабое место — по коду возврата нельзя отличить «проекция не удалась» от успеха; для учебного кода допустимо.</td></tr>
+            <tr><td>}</td><td>Закрывающая скобка <code>main</code>.</td><td>Конец программы; все локальные объекты (<code>sysInfo</code>, строки, счётчики) уничтожаются.</td></tr>
+          </table>
           </div>
+          <div class="callout-warn">Почему смещение ОБЯЗАНО быть кратно 64 КБ: диспетчер виртуальной памяти Windows отображает файл страницами, привязанными к гранулярности распределения (Allocation Granularity = 65 536 байт). Смещение 131072 = 2 × 65536 — допустимо. Смещение 131073 или 100000 — нет: <code>MapViewOfFile</code> вернёт <code>NULL</code>, а <code>GetLastError()</code> даст 1132 (<code>ERROR_MAPPED_ALIGNMENT</code>).</div>
+          <div class="callout-success">Итог: программа сама создаёт файл 256 КБ, кладёт маркер ровно на 128 КБ, проецирует окно 1 КБ с этого смещения и читает маркер из памяти — без единого вызова <code>ReadFile</code>.</div>
+        </div>
+
+        <div class="run-box">
+          <span class="run-title">Как запустить — задача 3</span>
+          <p><strong>Только Windows.</strong> Программа использует Win32 API (<code>windows.h</code>, <code>CreateFileW</code>, <code>MapViewOfFile</code>) — под Linux/macOS она не соберётся.</p>
+          <p><strong>Файл заранее создавать НЕ нужно.</strong> Это важно: программа сама создаёт <code>mapped_large_test.txt</code> в рабочей папке (флаг <code>CREATE_ALWAYS</code> в <code>CreateFileW</code>), записывает в него 256 КБ данных (4 × 64 КБ) и кладёт маркер на смещение 128 КБ. При каждом запуске файл перезаписывается заново. Если в папке уже лежит старый <code>mapped_large_test.txt</code> — он будет обнулён и создан заново, это нормальное поведение, а не ошибка.</p>
+          <p><strong>Единственное условие к папке запуска:</strong> право на запись в рабочую папку (туда, откуда запускается exe). Если прав нет — программа напечатает «Ошибка создания файла: 5» (код 5 = отказано в доступе) и завершится с кодом 1.</p>
+          <p><strong>Компиляция (Windows):</strong></p>
+          <div class="cmd">:: MSVC — в Developer Command Prompt for VS:
+cl /EHsc /std:c++17 task3_memory_mapped_offset.cpp
+
+:: MinGW-w64 (g++) — в PowerShell / cmd:
+g++ -std=c++17 -o task3.exe task3_memory_mapped_offset.cpp</div>
+          <p><strong>Запуск:</strong> из папки, где лежит exe (файл <code>mapped_large_test.txt</code> появится рядом с exe):</p>
+          <div class="cmd">.\task3.exe</div>
+          <p><strong>Ожидаемый вывод (виртуальный адрес при каждом запуске разный — это нормально):</strong></p>
+          <div class="output">=== САМОСТОЯТЕЛЬНО 2: ПРОЕЦИРОВАНИЕ ФАЙЛА С ФИКСИРОВАННЫМ СМЕЩЕНИЕМ ===
+Системная гранулярность выделения памяти (Allocation Granularity): 65536 байт (64 КБ)
+
+Запрос проецирования участка файла:
+  Смещение: 131072 байт (кратно 65536)
+  Размер проецируемого окна: 1024 байт
+  Успешно спроецировано по виртуальному адресу: 0x0000021A3B4C5000
+  Прочитанные данные: "[СЕКРЕТНЫЙ ТЕКСТ НА СМЕЩЕНИИ 128 КБ]"
+Окно проекции успешно размонтировано (UnmapViewOfFile).</div>
+          <p><strong>Проверка файла после запуска:</strong> рядом с exe появится <code>mapped_large_test.txt</code> размером 262144 байта; маркер можно найти поиском по файлу или командой PowerShell:</p>
+          <div class="cmd">:: Размер файла и проверка маркера на смещении 128 КБ:
+powershell -c "(Get-Item mapped_large_test.txt).Length"
+powershell -c "$b=[System.IO.File]::ReadAllBytes('mapped_large_test.txt'); [System.Text.Encoding]::UTF8.GetString($b[131072..131120])"</div>
+          <p><strong>Типичные ошибки:</strong></p>
+          <ul>
+            <li>«Ошибка MapViewOfFile: 1132» — смещение не кратно 64 КБ. В коде смещение 131072 = 2 × 65536, поэтому при неизменённом коде этой ошибки не будет; она появится, если поменять <code>targetOffset</code> на некруглое число (например, 100000).</li>
+            <li>«Ошибка создания файла: 5» — нет прав на запись в папку запуска (например, exe лежит в <code>C:\Program Files</code>). Запустите из обычной папки, например из папки проекта или <code>Desktop</code>.</li>
+            <li>«Ошибка MapViewOfFile» с другим кодом — смещение + размер окна выходят за конец файла. В коде файл 256 КБ, а окно 128 КБ + 1 КБ = 129 КБ &lt; 256 КБ, поэтому при неизменённом коде не возникает; появится, если уменьшить <code>totalFileSize</code> или увеличить <code>targetOffset</code>.</li>
+            <li>Нарушение доступа (падение) при чтении дальше 1024 байт от <code>pView</code> — окно спроецировано только на 1 КБ; байты за его пределами недоступны. Читайте только внутри <code>viewSize</code>.</li>
+            <li>Если в старой версии шпаргалки вы видели код с <code>OPEN_EXISTING</code> — это была сокращённая версия: в реальном файле <code>task3_memory_mapped_offset.cpp</code> стоит <code>CREATE_ALWAYS</code>, и файл создаётся самой программой. Для режима <code>OPEN_EXISTING</code> файл действительно пришлось бы создавать заранее (например, <code>fsutil file createnew mapped_large_test.txt 262144</code>), но к актуальному коду это не относится.</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -273,7 +605,8 @@ int main() {
   </main>
 
   <footer>
-    Лабораторная работа №4 • Системное программирование C++ и Win32 API • 2026
+    Лабораторная работа №4 • Системное программирование C++ и Win32 API • 2026<br>
+    Теория по каждой теме — в отдельном файле <a href="theory.html">theory.html</a>
   </footer>
 
   <script>

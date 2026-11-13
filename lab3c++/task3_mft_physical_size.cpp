@@ -6,7 +6,7 @@
 void investigateFile(const wchar_t* fileName, DWORD bytesToWrite) {
     HANDLE hFile = CreateFileW(
         fileName,
-        GENERIC_WRITE,
+        GENERIC_READ | GENERIC_WRITE,
         0,
         NULL,
         CREATE_ALWAYS,
@@ -24,16 +24,41 @@ void investigateFile(const wchar_t* fileName, DWORD bytesToWrite) {
 
     DWORD bytesWritten = 0;
     WriteFile(hFile, buffer, bytesToWrite, &bytesWritten, NULL);
-
-    CloseHandle(hFile);
     delete[] buffer;
 
+    // ПРЯМОЙ ПУТЬ: спрашиваем у самой NTFS, сколько места выделено под файл.
+    // FILE_STANDARD_INFO.AllocationSize — это реальный выделенный размер:
+    // 0 для резидентного файла (данные лежат внутри записи MFT, кластеры не
+    // выделялись), для нерезидентного — число кластеров × размер кластера.
+    // Запрос делается по открытому хэндлу, до CloseHandle.
+    FILE_STANDARD_INFO stdInfo = {};
+    LONGLONG physicalSize = -1;
+    if (GetFileInformationByHandleEx(hFile, FileStandardInfo, &stdInfo, sizeof(stdInfo))) {
+        physicalSize = stdInfo.AllocationSize.QuadPart;
+    } else {
+        std::wcout << L"Ошибка GetFileInformationByHandleEx: " << GetLastError() << std::endl;
+    }
+
+    CloseHandle(hFile);
+
+    // ДЛЯ СРАВНЕНИЯ: ловушка GetCompressedFileSizeW.
+    // Несмотря на имя, для обычного (несжатого, не разреженного) файла она
+    // возвращает ЛОГИЧЕСКИЙ размер, как GetFileSize. Так написано в самой
+    // документации Microsoft: "If the file is not compressed or a sparse
+    // file, the value obtained is the actual file size, the same as the value
+    // returned by a call to GetFileSize". Реальный размер на диске она даёт
+    // только для сжатых и разреженных файлов. Поэтому старый вариант этой
+    // программы печатал 200 и 2000 вместо правильных 0 и 4096.
     DWORD highSize = 0;
-    DWORD physicalSize = GetCompressedFileSizeW(fileName, &highSize);
+    DWORD compressedSize = GetCompressedFileSizeW(fileName, &highSize);
+    if (compressedSize == INVALID_FILE_SIZE && GetLastError() != NO_ERROR) {
+        std::wcout << L"Ошибка GetCompressedFileSizeW: " << GetLastError() << std::endl;
+    }
 
     std::wcout << L"Файл: " << fileName << std::endl;
     std::wcout << L"  Записано данных (логический размер): " << bytesToWrite << L" байт." << std::endl;
-    std::wcout << L"  Занято на диске (физический размер): " << physicalSize << L" байт." << std::endl;
+    std::wcout << L"  Занято на диске (физический размер, напрямую): " << physicalSize << L" байт." << std::endl;
+    std::wcout << L"  GetCompressedFileSizeW (для сравнения): " << compressedSize << L" байт." << std::endl;
     std::wcout << L"--------------------------------------------------" << std::endl;
 }
 
