@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Лабораторная работа №3 — Код программ</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-page); color: var(--text-main); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; padding-bottom: 80px; }
+
+    header {
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-content { max-width: 760px; margin: 0 auto; }
+    .badge-sub { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    h1 { font-size: 19px; font-weight: 800; color: var(--text-main); line-height: 1.25; }
+
+    .nav-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px 0; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+    .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
+
+    main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+    .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .task-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .task-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .task-path { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-subtle); background: var(--bg-code); padding: 3px 7px; border-radius: 4px; }
+    .task-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+    .code-container { position: relative; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-code); overflow: hidden; }
+    .code-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: #e2e8f0; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); }
+    .copy-btn { background: #ffffff; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: var(--text-main); transition: all 0.2s; }
+    .copy-btn:hover { background: var(--primary); color: #ffffff; border-color: var(--primary); }
+    .copy-btn.copied { background: var(--accent-green); color: #ffffff; border-color: var(--accent-green); }
+
+    pre { padding: 12px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.45; color: #0f172a; }
+
+    .explanation-box { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .explanation-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); }
+    .line-breakdown { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .line-item { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 13px; }
+    .line-code { font-family: var(--font-mono); font-weight: 700; color: #1e293b; margin-bottom: 3px; display: block; }
+    .line-desc { color: var(--text-muted); line-height: 1.45; }
+
+    .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
+    .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
+
+    footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
+  
+    .break-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+    .break-table th, .break-table td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; line-height: 1.45; }
+    .break-table th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    .break-table td.ln { white-space: nowrap; font-family: var(--font-mono); font-weight: 700; color: var(--primary); font-size: 12px; }
+    .break-table td.code { font-family: var(--font-mono); font-size: 12px; color: #1e293b; word-break: break-word; }
+    .break-table tr:nth-child(even) td { background: #f8fafc; }
+    .run-box { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .run-box h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent-green); }
+    .run-box code, .theory-body code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-code); padding: 1px 5px; border-radius: 4px; }
+    .run-box pre.cmd { background: #0f172a; color: #e2e8f0; padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
+    .run-box pre.cmd code { background: none; padding: 0; color: inherit; }
+    .theory-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; font-size: 14px; color: var(--text-muted); }
+    .theory-body h2 { font-size: 16px; color: var(--text-main); margin-top: 6px; }
+    .theory-body h3 { font-size: 14px; color: var(--text-main); margin-top: 4px; }
+    .theory-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .theory-body th, .theory-body td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; line-height: 1.45; }
+    .theory-body th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    .theory-body ul, .theory-body ol { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+    .toc { display: flex; flex-direction: column; gap: 6px; }
+    .toc a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+  
+    .break-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+    .break-table th, .break-table td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; line-height: 1.45; }
+    .break-table th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    .break-table td.ln { white-space: nowrap; font-family: var(--font-mono); font-weight: 700; color: var(--primary); font-size: 12px; }
+    .break-table td.code { font-family: var(--font-mono); font-size: 12px; color: #1e293b; word-break: break-word; }
+    .break-table tr:nth-child(even) td { background: #f8fafc; }
+    .run-box { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .run-box h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent-green); }
+    .run-box code, .theory-body code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-code); padding: 1px 5px; border-radius: 4px; }
+    .run-box pre.cmd { background: #0f172a; color: #e2e8f0; padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
+    .run-box pre.cmd code { background: none; padding: 0; color: inherit; }
+    .theory-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; font-size: 14px; color: var(--text-muted); }
+    .theory-body h2 { font-size: 16px; color: var(--text-main); margin-top: 6px; }
+    .theory-body h3 { font-size: 14px; color: var(--text-main); margin-top: 4px; }
+    .theory-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .theory-body th, .theory-body td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; line-height: 1.45; }
+    .theory-body th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-subtle); }
+    .theory-body ul, .theory-body ol { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+    .toc { display: flex; flex-direction: column; gap: 6px; }
+    .toc a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+  
+    .code-toggle { display: inline-flex; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; }
+    .toggle-btn { background: #ffffff; border: none; padding: 4px 10px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: var(--text-main); transition: all 0.2s; }
+    .toggle-btn:hover { background: var(--primary-light); }
+    .toggle-btn.active { background: var(--primary); color: #ffffff; }
+    .code-top-bar .code-toggle { margin-left: auto; }
+    .code-top-bar .copy-btn { margin-left: 8px; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Лабораторная работа №3</span>
+      <h1>Асинхронный I/O и структура NTFS MFT</h1>
+      <div class="nav-scroll"><a href="#task1" class="nav-chip">1. Копирование 1 ГБ</a><a href="#task2" class="nav-chip">2. MFT: резидентность</a><a href="#task3" class="nav-chip">3. Физический размер</a><a href="#task4" class="nav-chip">4. Блокировка потока</a><a href="explanations.html" class="nav-chip">Разбор и теория →</a></div>
+    </div>
+  </header>
+
+  <main>
+    <div class="task-card"><div class="task-body">
+      <div class="callout-success"><strong>Что здесь:</strong> полный код всех четырёх программ (точно как в .cpp-файлах) и условия запуска для каждой программы. У каждой программы два варианта кода — с комментариями и без: переключатель над блоком кода, кнопка «Скопировать» копирует показанный вариант. Построчный разбор, теория и словарь — в <a href="explanations.html"><strong>explanations.html</strong></a>.</div>
+    </div></div>
+
+    <div id="task1" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задача 1: Асинхронное копирование 1 ГБ файла (OVERLAPPED + hEvent)</div>
+        <span class="task-path">task1_async_copy_overlapped.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="code-container"><div class="code-top-bar"><span>task1_async_copy_overlapped.cpp</span><span class="code-toggle" role="group" aria-label="Вариант кода"><button type="button" class="toggle-btn active" onclick="toggleComments(this, false)">С комментариями</button><button type="button" class="toggle-btn" onclick="toggleComments(this, true)">Без комментариев</button></span><button class="copy-btn" onclick="copyCode(this)">Скопировать</button></div><pre class="code-block code-commented"><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;io.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;iomanip&gt;
+
+const DWORD CHUNK_SIZE = 64 * 1024; // 64 КБ на один блок передачи
+
+// Функция создания тестового файла заданного размера (в мегабайтах)
+bool CreateDummyFile(const wchar_t* path, DWORD sizeMB) {
+    HANDLE hFile = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) return false;
+
+    LARGE_INTEGER liSize;
+    liSize.QuadPart = (LONGLONG)sizeMB * 1024 * 1024;
+    
+    // Быстрое задание размера файла через SetFilePointerEx и SetEndOfFile
+    if (!SetFilePointerEx(hFile, liSize, NULL, FILE_BEGIN) || !SetEndOfFile(hFile)) {
+        CloseHandle(hFile);
+        return false;
+    }
+    CloseHandle(hFile);
+    return true;
+}
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
+    #endif
+
+    const wchar_t* srcPath = L"source_large.dat";
+    const wchar_t* dstPath = L"destination_copy.dat";
+
+    std::wcout &lt;&lt; L"=== АСИНХРОННОЕ КОПИРОВАНИЕ ФАЙЛА (OVERLAPPED + hEvent) ===" &lt;&lt; std::endl;
+
+    // Проверяем наличие исходного файла. Если нет — создаем демонстрационный файл 1024 МБ (1 ГБ)
+    WIN32_FIND_DATAW findData;
+    HANDLE hFind = FindFirstFileW(srcPath, &amp;findData);
+    if (hFind == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Создание тестового файла на 1024 МБ (1 ГБ)..." &lt;&lt; std::endl;
+        if (!CreateDummyFile(srcPath, 1024)) {
+            std::wcout &lt;&lt; L"Ошибка при создании тестового файла: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+            return 1;
+        }
+        std::wcout &lt;&lt; L"Тестовый файл успешно создан." &lt;&lt; std::endl;
+    } else {
+        FindClose(hFind);
+    }
+
+    // 1. Открытие исходного файла с флагом FILE_FLAG_OVERLAPPED
+    HANDLE hSrc = CreateFileW(
+        srcPath,
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        NULL,
+        OPEN_EXISTING,
+        FILE_FLAG_OVERLAPPED,
+        NULL
+    );
+    if (hSrc == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Не удалось открыть исходный файл: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return 1;
+    }
+
+    // 2. Создание целевого файла с флагом FILE_FLAG_OVERLAPPED
+    HANDLE hDst = CreateFileW(
+        dstPath,
+        GENERIC_WRITE,
+        0,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_FLAG_OVERLAPPED,
+        NULL
+    );
+    if (hDst == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Не удалось создать целевой файл: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        CloseHandle(hSrc);
+        return 1;
+    }
+
+    // Получаем полный размер файла
+    LARGE_INTEGER fileSize;
+    GetFileSizeEx(hSrc, &amp;fileSize);
+    std::wcout &lt;&lt; L"Размер исходного файла: " &lt;&lt; (fileSize.QuadPart / (1024 * 1024)) &lt;&lt; L" МБ" &lt;&lt; std::endl;
+
+    // 3. Создание событий для контроля завершения операций чтения и записи
+    HANDLE hReadEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    HANDLE hWriteEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    char* buffer = new char[CHUNK_SIZE];
+
+    OVERLAPPED ovRead;
+    OVERLAPPED ovWrite;
+    memset(&amp;ovRead, 0, sizeof(ovRead));
+    memset(&amp;ovWrite, 0, sizeof(ovWrite));
+
+    ovRead.hEvent = hReadEvent;
+    ovWrite.hEvent = hWriteEvent;
+
+    ULONGLONG currentOffset = 0;
+    DWORD bytesTransferred = 0;
+
+    std::wcout &lt;&lt; L"Запуск асинхронного копирования блоками по " &lt;&lt; (CHUNK_SIZE / 1024) &lt;&lt; L" КБ..." &lt;&lt; std::endl;
+
+    while (currentOffset &lt; (ULONGLONG)fileSize.QuadPart) {
+        DWORD bytesToRead = CHUNK_SIZE;
+        if (currentOffset + bytesToRead &gt; (ULONGLONG)fileSize.QuadPart) {
+            bytesToRead = (DWORD)(fileSize.QuadPart - currentOffset);
+        }
+
+        // Задаем смещение для чтения
+        ovRead.Offset = (DWORD)(currentOffset &amp; 0xFFFFFFFF);
+        ovRead.OffsetHigh = (DWORD)(currentOffset &gt;&gt; 32);
+        ResetEvent(hReadEvent);
+
+        // Асинхронный вызов ReadFile
+        BOOL readRet = ReadFile(hSrc, buffer, bytesToRead, NULL, &amp;ovRead);
+        if (!readRet &amp;&amp; GetLastError() != ERROR_IO_PENDING) {
+            std::wcout &lt;&lt; L"Ошибка при асинхронном чтении: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+            break;
+        }
+
+        // Ожидаем завершения чтения через событие hEvent
+        WaitForSingleObject(hReadEvent, INFINITE);
+        GetOverlappedResult(hSrc, &amp;ovRead, &amp;bytesTransferred, FALSE);
+
+        if (bytesTransferred == 0) break;
+
+        // Задаем смещение для записи
+        ovWrite.Offset = ovRead.Offset;
+        ovWrite.OffsetHigh = ovRead.OffsetHigh;
+        ResetEvent(hWriteEvent);
+
+        // Асинхронный вызов WriteFile
+        BOOL writeRet = WriteFile(hDst, buffer, bytesTransferred, NULL, &amp;ovWrite);
+        if (!writeRet &amp;&amp; GetLastError() != ERROR_IO_PENDING) {
+            std::wcout &lt;&lt; L"Ошибка при асинхронной записи: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+            break;
+        }
+
+        // Ожидаем завершения записи через событие hEvent
+        WaitForSingleObject(hWriteEvent, INFINITE);
+        GetOverlappedResult(hDst, &amp;ovWrite, &amp;bytesTransferred, FALSE);
+
+        currentOffset += bytesTransferred;
+
+        // Вывод прогресса в консоль
+        double percent = ((double)currentOffset / fileSize.QuadPart) * 100.0;
+        std::wcout &lt;&lt; L"\rПрогресс копирования: " &lt;&lt; std::fixed &lt;&lt; std::setprecision(1) &lt;&lt; percent &lt;&lt; L"% ("
+                   &lt;&lt; (currentOffset / (1024 * 1024)) &lt;&lt; L" / " &lt;&lt; (fileSize.QuadPart / (1024 * 1024)) &lt;&lt; L" МБ)" &lt;&lt; std::flush;
+    }
+
+    std::wcout &lt;&lt; L"\nКопирование успешно завершено!" &lt;&lt; std::endl;
+
+    // Освобождение ресурсов и закрытие дескрипторов
+    CloseHandle(hReadEvent);
+    CloseHandle(hWriteEvent);
+    CloseHandle(hSrc);
+    CloseHandle(hDst);
+    delete[] buffer;
+
+    return 0;
+}
+</code></pre><pre class="code-block code-clean" style="display:none"><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;io.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;iomanip&gt;
+
+const DWORD CHUNK_SIZE = 64 * 1024;
+
+bool CreateDummyFile(const wchar_t* path, DWORD sizeMB) {
+    HANDLE hFile = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) return false;
+
+    LARGE_INTEGER liSize;
+    liSize.QuadPart = (LONGLONG)sizeMB * 1024 * 1024;
+
+    if (!SetFilePointerEx(hFile, liSize, NULL, FILE_BEGIN) || !SetEndOfFile(hFile)) {
+        CloseHandle(hFile);
+        return false;
+    }
+    CloseHandle(hFile);
+    return true;
+}
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
+    #endif
+
+    const wchar_t* srcPath = L"source_large.dat";
+    const wchar_t* dstPath = L"destination_copy.dat";
+
+    std::wcout &lt;&lt; L"=== АСИНХРОННОЕ КОПИРОВАНИЕ ФАЙЛА (OVERLAPPED + hEvent) ===" &lt;&lt; std::endl;
+
+    WIN32_FIND_DATAW findData;
+    HANDLE hFind = FindFirstFileW(srcPath, &amp;findData);
+    if (hFind == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Создание тестового файла на 1024 МБ (1 ГБ)..." &lt;&lt; std::endl;
+        if (!CreateDummyFile(srcPath, 1024)) {
+            std::wcout &lt;&lt; L"Ошибка при создании тестового файла: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+            return 1;
+        }
+        std::wcout &lt;&lt; L"Тестовый файл успешно создан." &lt;&lt; std::endl;
+    } else {
+        FindClose(hFind);
+    }
+
+    HANDLE hSrc = CreateFileW(
+        srcPath,
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        NULL,
+        OPEN_EXISTING,
+        FILE_FLAG_OVERLAPPED,
+        NULL
+    );
+    if (hSrc == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Не удалось открыть исходный файл: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return 1;
+    }
+
+    HANDLE hDst = CreateFileW(
+        dstPath,
+        GENERIC_WRITE,
+        0,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_FLAG_OVERLAPPED,
+        NULL
+    );
+    if (hDst == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Не удалось создать целевой файл: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        CloseHandle(hSrc);
+        return 1;
+    }
+
+    LARGE_INTEGER fileSize;
+    GetFileSizeEx(hSrc, &amp;fileSize);
+    std::wcout &lt;&lt; L"Размер исходного файла: " &lt;&lt; (fileSize.QuadPart / (1024 * 1024)) &lt;&lt; L" МБ" &lt;&lt; std::endl;
+
+    HANDLE hReadEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    HANDLE hWriteEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    char* buffer = new char[CHUNK_SIZE];
+
+    OVERLAPPED ovRead;
+    OVERLAPPED ovWrite;
+    memset(&amp;ovRead, 0, sizeof(ovRead));
+    memset(&amp;ovWrite, 0, sizeof(ovWrite));
+
+    ovRead.hEvent = hReadEvent;
+    ovWrite.hEvent = hWriteEvent;
+
+    ULONGLONG currentOffset = 0;
+    DWORD bytesTransferred = 0;
+
+    std::wcout &lt;&lt; L"Запуск асинхронного копирования блоками по " &lt;&lt; (CHUNK_SIZE / 1024) &lt;&lt; L" КБ..." &lt;&lt; std::endl;
+
+    while (currentOffset &lt; (ULONGLONG)fileSize.QuadPart) {
+        DWORD bytesToRead = CHUNK_SIZE;
+        if (currentOffset + bytesToRead &gt; (ULONGLONG)fileSize.QuadPart) {
+            bytesToRead = (DWORD)(fileSize.QuadPart - currentOffset);
+        }
+
+        ovRead.Offset = (DWORD)(currentOffset &amp; 0xFFFFFFFF);
+        ovRead.OffsetHigh = (DWORD)(currentOffset &gt;&gt; 32);
+        ResetEvent(hReadEvent);
+
+        BOOL readRet = ReadFile(hSrc, buffer, bytesToRead, NULL, &amp;ovRead);
+        if (!readRet &amp;&amp; GetLastError() != ERROR_IO_PENDING) {
+            std::wcout &lt;&lt; L"Ошибка при асинхронном чтении: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+            break;
+        }
+
+        WaitForSingleObject(hReadEvent, INFINITE);
+        GetOverlappedResult(hSrc, &amp;ovRead, &amp;bytesTransferred, FALSE);
+
+        if (bytesTransferred == 0) break;
+
+        ovWrite.Offset = ovRead.Offset;
+        ovWrite.OffsetHigh = ovRead.OffsetHigh;
+        ResetEvent(hWriteEvent);
+
+        BOOL writeRet = WriteFile(hDst, buffer, bytesTransferred, NULL, &amp;ovWrite);
+        if (!writeRet &amp;&amp; GetLastError() != ERROR_IO_PENDING) {
+            std::wcout &lt;&lt; L"Ошибка при асинхронной записи: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+            break;
+        }
+
+        WaitForSingleObject(hWriteEvent, INFINITE);
+        GetOverlappedResult(hDst, &amp;ovWrite, &amp;bytesTransferred, FALSE);
+
+        currentOffset += bytesTransferred;
+
+        double percent = ((double)currentOffset / fileSize.QuadPart) * 100.0;
+        std::wcout &lt;&lt; L"\rПрогресс копирования: " &lt;&lt; std::fixed &lt;&lt; std::setprecision(1) &lt;&lt; percent &lt;&lt; L"% ("
+                   &lt;&lt; (currentOffset / (1024 * 1024)) &lt;&lt; L" / " &lt;&lt; (fileSize.QuadPart / (1024 * 1024)) &lt;&lt; L" МБ)" &lt;&lt; std::flush;
+    }
+
+    std::wcout &lt;&lt; L"\nКопирование успешно завершено!" &lt;&lt; std::endl;
+
+    CloseHandle(hReadEvent);
+    CloseHandle(hWriteEvent);
+    CloseHandle(hSrc);
+    CloseHandle(hDst);
+    delete[] buffer;
+
+    return 0;
+}
+</code></pre></div>
+        <div class="run-box"><h3>Как запустить — задача 1</h3>
+<p><strong>Только Windows.</strong> Программа использует Win32 API (<code>windows.h</code>, <code>CreateFileW</code>, <code>OVERLAPPED</code>) — на Linux/macOS не компилируется и не запускается.</p>
+<pre class="cmd"><code>rem MSVC (Developer Command Prompt for VS):
+cl /EHsc /W4 task1_async_copy_overlapped.cpp
+rem MinGW-w64:
+g++ -O2 -o task1_async_copy_overlapped.exe task1_async_copy_overlapped.cpp
+rem Запуск из папки с exe (файлы создаются в текущей папке):
+task1_async_copy_overlapped.exe</code></pre>
+<p><strong>Файлы:</strong> входной файл заранее создавать не нужно. Если <code>source_large.dat</code> нет в текущей папке, программа сама создаёт его на 1024 МБ (1 ГБ) — содержимое нули, но под него нужно <strong>свободное место от 1 ГБ</strong>, а под копию <code>destination_copy.dat</code> — ещё 1 ГБ, то есть <strong>всего от 2 ГБ</strong>. Если <code>source_large.dat</code> уже есть, он используется как есть (любого размера и содержимого) и не пересоздаётся; <code>destination_copy.dat</code> при каждом запуске стирается и пишется заново (<code>CREATE_ALWAYS</code>).</p>
+<p><strong>Ожидаемый вывод:</strong> заголовок, «Размер исходного файла: 1024 МБ», затем строка прогресса, переписывающаяся в одну строку (0,0% … 100,0%), и «Копирование успешно завершено!». Копирование 1 ГБ блоками по 64 КБ — это 16 384 итераций; время зависит от диска (на SSD — секунды, на HDD — дольше).</p>
+<p><strong>Что сломается:</strong> нет 2 ГБ свободного места — ошибка создания файла с кодом <code>GetLastError()</code> (112 — диск переполнен) и выход с кодом 1; запуск не из своей папки — файлы создадутся в другой папке, а не рядом с exe; закрытие консоли во время работы — останется недописанный <code>destination_copy.dat</code>, при следующем запуске он просто перепишется.</p>
+<p><strong>Нюанс:</strong> несмотря на асинхронные вызовы, программа ждёт завершения каждого блока (<code>WaitForSingleObject</code>), поэтому чтение и запись идут строго по очереди — это демонстрация механизма, а не ускорение копирования.</p></div>
+      </div>
+    </div>
+
+    <div id="task2" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задача 2: Чтение MFT (резидентность vs нерезидентность)</div>
+        <span class="task-path">task2_mft_resident_theory.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="code-container"><div class="code-top-bar"><span>task2_mft_resident_theory.cpp</span><span class="code-toggle" role="group" aria-label="Вариант кода"><button type="button" class="toggle-btn active" onclick="toggleComments(this, false)">С комментариями</button><button type="button" class="toggle-btn" onclick="toggleComments(this, true)">Без комментариев</button></span><button class="copy-btn" onclick="copyCode(this)">Скопировать</button></div><pre class="code-block code-commented"><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;io.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;vector&gt;
+
+// Функция анализа размещения файла в NTFS (резидентный в MFT vs нерезидентный с экстентами)
+void AnalyzeNtfsFileAllocation(const wchar_t* filePath, DWORD sizeInBytes) {
+    // Создаем тестовый файл нужного размера
+    HANDLE hFile = CreateFileW(
+        filePath,
+        GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Ошибка открытия файла: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return;
+    }
+
+    std::vector&lt;char&gt; buffer(sizeInBytes, 'X');
+    DWORD written = 0;
+    WriteFile(hFile, buffer.data(), sizeInBytes, &amp;written, NULL);
+
+    // Запрос цепочек кластеров (Data Runs / Extents) через FSCTL_GET_RETRIEVAL_POINTERS
+    STARTING_VCN_INPUT_BUFFER inputVcn;
+    inputVcn.StartingVcn.QuadPart = 0;
+
+    BYTE outBuf[1024];
+    DWORD bytesReturned = 0;
+
+    BOOL fsctlSuccess = DeviceIoControl(
+        hFile,
+        FSCTL_GET_RETRIEVAL_POINTERS,
+        &amp;inputVcn,
+        sizeof(inputVcn),
+        outBuf,
+        sizeof(outBuf),
+        &amp;bytesReturned,
+        NULL
+    );
+
+    std::wcout &lt;&lt; L"--------------------------------------------------" &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"Файл: " &lt;&lt; filePath &lt;&lt; L" (Размер: " &lt;&lt; sizeInBytes &lt;&lt; L" байт)" &lt;&lt; std::endl;
+
+    if (!fsctlSuccess) {
+        DWORD err = GetLastError();
+        if (err == ERROR_HANDLE_EOF) {
+            std::wcout &lt;&lt; L"Статус MFT: РЕЗИДЕНТНЫЙ ФАЙЛ (Resident Attribute $DATA)" &lt;&lt; std::endl;
+            std::wcout &lt;&lt; L"  -&gt; Данные файла целиком хранятся внутри 1024-байтной записи MFT!" &lt;&lt; std::endl;
+            std::wcout &lt;&lt; L"  -&gt; Файл не занимает отдельных кластеров на дисковом томе (Extents = 0)." &lt;&lt; std::endl;
+        } else {
+            std::wcout &lt;&lt; L"Ошибка FSCTL_GET_RETRIEVAL_POINTERS: " &lt;&lt; err &lt;&lt; std::endl;
+        }
+    } else {
+        RETRIEVAL_POINTERS_BUFFER* rp = reinterpret_cast&lt;RETRIEVAL_POINTERS_BUFFER*&gt;(outBuf);
+        std::wcout &lt;&lt; L"Статус MFT: НЕРЕЗИДЕНТНЫЙ ФАЙЛ (Non-Resident Attribute $DATA)" &lt;&lt; std::endl;
+        std::wcout &lt;&lt; L"  -&gt; Данные не поместились в MFT-запись и вынесены в отдельные кластеры тома." &lt;&lt; std::endl;
+        std::wcout &lt;&lt; L"  -&gt; Количество цепочек кластеров (Extents): " &lt;&lt; rp-&gt;ExtentCount &lt;&lt; std::endl;
+        for (DWORD i = 0; i &lt; rp-&gt;ExtentCount; ++i) {
+            std::wcout &lt;&lt; L"     Цепочка " &lt;&lt; i &lt;&lt; L": LCN = " &lt;&lt; rp-&gt;Extents[i].Lcn.QuadPart 
+                       &lt;&lt; L", NextVCN = " &lt;&lt; rp-&gt;Extents[i].NextVcn.QuadPart &lt;&lt; std::endl;
+        }
+    }
+
+    CloseHandle(hFile);
+}
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
+    #endif
+
+    std::wcout &lt;&lt; L"=== АНАЛИЗ ЧТЕНИЯ MFT: РЕЗИДЕНТНЫЕ И НЕРЕЗИДЕНТНЫЕ ДАННЫЕ ===" &lt;&lt; std::endl;
+
+    // Сравнение 1: Маленький файл (200 байт — строго помещается в MFT)
+    AnalyzeNtfsFileAllocation(L"test_resident_200b.dat", 200);
+
+    // Сравнение 2: Большой файл (2500 байт — не помещается в 1 КБ запись MFT)
+    AnalyzeNtfsFileAllocation(L"test_nonresident_2500b.dat", 2500);
+
+    // Сравнение 3: Файл объемом 500 КБ (512 000 байт — нерезидентный массив данных)
+    AnalyzeNtfsFileAllocation(L"test_large_500kb.dat", 500 * 1024);
+
+    return 0;
+}
+</code></pre><pre class="code-block code-clean" style="display:none"><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;io.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;vector&gt;
+
+void AnalyzeNtfsFileAllocation(const wchar_t* filePath, DWORD sizeInBytes) {
+    HANDLE hFile = CreateFileW(
+        filePath,
+        GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Ошибка открытия файла: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return;
+    }
+
+    std::vector&lt;char&gt; buffer(sizeInBytes, 'X');
+    DWORD written = 0;
+    WriteFile(hFile, buffer.data(), sizeInBytes, &amp;written, NULL);
+
+    STARTING_VCN_INPUT_BUFFER inputVcn;
+    inputVcn.StartingVcn.QuadPart = 0;
+
+    BYTE outBuf[1024];
+    DWORD bytesReturned = 0;
+
+    BOOL fsctlSuccess = DeviceIoControl(
+        hFile,
+        FSCTL_GET_RETRIEVAL_POINTERS,
+        &amp;inputVcn,
+        sizeof(inputVcn),
+        outBuf,
+        sizeof(outBuf),
+        &amp;bytesReturned,
+        NULL
+    );
+
+    std::wcout &lt;&lt; L"--------------------------------------------------" &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"Файл: " &lt;&lt; filePath &lt;&lt; L" (Размер: " &lt;&lt; sizeInBytes &lt;&lt; L" байт)" &lt;&lt; std::endl;
+
+    if (!fsctlSuccess) {
+        DWORD err = GetLastError();
+        if (err == ERROR_HANDLE_EOF) {
+            std::wcout &lt;&lt; L"Статус MFT: РЕЗИДЕНТНЫЙ ФАЙЛ (Resident Attribute $DATA)" &lt;&lt; std::endl;
+            std::wcout &lt;&lt; L"  -&gt; Данные файла целиком хранятся внутри 1024-байтной записи MFT!" &lt;&lt; std::endl;
+            std::wcout &lt;&lt; L"  -&gt; Файл не занимает отдельных кластеров на дисковом томе (Extents = 0)." &lt;&lt; std::endl;
+        } else {
+            std::wcout &lt;&lt; L"Ошибка FSCTL_GET_RETRIEVAL_POINTERS: " &lt;&lt; err &lt;&lt; std::endl;
+        }
+    } else {
+        RETRIEVAL_POINTERS_BUFFER* rp = reinterpret_cast&lt;RETRIEVAL_POINTERS_BUFFER*&gt;(outBuf);
+        std::wcout &lt;&lt; L"Статус MFT: НЕРЕЗИДЕНТНЫЙ ФАЙЛ (Non-Resident Attribute $DATA)" &lt;&lt; std::endl;
+        std::wcout &lt;&lt; L"  -&gt; Данные не поместились в MFT-запись и вынесены в отдельные кластеры тома." &lt;&lt; std::endl;
+        std::wcout &lt;&lt; L"  -&gt; Количество цепочек кластеров (Extents): " &lt;&lt; rp-&gt;ExtentCount &lt;&lt; std::endl;
+        for (DWORD i = 0; i &lt; rp-&gt;ExtentCount; ++i) {
+            std::wcout &lt;&lt; L"     Цепочка " &lt;&lt; i &lt;&lt; L": LCN = " &lt;&lt; rp-&gt;Extents[i].Lcn.QuadPart
+                       &lt;&lt; L", NextVCN = " &lt;&lt; rp-&gt;Extents[i].NextVcn.QuadPart &lt;&lt; std::endl;
+        }
+    }
+
+    CloseHandle(hFile);
+}
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
+    #endif
+
+    std::wcout &lt;&lt; L"=== АНАЛИЗ ЧТЕНИЯ MFT: РЕЗИДЕНТНЫЕ И НЕРЕЗИДЕНТНЫЕ ДАННЫЕ ===" &lt;&lt; std::endl;
+
+    AnalyzeNtfsFileAllocation(L"test_resident_200b.dat", 200);
+
+    AnalyzeNtfsFileAllocation(L"test_nonresident_2500b.dat", 2500);
+
+    AnalyzeNtfsFileAllocation(L"test_large_500kb.dat", 500 * 1024);
+
+    return 0;
+}
+</code></pre></div>
+        <div class="run-box"><h3>Как запустить — задача 2</h3>
+<p><strong>Только Windows и только том NTFS.</strong> <code>FSCTL_GET_RETRIEVAL_POINTERS</code> — запрос к драйверу NTFS; на FAT32/exFAT результат будет другим (другая ошибка, не <code>ERROR_HANDLE_EOF</code>).</p>
+<pre class="cmd"><code>rem MSVC (Developer Command Prompt for VS):
+cl /EHsc /W4 task2_mft_resident_theory.cpp
+rem MinGW-w64:
+g++ -O2 -o task2_mft_resident_theory.exe task2_mft_resident_theory.cpp
+rem Запуск из папки с exe:
+task2_mft_resident_theory.exe</code></pre>
+<p><strong>Файлы:</strong> заранее ничего создавать не нужно — программа сама создаёт в текущей папке три файла: <code>test_resident_200b.dat</code> (200 байт), <code>test_nonresident_2500b.dat</code> (2500 байт), <code>test_large_500kb.dat</code> (512 000 байт). Все три при каждом запуске стираются и создаются заново (<code>CREATE_ALWAYS</code>). Место на диске нужно мизерное (около 500 КБ).</p>
+<p><strong>Ожидаемый вывод:</strong> три блока. Для 200 байт — «Статус MFT: РЕЗИДЕНТНЫЙ ФАЙЛ», для 2500 байт и 500 КБ — «НЕРЕЗИДЕНТНЫЙ ФАЙЛ» с числом экстентов (обычно 1) и значениями LCN/NextVCN.</p>
+<p><strong>Что сломается:</strong> запуск на не-NTFS томе (флешка FAT32) — для маленького файла будет не «резидентный», а ошибка с другим кодом; сильно фрагментированный диск — экстентов больше одного, и это нормально; выходной буфер в программе всего 1024 байта, поэтому у очень фрагментированного файла список экстентов может не влезть.</p></div>
+      </div>
+    </div>
+
+    <div id="task3" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задача 3: Реальный физический размер файлов вне таблицы MFT</div>
+        <span class="task-path">task3_mft_physical_size.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="code-container"><div class="code-top-bar"><span>task3_mft_physical_size.cpp</span><span class="code-toggle" role="group" aria-label="Вариант кода"><button type="button" class="toggle-btn active" onclick="toggleComments(this, false)">С комментариями</button><button type="button" class="toggle-btn" onclick="toggleComments(this, true)">Без комментариев</button></span><button class="copy-btn" onclick="copyCode(this)">Скопировать</button></div><pre class="code-block code-commented"><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;io.h&gt;
+#include &lt;fcntl.h&gt;
+
+void investigateFile(const wchar_t* fileName, DWORD bytesToWrite) {
+    HANDLE hFile = CreateFileW(
+        fileName,
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Ошибка создания файла: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return;
+    }
+
+    char* buffer = new char[bytesToWrite];
+    memset(buffer, 'A', bytesToWrite);
+
+    DWORD bytesWritten = 0;
+    WriteFile(hFile, buffer, bytesToWrite, &amp;bytesWritten, NULL);
+    delete[] buffer;
+
+    // ПРЯМОЙ ПУТЬ: спрашиваем у самой NTFS, сколько места выделено под файл.
+    // FILE_STANDARD_INFO.AllocationSize — это реальный выделенный размер:
+    // 0 для резидентного файла (данные лежат внутри записи MFT, кластеры не
+    // выделялись), для нерезидентного — число кластеров × размер кластера.
+    // Запрос делается по открытому хэндлу, до CloseHandle.
+    FILE_STANDARD_INFO stdInfo = {};
+    LONGLONG physicalSize = -1;
+    if (GetFileInformationByHandleEx(hFile, FileStandardInfo, &amp;stdInfo, sizeof(stdInfo))) {
+        physicalSize = stdInfo.AllocationSize.QuadPart;
+    } else {
+        std::wcout &lt;&lt; L"Ошибка GetFileInformationByHandleEx: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+    }
+
+    CloseHandle(hFile);
+
+    // ДЛЯ СРАВНЕНИЯ: ловушка GetCompressedFileSizeW.
+    // Несмотря на имя, для обычного (несжатого, не разреженного) файла она
+    // возвращает ЛОГИЧЕСКИЙ размер, как GetFileSize. Так написано в самой
+    // документации Microsoft: "If the file is not compressed or a sparse
+    // file, the value obtained is the actual file size, the same as the value
+    // returned by a call to GetFileSize". Реальный размер на диске она даёт
+    // только для сжатых и разреженных файлов. Поэтому старый вариант этой
+    // программы печатал 200 и 2000 вместо правильных 0 и 4096.
+    DWORD highSize = 0;
+    DWORD compressedSize = GetCompressedFileSizeW(fileName, &amp;highSize);
+    if (compressedSize == INVALID_FILE_SIZE &amp;&amp; GetLastError() != NO_ERROR) {
+        std::wcout &lt;&lt; L"Ошибка GetCompressedFileSizeW: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+    }
+
+    std::wcout &lt;&lt; L"Файл: " &lt;&lt; fileName &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"  Записано данных (логический размер): " &lt;&lt; bytesToWrite &lt;&lt; L" байт." &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"  Занято на диске (физический размер, напрямую): " &lt;&lt; physicalSize &lt;&lt; L" байт." &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"  GetCompressedFileSizeW (для сравнения): " &lt;&lt; compressedSize &lt;&lt; L" байт." &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"--------------------------------------------------" &lt;&lt; std::endl;
+}
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
+    #endif
+
+    std::wcout &lt;&lt; L"=== ИССЛЕДОВАНИЕ ФИЗИЧЕСКОГО РАЗМЕРА ФАЙЛА ВНЕ ТАБЛИЦЫ MFT ===" &lt;&lt; std::endl;
+
+    investigateFile(L"small_file.txt", 200);   // Кейс 1: 200 байт (резидентный в MFT)
+    investigateFile(L"large_file.txt", 2000); // Кейс 2: 2000 байт (нерезидентный)
+
+    return 0;
+}
+</code></pre><pre class="code-block code-clean" style="display:none"><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;io.h&gt;
+#include &lt;fcntl.h&gt;
+
+void investigateFile(const wchar_t* fileName, DWORD bytesToWrite) {
+    HANDLE hFile = CreateFileW(
+        fileName,
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Ошибка создания файла: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return;
+    }
+
+    char* buffer = new char[bytesToWrite];
+    memset(buffer, 'A', bytesToWrite);
+
+    DWORD bytesWritten = 0;
+    WriteFile(hFile, buffer, bytesToWrite, &amp;bytesWritten, NULL);
+    delete[] buffer;
+
+    FILE_STANDARD_INFO stdInfo = {};
+    LONGLONG physicalSize = -1;
+    if (GetFileInformationByHandleEx(hFile, FileStandardInfo, &amp;stdInfo, sizeof(stdInfo))) {
+        physicalSize = stdInfo.AllocationSize.QuadPart;
+    } else {
+        std::wcout &lt;&lt; L"Ошибка GetFileInformationByHandleEx: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+    }
+
+    CloseHandle(hFile);
+
+    DWORD highSize = 0;
+    DWORD compressedSize = GetCompressedFileSizeW(fileName, &amp;highSize);
+    if (compressedSize == INVALID_FILE_SIZE &amp;&amp; GetLastError() != NO_ERROR) {
+        std::wcout &lt;&lt; L"Ошибка GetCompressedFileSizeW: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+    }
+
+    std::wcout &lt;&lt; L"Файл: " &lt;&lt; fileName &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"  Записано данных (логический размер): " &lt;&lt; bytesToWrite &lt;&lt; L" байт." &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"  Занято на диске (физический размер, напрямую): " &lt;&lt; physicalSize &lt;&lt; L" байт." &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"  GetCompressedFileSizeW (для сравнения): " &lt;&lt; compressedSize &lt;&lt; L" байт." &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"--------------------------------------------------" &lt;&lt; std::endl;
+}
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
+    #endif
+
+    std::wcout &lt;&lt; L"=== ИССЛЕДОВАНИЕ ФИЗИЧЕСКОГО РАЗМЕРА ФАЙЛА ВНЕ ТАБЛИЦЫ MFT ===" &lt;&lt; std::endl;
+
+    investigateFile(L"small_file.txt", 200);
+    investigateFile(L"large_file.txt", 2000);
+
+    return 0;
+}
+</code></pre></div>
+        <div class="run-box"><h3>Как запустить — задача 3</h3>
+<p><strong>Только Windows, том NTFS.</strong> Результат «0 байт на диске» возможен только в NTFS с резидентными атрибутами; на FAT32/exFAT маленький файл займёт целый кластер.</p>
+<pre class="cmd"><code>rem MSVC (Developer Command Prompt for VS):
+cl /EHsc /W4 task3_mft_physical_size.cpp
+rem MinGW-w64:
+g++ -O2 -o task3_mft_physical_size.exe task3_mft_physical_size.cpp
+rem Запуск из папки с exe:
+task3_mft_physical_size.exe</code></pre>
+<p><strong>Файлы:</strong> заранее ничего создавать не нужно — программа сама создаёт в текущей папке <code>small_file.txt</code> (200 байт символа 'A') и <code>large_file.txt</code> (2000 байт символа 'A'), оба при каждом запуске стираются и создаются заново (<code>CREATE_ALWAYS</code>).</p>
+<p><strong>Ожидаемый вывод:</strong> <code>small_file.txt</code> — записано 200 байт, занято на диске (напрямую) <strong>0 байт</strong>, GetCompressedFileSizeW — 200 байт; <code>large_file.txt</code> — записано 2000 байт, занято на диске (напрямую) <strong>4096 байт</strong> (один кластер 4 КБ при стандартном форматировании NTFS), GetCompressedFileSizeW — 2000 байт. Именно строка «для сравнения» и показывает ловушку: для обычных файлов GetCompressedFileSizeW возвращает логический размер.</p>
+<p><strong>Что сломается / изменится:</strong> если том отформатирован с другим размером кластера (например, 8 КБ), второй файл займёт 8192 байт вместо 4096 — это не ошибка программы, а свойство тома; на сжатом томе NTFS числа тоже будут другими; если убрать строку «для сравнения», ловушка перестанет быть видна, но правильные числа (0 и 4096) останутся — они берутся из AllocationSize, а не из GetCompressedFileSizeW.</p></div>
+      </div>
+    </div>
+
+    <div id="task4" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задача 4: Эффект блокировки потока при синхронном I/O</div>
+        <span class="task-path">task4_sync_blocking_demo.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="code-container"><div class="code-top-bar"><span>task4_sync_blocking_demo.cpp</span><span class="code-toggle" role="group" aria-label="Вариант кода"><button type="button" class="toggle-btn active" onclick="toggleComments(this, false)">С комментариями</button><button type="button" class="toggle-btn" onclick="toggleComments(this, true)">Без комментариев</button></span><button class="copy-btn" onclick="copyCode(this)">Скопировать</button></div><pre class="code-block code-commented"><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;io.h&gt;
+#include &lt;fcntl.h&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
+    #endif
+
+    std::wcout &lt;&lt; L"=== ТЕСТ СИНХРОННОЙ БЛОКИРОВКИ ПОТОКА ПРИ ВВОДЕ-ВЫВОДЕ ===" &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"Для начала эксперимента нажмите [Enter]...";
+    std::cin.get();
+
+    const wchar_t* filePath = L"heavy_test_file.tmp";
+
+    // Проверяем наличие файла. Если нет — создаем файл размером 256 МБ
+    HANDLE hCheck = CreateFileW(filePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hCheck == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Создание демонстрационного файла 256 МБ для эмуляции нагрузки..." &lt;&lt; std::endl;
+        HANDLE hNew = CreateFileW(filePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (hNew != INVALID_HANDLE_VALUE) {
+            LARGE_INTEGER sz;
+            sz.QuadPart = 256LL * 1024 * 1024;
+            SetFilePointerEx(hNew, sz, NULL, FILE_BEGIN);
+            SetEndOfFile(hNew);
+            CloseHandle(hNew);
+        }
+    } else {
+        CloseHandle(hCheck);
+    }
+
+    HANDLE hFile = CreateFileW(
+        filePath,
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        NULL,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Ошибка открытия файла! Код: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return 1;
+    }
+
+    DWORD bufferSize = 64 * 1024 * 1024; // Буфер 64 МБ
+    char* buffer = new char[bufferSize];
+    DWORD bytesRead = 0;
+
+    std::wcout &lt;&lt; L"Начинаем процесс: поток эмулирует работу интерфейса (выводит тики таймера)..." &lt;&lt; std::endl;
+    Sleep(1000);
+
+    for (int i = 1; i &lt;= 10; i++) {
+        std::wcout &lt;&lt; L"Интерфейс: Тик " &lt;&lt; i &lt;&lt; L" [Поток активен, State: Running]" &lt;&lt; std::endl;
+        Sleep(500); // Имитация обработки событий пользовательского интерфейса
+
+        if (i == 5) {
+            std::wcout &lt;&lt; L"\n!!! ВНИМАНИЕ: Вызываем синхронный ReadFile() на 64 МБ!" &lt;&lt; std::endl;
+            std::wcout &lt;&lt; L"!!! Поток переходит в ядре в состояние Waiting (заблокирован драйвером)." &lt;&lt; std::endl;
+            std::wcout &lt;&lt; L"!!! В этот момент GUI-окно программы зависает ('Не отвечает')...\n" &lt;&lt; std::endl;
+
+            // Синхронный вызов. Текущий поток приостанавливается планировщиком Windows
+            ReadFile(hFile, buffer, bufferSize, &amp;bytesRead, NULL);
+
+            std::wcout &lt;&lt; L"!!! ReadFile() завершился! Прочитано " &lt;&lt; (bytesRead / (1024 * 1024))
+                       &lt;&lt; L" МБ. Поток разблокирован и вернулся к выполнению.\n" &lt;&lt; std::endl;
+        }
+    }
+
+    std::wcout &lt;&lt; L"Эксперимент окончен." &lt;&lt; std::endl;
+
+    CloseHandle(hFile);
+    delete[] buffer;
+
+    return 0;
+}
+</code></pre><pre class="code-block code-clean" style="display:none"><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;io.h&gt;
+#include &lt;fcntl.h&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    _setmode(_fileno(stdout), _O_U8TEXT);
+    #endif
+
+    std::wcout &lt;&lt; L"=== ТЕСТ СИНХРОННОЙ БЛОКИРОВКИ ПОТОКА ПРИ ВВОДЕ-ВЫВОДЕ ===" &lt;&lt; std::endl;
+    std::wcout &lt;&lt; L"Для начала эксперимента нажмите [Enter]...";
+    std::cin.get();
+
+    const wchar_t* filePath = L"heavy_test_file.tmp";
+
+    HANDLE hCheck = CreateFileW(filePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hCheck == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Создание демонстрационного файла 256 МБ для эмуляции нагрузки..." &lt;&lt; std::endl;
+        HANDLE hNew = CreateFileW(filePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (hNew != INVALID_HANDLE_VALUE) {
+            LARGE_INTEGER sz;
+            sz.QuadPart = 256LL * 1024 * 1024;
+            SetFilePointerEx(hNew, sz, NULL, FILE_BEGIN);
+            SetEndOfFile(hNew);
+            CloseHandle(hNew);
+        }
+    } else {
+        CloseHandle(hCheck);
+    }
+
+    HANDLE hFile = CreateFileW(
+        filePath,
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        NULL,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        std::wcout &lt;&lt; L"Ошибка открытия файла! Код: " &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return 1;
+    }
+
+    DWORD bufferSize = 64 * 1024 * 1024;
+    char* buffer = new char[bufferSize];
+    DWORD bytesRead = 0;
+
+    std::wcout &lt;&lt; L"Начинаем процесс: поток эмулирует работу интерфейса (выводит тики таймера)..." &lt;&lt; std::endl;
+    Sleep(1000);
+
+    for (int i = 1; i &lt;= 10; i++) {
+        std::wcout &lt;&lt; L"Интерфейс: Тик " &lt;&lt; i &lt;&lt; L" [Поток активен, State: Running]" &lt;&lt; std::endl;
+        Sleep(500);
+
+        if (i == 5) {
+            std::wcout &lt;&lt; L"\n!!! ВНИМАНИЕ: Вызываем синхронный ReadFile() на 64 МБ!" &lt;&lt; std::endl;
+            std::wcout &lt;&lt; L"!!! Поток переходит в ядре в состояние Waiting (заблокирован драйвером)." &lt;&lt; std::endl;
+            std::wcout &lt;&lt; L"!!! В этот момент GUI-окно программы зависает ('Не отвечает')...\n" &lt;&lt; std::endl;
+
+            ReadFile(hFile, buffer, bufferSize, &amp;bytesRead, NULL);
+
+            std::wcout &lt;&lt; L"!!! ReadFile() завершился! Прочитано " &lt;&lt; (bytesRead / (1024 * 1024))
+                       &lt;&lt; L" МБ. Поток разблокирован и вернулся к выполнению.\n" &lt;&lt; std::endl;
+        }
+    }
+
+    std::wcout &lt;&lt; L"Эксперимент окончен." &lt;&lt; std::endl;
+
+    CloseHandle(hFile);
+    delete[] buffer;
+
+    return 0;
+}
+</code></pre></div>
+        <div class="run-box"><h3>Как запустить — задача 4</h3>
+<p><strong>Только Windows.</strong> Программа использует Win32 API и консольный ввод; запускать из терминала (cmd/PowerShell), а не двойным кликом, иначе окно закроется после завершения.</p>
+<pre class="cmd"><code>rem MSVC (Developer Command Prompt for VS):
+cl /EHsc /W4 task4_sync_blocking_demo.cpp
+rem MinGW-w64:
+g++ -O2 -o task4_sync_blocking_demo.exe task4_sync_blocking_demo.cpp
+rem Запуск из папки с exe:
+task4_sync_blocking_demo.exe</code></pre>
+<p><strong>Интерактивный запуск:</strong> программа сразу ждёт нажатия <strong>[Enter]</strong> (<code>std::cin.get()</code>) — без этого тики не начнутся. Дальше ничего нажимать не нужно: тики идут сами, блокировка случается автоматически на тике 5.</p>
+<p><strong>Файлы:</strong> заранее ничего создавать не нужно. Если <code>heavy_test_file.tmp</code> нет в текущей папке, программа сама создаёт его на 256 МБ (нули, быстрым способом через <code>SetEndOfFile</code>) — нужно <strong>256 МБ свободного места</strong>. Если файл уже есть, он используется как есть. Дополнительно программа выделяет буфер чтения на <strong>64 МБ оперативной памяти</strong>.</p>
+<p><strong>Ожидаемый вывод:</strong> тики 1–4 раз в ~0,5 с, на тике 5 — предупреждения и пауза (поток заблокирован в <code>ReadFile</code> на 64 МБ), затем «ReadFile() завершился! Прочитано 64 МБ», тики 6–10 и «Эксперимент окончен.».</p>
+<p><strong>Что сломается / изменится:</strong> на быстром NVMe SSD с тёплым кэшем файл из нулей может прочитаться за миллисекунды — пауза будет почти незаметна, и это нормально: эффект ярче всего на HDD или при холодном кэше; если нет 256 МБ на диске, создание файла молча не удастся, и программа выйдет с ошибкой открытия и кодом 1.</p></div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    Лабораторная работа №3 • Системное программирование C++ и Win32 API • 2026
+  </footer>
+
+  <script>
+    function toggleComments(btn, showClean) {
+      const container = btn.closest('.code-container');
+      const commented = container.querySelector('.code-commented');
+      const clean = container.querySelector('.code-clean');
+      commented.style.display = showClean ? 'none' : '';
+      clean.style.display = showClean ? '' : 'none';
+      container.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+    }
+    function copyCode(btn) {
+      const container = btn.closest('.code-container');
+      const pre = Array.from(container.querySelectorAll('pre.code-block')).find(p => p.style.display !== 'none');
+      const text = pre.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = 'Скопировано!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  </script>
+
+</body>
+</html>

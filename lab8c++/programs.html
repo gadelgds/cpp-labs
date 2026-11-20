@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Лабораторная работа №8 — Программы</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-page); color: var(--text-main); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; padding-bottom: 80px; }
+    header { background: rgba(255, 255, 255, 0.96); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(8px); padding: 12px 16px; box-shadow: var(--shadow-sm); }
+    .header-content { max-width: 760px; margin: 0 auto; }
+    .badge-sub { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    h1 { font-size: 19px; font-weight: 800; color: var(--text-main); line-height: 1.25; }
+    .nav-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px 0; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+    .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
+    main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+    .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .task-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .task-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .task-path { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-subtle); background: var(--bg-code); padding: 3px 7px; border-radius: 4px; }
+    .task-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .code-container { position: relative; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-code); overflow: hidden; }
+    .code-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: #e2e8f0; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); }
+    .copy-btn { background: #ffffff; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: var(--text-main); transition: all 0.2s; }
+    .copy-btn:hover { background: var(--primary); color: #ffffff; border-color: var(--primary); }
+    .copy-btn.copied { background: var(--accent-green); color: #ffffff; border-color: var(--accent-green); }
+    pre { padding: 12px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.45; color: #0f172a; }
+    .code-toggle { display: flex; gap: 6px; margin-bottom: 8px; }
+    .toggle-btn { background: var(--bg-code); border: 1px solid #cbd5e1; padding: 5px 12px; border-radius: 20px; font-size: 12.5px; font-weight: 600; cursor: pointer; color: var(--text-muted); transition: all 0.2s; }
+    .toggle-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .toggle-btn.active { background: var(--primary); color: #ffffff; border-color: var(--primary); }
+    .run-box { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .run-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-main); }
+    .run-box ol, .run-box ul { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; color: var(--text-muted); }
+    .run-box code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-code); padding: 1px 5px; border-radius: 4px; color: #1e293b; }
+    .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
+    .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
+    footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Лабораторная работа №8</span>
+      <h1>Программы: потоки, CRT и перехват через RIP</h1>
+      <div class="nav-scroll">
+        <a href="#task1" class="nav-chip">1. CreateThread / _beginthreadex</a>
+        <a href="#task2" class="nav-chip">2. CREATE_SUSPENDED + хук</a>
+        <a href="explanations.html" class="nav-chip">Разбор и теория →</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <div class="callout-warn">Честная оговорка: в песочнице, где готовилась эта лаба, нет компилятора Windows, поэтому программы не компилировались и не запускались здесь. Ожидаемый вывод ниже выведен из логики кода. Прогон — на домашнем ПК с Windows.</div>
+
+    <!-- Задача 1 -->
+    <div id="task1" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задание 1: 10 000 краткоживущих потоков — CreateThread против _beginthreadex</div>
+        <span class="task-path">task1_createthread_vs_beginthreadex.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="code-toggle">
+          <button class="toggle-btn active" onclick="toggleCode(this, 'with')">С комментариями</button>
+          <button class="toggle-btn" onclick="toggleCode(this, 'clean')">Без комментариев</button>
+        </div>
+        <div class="code-container">
+          <div class="code-top-bar">
+            <span>task1_createthread_vs_beginthreadex.cpp</span>
+            <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+          </div>
+          <pre class="code-with"><code>// Лабораторная работа №8, задание 1.
+// Краткоживущие потоки: CreateThread против _beginthreadex.
+// Сборка MSVC:  cl /EHsc task1_createthread_vs_beginthreadex.cpp psapi.lib
+// Сборка MinGW: g++ -o task1.exe task1_createthread_vs_beginthreadex.cpp -lpsapi
+// Запуск: task1.exe           — вариант CreateThread (по умолчанию)
+//        task1.exe create     — то же, явно
+//        task1.exe begin      — вариант _beginthreadex
+
+#include &lt;windows.h&gt;
+#include &lt;process.h&gt;   // _beginthreadex
+#include &lt;psapi.h&gt;     // GetProcessMemoryInfo
+#include &lt;iostream&gt;
+#include &lt;cstring&gt;     // strtok, strcpy
+
+// Сколько потоков создать всего.
+const int THREAD_COUNT = 10000;
+// Сколько раз strtok вызывается внутри одного потока.
+const int STRTOK_CALLS = 100;
+
+// Тестовая строка для strtok. strtok портит строку,
+// поэтому каждый поток работает со своей копией.
+const char* TEST_STRING = &quot;один,два,три;четыре пять:шесть&quot;;
+
+// Функция потока: многократно разбирает копию тестовой строки.
+DWORD WINAPI WorkerThread(LPVOID /* param */)
+{
+    char buffer[128];
+    for (int i = 0; i &lt; STRTOK_CALLS; ++i) {
+        // Свежая копия: strtok ставит &#x27;\0&#x27; вместо разделителей.
+        // Буфер 128 байт, тестовая строка намного короче.
+        strcpy(buffer, TEST_STRING);
+        // Первый вызов — с указателем на строку.
+        char* token = strtok(buffer, &quot;,;: &quot;);
+        // Дальше — с NULL: продолжаем разбор той же строки.
+        while (token != nullptr) {
+            token = strtok(nullptr, &quot;,;: &quot;);
+        }
+    }
+    return 0;
+}
+
+// Печатает текущее потребление памяти процесса.
+// PrivateUsage — память, занятая только этим процессом (то, что
+// видно в диспетчере задач как Private Bytes в столбце &quot;Память&quot;).
+// WorkingSetSize — память, реально находящаяся в ОЗУ сейчас.
+void PrintMemory(const char* label)
+{
+    PROCESS_MEMORY_COUNTERS_EX pmc;
+    if (GetProcessMemoryInfo(GetCurrentProcess(),
+            reinterpret_cast&lt;PROCESS_MEMORY_COUNTERS*&gt;(&amp;pmc), sizeof(pmc))) {
+        std::cout &lt;&lt; label
+                  &lt;&lt; &quot;  WorkingSet: &quot; &lt;&lt; pmc.WorkingSetSize / 1024 &lt;&lt; &quot; КБ&quot;
+                  &lt;&lt; &quot;  PrivateUsage: &quot; &lt;&lt; pmc.PrivateUsage / 1024 &lt;&lt; &quot; КБ&quot;
+                  &lt;&lt; std::endl;
+    }
+    else {
+        std::cout &lt;&lt; label &lt;&lt; &quot;  (не удалось прочитать память, код &quot;
+                  &lt;&lt; GetLastError() &lt;&lt; &quot;)&quot; &lt;&lt; std::endl;
+    }
+}
+
+int main(int argc, char* argv[])
+{
+#if defined(_WIN32)
+    system(&quot;chcp 65001 &gt; nul&quot;); // Русский текст в консоли без кракозябр.
+#endif
+
+    // Выбор варианта по аргументу командной строки.
+    bool useBeginThreadEx = (argc &gt; 1 &amp;&amp; strcmp(argv[1], &quot;begin&quot;) == 0);
+
+    std::cout &lt;&lt; &quot;=== ЗАДАНИЕ 1: CreateThread против _beginthreadex ===&quot; &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;Вариант: &quot;
+              &lt;&lt; (useBeginThreadEx ? &quot;_beginthreadex&quot; : &quot;CreateThread&quot;)
+              &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;Потоков к созданию: &quot; &lt;&lt; THREAD_COUNT &lt;&lt; std::endl;
+    PrintMemory(&quot;Старт:   &quot;);
+
+    for (int i = 0; i &lt; THREAD_COUNT; ++i) {
+        HANDLE hThread = nullptr;
+
+        if (useBeginThreadEx) {
+            // _beginthreadex: поток с инициализацией CRT.
+            // Сигнатура WorkerThread приводится к типу _beginthreadex.
+            uintptr_t h = _beginthreadex(
+                nullptr, 0,
+                reinterpret_cast&lt;unsigned (__stdcall*)(void*)&gt;(WorkerThread),
+                nullptr, 0, nullptr);
+            hThread = reinterpret_cast&lt;HANDLE&gt;(h);
+        }
+        else {
+            // CreateThread: «голый» поток Windows без CRT-состояния.
+            hThread = CreateThread(
+                nullptr, 0, WorkerThread, nullptr, 0, nullptr);
+        }
+
+        if (hThread == nullptr) {
+            std::cout &lt;&lt; &quot;Ошибка создания потока №&quot; &lt;&lt; i
+                      &lt;&lt; &quot;, код &quot; &lt;&lt; GetLastError() &lt;&lt; std::endl;
+            return 1;
+        }
+
+        // Ждём завершения потока и закрываем его дескриптор.
+        WaitForSingleObject(hThread, INFINITE);
+        CloseHandle(hThread);
+
+        // Каждую тысячу потоков — срез памяти, чтобы видеть рост.
+        if ((i + 1) % 1000 == 0) {
+            std::cout &lt;&lt; &quot;Создано потоков: &quot; &lt;&lt; (i + 1) &lt;&lt; &quot;  &quot;;
+            PrintMemory(&quot;&quot;);
+        }
+    }
+
+    std::cout &lt;&lt; &quot;Создано потоков всего: &quot; &lt;&lt; THREAD_COUNT &lt;&lt; std::endl;
+    PrintMemory(&quot;Финиш:  &quot;);
+    std::cout &lt;&lt; &quot;Сравните PrivateUsage на старте и на финише.&quot; &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;С CreateThread PrivateUsage заметно растёт, &quot;
+              &lt;&lt; &quot;с _beginthreadex — почти не меняется.&quot; &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+          <pre class="code-clean" style="display:none"><code>#include &lt;windows.h&gt;
+#include &lt;process.h&gt;
+#include &lt;psapi.h&gt;
+#include &lt;iostream&gt;
+#include &lt;cstring&gt;
+
+const int THREAD_COUNT = 10000;
+
+const int STRTOK_CALLS = 100;
+
+const char* TEST_STRING = &quot;один,два,три;четыре пять:шесть&quot;;
+
+DWORD WINAPI WorkerThread(LPVOID )
+{
+    char buffer[128];
+    for (int i = 0; i &lt; STRTOK_CALLS; ++i) {
+
+        strcpy(buffer, TEST_STRING);
+
+        char* token = strtok(buffer, &quot;,;: &quot;);
+
+        while (token != nullptr) {
+            token = strtok(nullptr, &quot;,;: &quot;);
+        }
+    }
+    return 0;
+}
+
+void PrintMemory(const char* label)
+{
+    PROCESS_MEMORY_COUNTERS_EX pmc;
+    if (GetProcessMemoryInfo(GetCurrentProcess(),
+            reinterpret_cast&lt;PROCESS_MEMORY_COUNTERS*&gt;(&amp;pmc), sizeof(pmc))) {
+        std::cout &lt;&lt; label
+                  &lt;&lt; &quot;  WorkingSet: &quot; &lt;&lt; pmc.WorkingSetSize / 1024 &lt;&lt; &quot; КБ&quot;
+                  &lt;&lt; &quot;  PrivateUsage: &quot; &lt;&lt; pmc.PrivateUsage / 1024 &lt;&lt; &quot; КБ&quot;
+                  &lt;&lt; std::endl;
+    }
+    else {
+        std::cout &lt;&lt; label &lt;&lt; &quot;  (не удалось прочитать память, код &quot;
+                  &lt;&lt; GetLastError() &lt;&lt; &quot;)&quot; &lt;&lt; std::endl;
+    }
+}
+
+int main(int argc, char* argv[])
+{
+#if defined(_WIN32)
+    system(&quot;chcp 65001 &gt; nul&quot;);
+#endif
+
+    bool useBeginThreadEx = (argc &gt; 1 &amp;&amp; strcmp(argv[1], &quot;begin&quot;) == 0);
+
+    std::cout &lt;&lt; &quot;=== ЗАДАНИЕ 1: CreateThread против _beginthreadex ===&quot; &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;Вариант: &quot;
+              &lt;&lt; (useBeginThreadEx ? &quot;_beginthreadex&quot; : &quot;CreateThread&quot;)
+              &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;Потоков к созданию: &quot; &lt;&lt; THREAD_COUNT &lt;&lt; std::endl;
+    PrintMemory(&quot;Старт:   &quot;);
+
+    for (int i = 0; i &lt; THREAD_COUNT; ++i) {
+        HANDLE hThread = nullptr;
+
+        if (useBeginThreadEx) {
+
+            uintptr_t h = _beginthreadex(
+                nullptr, 0,
+                reinterpret_cast&lt;unsigned (__stdcall*)(void*)&gt;(WorkerThread),
+                nullptr, 0, nullptr);
+            hThread = reinterpret_cast&lt;HANDLE&gt;(h);
+        }
+        else {
+
+            hThread = CreateThread(
+                nullptr, 0, WorkerThread, nullptr, 0, nullptr);
+        }
+
+        if (hThread == nullptr) {
+            std::cout &lt;&lt; &quot;Ошибка создания потока №&quot; &lt;&lt; i
+                      &lt;&lt; &quot;, код &quot; &lt;&lt; GetLastError() &lt;&lt; std::endl;
+            return 1;
+        }
+
+        WaitForSingleObject(hThread, INFINITE);
+        CloseHandle(hThread);
+
+        if ((i + 1) % 1000 == 0) {
+            std::cout &lt;&lt; &quot;Создано потоков: &quot; &lt;&lt; (i + 1) &lt;&lt; &quot;  &quot;;
+            PrintMemory(&quot;&quot;);
+        }
+    }
+
+    std::cout &lt;&lt; &quot;Создано потоков всего: &quot; &lt;&lt; THREAD_COUNT &lt;&lt; std::endl;
+    PrintMemory(&quot;Финиш:  &quot;);
+    std::cout &lt;&lt; &quot;Сравните PrivateUsage на старте и на финише.&quot; &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;С CreateThread PrivateUsage заметно растёт, &quot;
+              &lt;&lt; &quot;с _beginthreadex — почти не меняется.&quot; &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+        </div>
+
+        <div class="run-box">
+          <span class="run-title">Как запустить</span>
+          <ol>
+            <li>Скомпилировать. MSVC (Developer Command Prompt): <code>cl /EHsc task1_createthread_vs_beginthreadex.cpp psapi.lib</code> — получится <code>task1_createthread_vs_beginthreadex.exe</code>. MinGW: <code>g++ -o task1.exe task1_createthread_vs_beginthreadex.cpp -lpsapi</code>.</li>
+            <li>Запустить вариант CreateThread: <code>task1.exe</code> или <code>task1.exe create</code>.</li>
+            <li>Запустить вариант _beginthreadex: <code>task1.exe begin</code>.</li>
+            <li>Как смотреть Private Bytes в диспетчере задач: Ctrl+Shift+Esc → вкладка «Подробности» → правый клик по заголовкам столбцов → «Выбрать столбцы» → включить «Память (активный частный рабочий набор)» / «Выделенная память» (Private Bytes зависит от версии Windows) → найти процесс <code>task1.exe</code> и следить за столбцом во время работы программы. Столбец «Память» по умолчанию показывает рабочий набор (Working Set), а не Private Bytes — для задания нужен именно частный набор.</li>
+            <li>Программа и сама печатает память: строки «Старт», каждые 1000 потоков и «Финиш» — WorkingSet и PrivateUsage в килобайтах.</li>
+          </ol>
+          <div class="callout-success">Ожидаемый вывод (вариант CreateThread): «Вариант: CreateThread» → «Старт: WorkingSet: … PrivateUsage: …» → каждые 1000 потоков PrivateUsage заметно растёт (на тысячи килобайт к концу) → «Создано потоков всего: 10000» → «Финиш: PrivateUsage» заметно больше стартового. Вариант _beginthreadex: те же строки, но PrivateUsage почти не меняется от старта к финишу. Точные числа зависят от ПК.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Задача 2 -->
+    <div id="task2" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задание 2: Приостановленный поток и перехват через RIP</div>
+        <span class="task-path">task2_suspended_hook.cpp</span>
+      </div>
+      <div class="task-body">
+        <div class="code-toggle">
+          <button class="toggle-btn active" onclick="toggleCode(this, 'with')">С комментариями</button>
+          <button class="toggle-btn" onclick="toggleCode(this, 'clean')">Без комментариев</button>
+        </div>
+        <div class="code-container">
+          <div class="code-top-bar">
+            <span>task2_suspended_hook.cpp</span>
+            <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+          </div>
+          <pre class="code-with"><code>// Лабораторная работа №8, задание 2.
+// Приостановленный поток (CREATE_SUSPENDED) и перехват через RIP.
+// Сборка MSVC:  cl /EHsc task2_suspended_hook.cpp
+// Сборка MinGW: g++ -o task2.exe task2_suspended_hook.cpp
+// Запуск: task2.exe
+
+#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+
+// Номер Фибоначчи для расчёта. Fib(40) рекурсивно —
+// около 100 миллионов вызовов, это занимает несколько секунд:
+// расчёт достаточно тяжёлый, чтобы поток был «настоящей работой»,
+// а не мгновенным действием.
+const int FIB_N = 40;
+
+// Сюда хук запишет результат расчёта.
+long long g_result = -1;
+
+// Рекурсивное вычисление чисел Фибоначчи.
+// Медленно, но наглядно: каждый вызов порождает два новых.
+long long FibRecursive(int n)
+{
+    if (n &lt;= 1) return n;
+    return FibRecursive(n - 1) + FibRecursive(n - 2);
+}
+
+// Оригинальная функция потока: то, с чего поток должен был стартовать.
+// Если перехват сработал, эта функция НЕ выполнится ни разу —
+// её сообщение на экране не появится. Это и есть доказательство.
+DWORD WINAPI FibThread(LPVOID /* param */)
+{
+    std::cout &lt;&lt; &quot;ОРИГИНАЛ: поток стартовал со своей функции FibThread.&quot;
+              &lt;&lt; std::endl;
+    g_result = FibRecursive(FIB_N);
+    std::cout &lt;&lt; &quot;ОРИГИНАЛ: Fib(&quot; &lt;&lt; FIB_N &lt;&lt; &quot;) = &quot; &lt;&lt; g_result
+              &lt;&lt; std::endl;
+    return 0;
+}
+
+// Функция-перехватчик (хук). Поток стартует с неё вместо FibThread:
+// мы подменили регистр RIP в контексте потока до его запуска.
+// Получает тот же параметр, что и оригинальная функция потока.
+DWORD WINAPI HookThread(LPVOID /* param */)
+{
+    std::cout &lt;&lt; &quot;ПЕРЕХВАТ: поток стартовал с хука HookThread, &quot;
+              &lt;&lt; &quot;а не с FibThread!&quot; &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;ПЕРЕХВАТ: выполняю расчёт Fib(&quot; &lt;&lt; FIB_N &lt;&lt; &quot;)...&quot;
+              &lt;&lt; std::endl;
+    g_result = FibRecursive(FIB_N);
+    std::cout &lt;&lt; &quot;ПЕРЕХВАТ: Fib(&quot; &lt;&lt; FIB_N &lt;&lt; &quot;) = &quot; &lt;&lt; g_result
+              &lt;&lt; std::endl;
+    return 0;
+}
+
+int main()
+{
+#if defined(_WIN32)
+    system(&quot;chcp 65001 &gt; nul&quot;); // Русский текст в консоли без кракозябр.
+#endif
+
+    std::cout &lt;&lt; &quot;=== ЗАДАНИЕ 2: CREATE_SUSPENDED + перехват через RIP ===&quot;
+              &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;Расчёт: Fib(&quot; &lt;&lt; FIB_N &lt;&lt; &quot;) рекурсивно.&quot; &lt;&lt; std::endl;
+
+    // Создаём поток ПРИОСТАНОВЛЕННЫМ: он не выполнит ни одной
+    // инструкции, пока мы не вызовем ResumeThread.
+    HANDLE hThread = CreateThread(
+        nullptr, 0, FibThread, nullptr, CREATE_SUSPENDED, nullptr);
+    if (hThread == nullptr) {
+        std::cout &lt;&lt; &quot;Ошибка CreateThread: &quot; &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return 1;
+    }
+    std::cout &lt;&lt; &quot;Поток создан с CREATE_SUSPENDED и пока спит.&quot; &lt;&lt; std::endl;
+
+    // Готовим структуру контекста. ContextFlags говорит системе,
+    // какие регистры нам нужны: CONTEXT_FULL — все основные регистры,
+    // включая RIP. Без этого флага GetThreadContext вернёт мусор.
+    CONTEXT ctx;
+    ZeroMemory(&amp;ctx, sizeof(ctx));
+    ctx.ContextFlags = CONTEXT_FULL;
+
+    // Читаем контекст приостановленного потока.
+    // На работающем потоке это делать нельзя — контекст «плывёт».
+    if (!GetThreadContext(hThread, &amp;ctx)) {
+        std::cout &lt;&lt; &quot;Ошибка GetThreadContext: &quot; &lt;&lt; GetLastError()
+                  &lt;&lt; std::endl;
+        CloseHandle(hThread);
+        return 1;
+    }
+
+#ifdef _WIN64
+    std::cout &lt;&lt; &quot;Исходный RIP потока: 0x&quot; &lt;&lt; std::hex &lt;&lt; ctx.Rip
+              &lt;&lt; std::dec &lt;&lt; std::endl;
+    // Подмена точки входа: поток начнётся с хука, а не с FibThread.
+    // На x64 регистр называется RIP (на x86 был бы EIP).
+    ctx.Rip = reinterpret_cast&lt;DWORD64&gt;(HookThread);
+    std::cout &lt;&lt; &quot;Новый RIP потока:    0x&quot; &lt;&lt; std::hex &lt;&lt; ctx.Rip
+              &lt;&lt; std::dec &lt;&lt; &quot; (адрес HookThread)&quot; &lt;&lt; std::endl;
+#else
+    std::cout &lt;&lt; &quot;Исходный EIP потока: 0x&quot; &lt;&lt; std::hex &lt;&lt; ctx.Eip
+              &lt;&lt; std::dec &lt;&lt; std::endl;
+    ctx.Eip = reinterpret_cast&lt;DWORD&gt;(HookThread);
+    std::cout &lt;&lt; &quot;Новый EIP потока:    0x&quot; &lt;&lt; std::hex &lt;&lt; ctx.Eip
+              &lt;&lt; std::dec &lt;&lt; &quot; (адрес HookThread)&quot; &lt;&lt; std::endl;
+#endif
+
+    // Записываем изменённый контекст обратно в поток.
+    if (!SetThreadContext(hThread, &amp;ctx)) {
+        std::cout &lt;&lt; &quot;Ошибка SetThreadContext: &quot; &lt;&lt; GetLastError()
+                  &lt;&lt; std::endl;
+        CloseHandle(hThread);
+        return 1;
+    }
+    std::cout &lt;&lt; &quot;Контекст изменён: поток стартует с хука.&quot; &lt;&lt; std::endl;
+
+    // Оживляем поток: теперь он выполнит первую инструкцию
+    // уже по новому адресу — из HookThread.
+    DWORD prevSuspend = ResumeThread(hThread);
+    std::cout &lt;&lt; &quot;ResumeThread вызван (счётчик приостановки был &quot;
+              &lt;&lt; prevSuspend &lt;&lt; &quot;). Поток работает...&quot; &lt;&lt; std::endl;
+
+    // Ждём, пока поток закончит расчёт.
+    WaitForSingleObject(hThread, INFINITE);
+    CloseHandle(hThread);
+
+    std::cout &lt;&lt; &quot;Поток завершён. Итог: Fib(&quot; &lt;&lt; FIB_N &lt;&lt; &quot;) = &quot;
+              &lt;&lt; g_result &lt;&lt; std::endl;
+    if (g_result == 102334155) {
+        std::cout &lt;&lt; &quot;Результат верный: Fib(40) = 102334155.&quot; &lt;&lt; std::endl;
+    }
+    std::cout &lt;&lt; &quot;Доказательство перехвата: сообщение «ПЕРЕХВАТ» есть, &quot;
+              &lt;&lt; &quot;а сообщение «ОРИГИНАЛ» не появилось — FibThread &quot;
+              &lt;&lt; &quot;так и не запустилась.&quot; &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+          <pre class="code-clean" style="display:none"><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+
+const int FIB_N = 40;
+
+long long g_result = -1;
+
+long long FibRecursive(int n)
+{
+    if (n &lt;= 1) return n;
+    return FibRecursive(n - 1) + FibRecursive(n - 2);
+}
+
+DWORD WINAPI FibThread(LPVOID )
+{
+    std::cout &lt;&lt; &quot;ОРИГИНАЛ: поток стартовал со своей функции FibThread.&quot;
+              &lt;&lt; std::endl;
+    g_result = FibRecursive(FIB_N);
+    std::cout &lt;&lt; &quot;ОРИГИНАЛ: Fib(&quot; &lt;&lt; FIB_N &lt;&lt; &quot;) = &quot; &lt;&lt; g_result
+              &lt;&lt; std::endl;
+    return 0;
+}
+
+DWORD WINAPI HookThread(LPVOID )
+{
+    std::cout &lt;&lt; &quot;ПЕРЕХВАТ: поток стартовал с хука HookThread, &quot;
+              &lt;&lt; &quot;а не с FibThread!&quot; &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;ПЕРЕХВАТ: выполняю расчёт Fib(&quot; &lt;&lt; FIB_N &lt;&lt; &quot;)...&quot;
+              &lt;&lt; std::endl;
+    g_result = FibRecursive(FIB_N);
+    std::cout &lt;&lt; &quot;ПЕРЕХВАТ: Fib(&quot; &lt;&lt; FIB_N &lt;&lt; &quot;) = &quot; &lt;&lt; g_result
+              &lt;&lt; std::endl;
+    return 0;
+}
+
+int main()
+{
+#if defined(_WIN32)
+    system(&quot;chcp 65001 &gt; nul&quot;);
+#endif
+
+    std::cout &lt;&lt; &quot;=== ЗАДАНИЕ 2: CREATE_SUSPENDED + перехват через RIP ===&quot;
+              &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;Расчёт: Fib(&quot; &lt;&lt; FIB_N &lt;&lt; &quot;) рекурсивно.&quot; &lt;&lt; std::endl;
+
+    HANDLE hThread = CreateThread(
+        nullptr, 0, FibThread, nullptr, CREATE_SUSPENDED, nullptr);
+    if (hThread == nullptr) {
+        std::cout &lt;&lt; &quot;Ошибка CreateThread: &quot; &lt;&lt; GetLastError() &lt;&lt; std::endl;
+        return 1;
+    }
+    std::cout &lt;&lt; &quot;Поток создан с CREATE_SUSPENDED и пока спит.&quot; &lt;&lt; std::endl;
+
+    CONTEXT ctx;
+    ZeroMemory(&amp;ctx, sizeof(ctx));
+    ctx.ContextFlags = CONTEXT_FULL;
+
+    if (!GetThreadContext(hThread, &amp;ctx)) {
+        std::cout &lt;&lt; &quot;Ошибка GetThreadContext: &quot; &lt;&lt; GetLastError()
+                  &lt;&lt; std::endl;
+        CloseHandle(hThread);
+        return 1;
+    }
+
+#ifdef _WIN64
+    std::cout &lt;&lt; &quot;Исходный RIP потока: 0x&quot; &lt;&lt; std::hex &lt;&lt; ctx.Rip
+              &lt;&lt; std::dec &lt;&lt; std::endl;
+
+    ctx.Rip = reinterpret_cast&lt;DWORD64&gt;(HookThread);
+    std::cout &lt;&lt; &quot;Новый RIP потока:    0x&quot; &lt;&lt; std::hex &lt;&lt; ctx.Rip
+              &lt;&lt; std::dec &lt;&lt; &quot; (адрес HookThread)&quot; &lt;&lt; std::endl;
+#else
+    std::cout &lt;&lt; &quot;Исходный EIP потока: 0x&quot; &lt;&lt; std::hex &lt;&lt; ctx.Eip
+              &lt;&lt; std::dec &lt;&lt; std::endl;
+    ctx.Eip = reinterpret_cast&lt;DWORD&gt;(HookThread);
+    std::cout &lt;&lt; &quot;Новый EIP потока:    0x&quot; &lt;&lt; std::hex &lt;&lt; ctx.Eip
+              &lt;&lt; std::dec &lt;&lt; &quot; (адрес HookThread)&quot; &lt;&lt; std::endl;
+#endif
+
+    if (!SetThreadContext(hThread, &amp;ctx)) {
+        std::cout &lt;&lt; &quot;Ошибка SetThreadContext: &quot; &lt;&lt; GetLastError()
+                  &lt;&lt; std::endl;
+        CloseHandle(hThread);
+        return 1;
+    }
+    std::cout &lt;&lt; &quot;Контекст изменён: поток стартует с хука.&quot; &lt;&lt; std::endl;
+
+    DWORD prevSuspend = ResumeThread(hThread);
+    std::cout &lt;&lt; &quot;ResumeThread вызван (счётчик приостановки был &quot;
+              &lt;&lt; prevSuspend &lt;&lt; &quot;). Поток работает...&quot; &lt;&lt; std::endl;
+
+    WaitForSingleObject(hThread, INFINITE);
+    CloseHandle(hThread);
+
+    std::cout &lt;&lt; &quot;Поток завершён. Итог: Fib(&quot; &lt;&lt; FIB_N &lt;&lt; &quot;) = &quot;
+              &lt;&lt; g_result &lt;&lt; std::endl;
+    if (g_result == 102334155) {
+        std::cout &lt;&lt; &quot;Результат верный: Fib(40) = 102334155.&quot; &lt;&lt; std::endl;
+    }
+    std::cout &lt;&lt; &quot;Доказательство перехвата: сообщение «ПЕРЕХВАТ» есть, &quot;
+              &lt;&lt; &quot;а сообщение «ОРИГИНАЛ» не появилось — FibThread &quot;
+              &lt;&lt; &quot;так и не запустилась.&quot; &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+        </div>
+
+        <div class="run-box">
+          <span class="run-title">Как запустить</span>
+          <ol>
+            <li>Скомпилировать. MSVC (Developer Command Prompt): <code>cl /EHsc task2_suspended_hook.cpp</code> — получится <code>task2_suspended_hook.exe</code>. MinGW: <code>g++ -o task2.exe task2_suspended_hook.cpp</code>.</li>
+            <li>Запустить: <code>task2.exe</code>. Аргументов командной строки нет.</li>
+            <li>Программа работает только на x64 (используется RIP; на x86 — ветка с EIP). Сборка должна быть 64-битной: MSVC — командная строка x64, MinGW — mingw64.</li>
+            <li>Расчёт Fib(40) рекурсивно занимает несколько секунд — это нормально, дождитесь завершения программы.</li>
+          </ol>
+          <div class="callout-success">Ожидаемый вывод: «Поток создан с CREATE_SUSPENDED и пока спит.» → «Исходный RIP потока: 0x…» → «Новый RIP потока: 0x… (адрес HookThread)» → «Контекст изменён: поток стартует с хука.» → «ПЕРЕХВАТ: поток стартовал с хука HookThread, а не с FibThread!» → «ПЕРЕХВАТ: Fib(40) = 102334155» → «Поток завершён. Итог: Fib(40) = 102334155» → «Результат верный: Fib(40) = 102334155.» Сообщение «ОРИГИНАЛ» не появляется ни разу — это и есть доказательство перехвата.</div>
+          <div class="callout-warn">Если в выводе появилось «ОРИГИНАЛ: поток стартовал со своей функции FibThread.» — перехват не сработал: проверьте, что SetThreadContext вызван до ResumeThread и что ContextFlags = CONTEXT_FULL.</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>Лабораторная работа №8 · <a href="explanations.html">Разбор, теория и словарь →</a></footer>
+  <script>
+    function toggleCode(btn, mode) {
+      var body = btn.closest('.task-body');
+      var container = body.querySelector('.code-container');
+      var withPre = container.querySelector('pre.code-with');
+      var cleanPre = container.querySelector('pre.code-clean');
+      if (mode === 'clean') { withPre.style.display = 'none'; cleanPre.style.display = ''; }
+      else { withPre.style.display = ''; cleanPre.style.display = 'none'; }
+      var btns = body.querySelectorAll('.code-toggle .toggle-btn');
+      btns.forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+    }
+    function copyCode(btn) {
+      var container = btn.closest('.code-container');
+      var cleanPre = container.querySelector('pre.code-clean');
+      var pre = (cleanPre.style.display !== 'none') ? cleanPre : container.querySelector('pre.code-with');
+      var text = pre.innerText;
+      function done() {
+        btn.textContent = 'Скопировано ✓';
+        btn.classList.add('copied');
+        setTimeout(function() { btn.textContent = 'Скопировать'; btn.classList.remove('copied'); }, 2000);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function() { fallback(); });
+      } else { fallback(); }
+      function fallback() {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+        done();
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Лабораторная №2 — программы: код и запуск</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --accent-purple: #7c3aed;
+      --accent-purple-bg: #f5f3ff;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.6;
+      padding-bottom: 70px;
+    }
+
+    /* Верхняя панель навигации (Sticky для смартфона) */
+    header {
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-content {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .badge-sub {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+    }
+
+    h1 {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.25;
+    }
+
+    /* Навигационные чипсы */
+    .nav-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 10px 0 2px 0;
+      scrollbar-width: none;
+    }
+    .nav-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .nav-chip {
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: var(--bg-code);
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .nav-chip:hover, .nav-chip:active {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    /* Контейнер контента */
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* Секции */
+    .section-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .section-header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 8px;
+      margin-top: 8px;
+    }
+
+    .section-tag {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+
+    .tag-lab2 { background: var(--primary-light); color: var(--primary); }
+    .tag-lecture { background: var(--accent-purple-bg); color: var(--accent-purple); }
+    .tag-practice { background: var(--accent-green-bg); color: var(--accent-green); }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    /* Карточки заданий */
+    .task-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .task-header {
+      padding: 12px 16px;
+      background: #fafbfc;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .task-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .task-path {
+      font-size: 11.5px;
+      font-family: var(--font-mono);
+      color: var(--text-subtle);
+      background: var(--bg-code);
+      padding: 3px 7px;
+      border-radius: 4px;
+    }
+
+    .task-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Контейнер кода с кнопкой копирования */
+    .code-container {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-code);
+      overflow: hidden;
+    }
+
+    .code-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 12px;
+      background: #e2e8f0;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-subtle);
+    }
+
+    .copy-btn {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-main);
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    .copy-btn.copied {
+      background: var(--accent-green);
+      color: #ffffff;
+      border-color: var(--accent-green);
+    }
+
+    pre {
+      padding: 12px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.45;
+      color: #0f172a;
+    }
+
+    code {
+      font-family: var(--font-mono);
+    }
+
+    /* Блоки объяснений вне кода */
+    .explanation-box {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 13.5px;
+    }
+
+    .explanation-title {
+      font-weight: 800;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .step-num {
+      min-width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+    }
+
+    /* Таблицы */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      -webkit-overflow-scrolling: touch;
+      margin-top: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: var(--text-main);
+      padding: 8px 10px;
+      text-align: left;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) { background-color: #f8fafc; }
+
+    .badge-diff {
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* Карточки теории / вопросов */
+    .qa-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .qa-header {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .qa-badge {
+      background: #0284c7;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 5px;
+      min-width: 26px;
+      text-align: center;
+      margin-top: 2px;
+    }
+
+    .qa-q-text {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.35;
+    }
+
+    .qa-ans-box {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .qa-ans-box ul {
+      margin-left: 18px;
+      margin-top: 6px;
+    }
+
+    .qa-ans-box li {
+      margin-bottom: 4px;
+    }
+
+    .callout-warn {
+      background: var(--accent-amber-bg);
+      border-left: 3px solid var(--accent-amber);
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #92400e;
+      margin-bottom: 8px;
+    }
+
+    .callout-success {
+      background: var(--accent-green-bg);
+      border-left: 3px solid var(--accent-green);
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #065f46;
+      margin-bottom: 8px;
+    }
+
+    /* Построчный разбор и блоки запуска (добавлено 13.11.2026) */
+    .wrap-table table {
+      white-space: normal;
+    }
+    .wrap-table td {
+      vertical-align: top;
+    }
+    .wrap-table td.code-cell {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--text-main);
+    }
+    .run-box {
+      background: var(--accent-green-bg);
+      border: 1px solid #a7f3d0;
+      border-left: 4px solid var(--accent-green);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 13.5px;
+    }
+    .run-box .run-title {
+      font-weight: 800;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent-green);
+      margin-bottom: 6px;
+      display: block;
+    }
+    .run-box code {
+      background: #ffffff;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .run-box pre {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-top: 6px;
+    }
+    .run-box ul {
+      margin-left: 18px;
+      margin-top: 6px;
+    }
+    .run-box li {
+      margin-bottom: 4px;
+      color: var(--text-muted);
+    }
+
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-subtle);
+      margin-top: 30px;
+    }
+
+    /* Переключатель «С комментариями / Без комментариев» (добавлено 20.11.2026) */
+    .code-top-bar {
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .code-toggle {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
+    }
+    .toggle-btn {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-main);
+      transition: all 0.2s;
+    }
+    .toggle-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .toggle-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+    .code-no-comments {
+      display: none;
+    }
+    .code-container.show-clean .code-with-comments {
+      display: none;
+    }
+    .code-container.show-clean .code-no-comments {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Шпаргалка & Код C++</span>
+      <h1>Лабораторная №2, ДЗ Лекции и Практики — программы</h1>
+      <div class="nav-scroll">
+        <a href="#sec-lab2" class="nav-chip">1. Лаб 2 (Word)</a>
+        <a href="#sec-lecture" class="nav-chip">2. ДЗ Лекции (Фото 1 & 3)</a>
+        <a href="#sec-practice" class="nav-chip">3. ДЗ Практики (Фото 2)</a>
+        <a href="explanations.html" class="nav-chip">Разбор, теория и словарь</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <div class="callout-success">
+      В этом файле — только код 10 программ лабы №2 и условия запуска каждой. Построчный разбор, теория и словарь терминов — в файле <a href="explanations.html">explanations.html</a>.
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- РАЗДЕЛ 1: ЛАБОРАТОРНАЯ РАБОТА №2 (ИЗ WORD ФАЙЛА)          -->
+    <!-- ======================================================== -->
+    <section id="sec-lab2" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag tag-lab2">Папка: 1_lab2_word/</span>
+        <h2>1. Лабораторная работа №2 (Word-файл)</h2>
+      </div>
+      <p style="font-size: 13.5px;">Задание 1 (префиксы венгерской нотации, без кода) — в разделе «Разбор программ» файла <a href="explanations.html">explanations.html</a>.</p>
+
+      <!-- Задание 2 Word: sizeof -->
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Задание 2: Исследование моделей данных (sizeof)</div>
+          <span class="task-path">1_lab2_word/task1_types_sizeof.cpp</span>
+        </div>
+        <div class="task-body">
+          <div class="code-container">
+            <div class="code-top-bar">
+              <span>task1_types_sizeof.cpp</span>
+              <span class="code-toggle">
+                <button class="toggle-btn active" onclick="toggleComments(this, true)">С комментариями</button>
+                <button class="toggle-btn" onclick="toggleComments(this, false)">Без комментариев</button>
+              </span>
+              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+            </div>
+            <pre class="code-with-comments"><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    std::cout &lt;&lt; "=== Исследование моделей данных C++ и Win32 ===" &lt;&lt; std::endl;
+
+    #if defined(_WIN64)
+    std::cout &lt;&lt; "Архитектура: x64 (64-битная система)" &lt;&lt; std::endl;
+    #elif defined(_WIN32)
+    std::cout &lt;&lt; "Архитектура: x86 (32-битная система)" &lt;&lt; std::endl;
+    #endif
+
+    std::cout &lt;&lt; "\n[Базовые типы C++]:" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(int):       " &lt;&lt; sizeof(int)       &lt;&lt; " байт (" &lt;&lt; sizeof(int) * 8       &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(long):      " &lt;&lt; sizeof(long)      &lt;&lt; " байт (" &lt;&lt; sizeof(long) * 8      &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(long long): " &lt;&lt; sizeof(long long) &lt;&lt; " байт (" &lt;&lt; sizeof(long long) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(void*):     " &lt;&lt; sizeof(void*)     &lt;&lt; " байт (" &lt;&lt; sizeof(void*) * 8     &lt;&lt; " бит)" &lt;&lt; std::endl;
+
+    std::cout &lt;&lt; "\n[Типы Win32 API]:" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(DWORD):     " &lt;&lt; sizeof(DWORD)     &lt;&lt; " байт (" &lt;&lt; sizeof(DWORD) * 8     &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(LONG):      " &lt;&lt; sizeof(LONG)      &lt;&lt; " байт (" &lt;&lt; sizeof(LONG) * 8      &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(ULONG_PTR): " &lt;&lt; sizeof(ULONG_PTR) &lt;&lt; " байт (" &lt;&lt; sizeof(ULONG_PTR) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(DWORD_PTR): " &lt;&lt; sizeof(DWORD_PTR) &lt;&lt; " байт (" &lt;&lt; sizeof(DWORD_PTR) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(INT_PTR):   " &lt;&lt; sizeof(INT_PTR)   &lt;&lt; " байт (" &lt;&lt; sizeof(INT_PTR) * 8   &lt;&lt; " бит)" &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+            <pre class="code-no-comments"><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    std::cout &lt;&lt; "=== Исследование моделей данных C++ и Win32 ===" &lt;&lt; std::endl;
+
+    #if defined(_WIN64)
+    std::cout &lt;&lt; "Архитектура: x64 (64-битная система)" &lt;&lt; std::endl;
+    #elif defined(_WIN32)
+    std::cout &lt;&lt; "Архитектура: x86 (32-битная система)" &lt;&lt; std::endl;
+    #endif
+
+    std::cout &lt;&lt; "\n[Базовые типы C++]:" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(int):       " &lt;&lt; sizeof(int)       &lt;&lt; " байт (" &lt;&lt; sizeof(int) * 8       &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(long):      " &lt;&lt; sizeof(long)      &lt;&lt; " байт (" &lt;&lt; sizeof(long) * 8      &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(long long): " &lt;&lt; sizeof(long long) &lt;&lt; " байт (" &lt;&lt; sizeof(long long) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(void*):     " &lt;&lt; sizeof(void*)     &lt;&lt; " байт (" &lt;&lt; sizeof(void*) * 8     &lt;&lt; " бит)" &lt;&lt; std::endl;
+
+    std::cout &lt;&lt; "\n[Типы Win32 API]:" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(DWORD):     " &lt;&lt; sizeof(DWORD)     &lt;&lt; " байт (" &lt;&lt; sizeof(DWORD) * 8     &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(LONG):      " &lt;&lt; sizeof(LONG)      &lt;&lt; " байт (" &lt;&lt; sizeof(LONG) * 8      &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(ULONG_PTR): " &lt;&lt; sizeof(ULONG_PTR) &lt;&lt; " байт (" &lt;&lt; sizeof(ULONG_PTR) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(DWORD_PTR): " &lt;&lt; sizeof(DWORD_PTR) &lt;&lt; " байт (" &lt;&lt; sizeof(DWORD_PTR) * 8 &lt;&lt; " бит)" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "sizeof(INT_PTR):   " &lt;&lt; sizeof(INT_PTR)   &lt;&lt; " байт (" &lt;&lt; sizeof(INT_PTR) * 8   &lt;&lt; " бит)" &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+          </div>
+
+<div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Только Windows</strong> — нужен <code>windows.h</code>. На Linux/macOS не соберётся.</li>
+              <li><strong>MSVC</strong> (Developer Command Prompt): <code>cl /EHsc /W4 task1_types_sizeof.cpp</code></li>
+              <li><strong>MinGW-w64:</strong> <code>g++ -Wall -Wextra -o task1_types_sizeof.exe task1_types_sizeof.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong> Ввод не требуется.</li>
+              <li><strong>Запуск:</strong> <code>.\task1_types_sizeof.exe</code> (PowerShell) или <code>task1_types_sizeof.exe</code> (cmd).</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод (x64):</strong></p>
+            <pre>=== Исследование моделей данных C++ и Win32 ===
+Архитектура: x64 (64-битная система)
+
+[Базовые типы C++]:
+sizeof(int):       4 байт (32 бит)
+sizeof(long):      4 байт (32 бит)
+sizeof(long long): 8 байт (64 бит)
+sizeof(void*):     8 байт (64 бит)
+
+[Типы Win32 API]:
+sizeof(DWORD):     4 байт (32 бит)
+sizeof(LONG):      4 байт (32 бит)
+sizeof(ULONG_PTR): 8 байт (64 бит)
+sizeof(DWORD_PTR): 8 байт (64 бит)
+sizeof(INT_PTR):   8 байт (64 бит)</pre>
+            <p style="margin-top:6px;"><strong>Что сломается:</strong> в x86-сборке <code>void*</code> и все <code>*_PTR</code> будут 4 байта вместо 8, а строка архитектуры — «x86 (32-битная система)». Это нормально и есть предмет задания.</p>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Задание 3 Word: Truncation Fix -->
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Задание 3: Исправление усечения указателя в x64</div>
+          <span class="task-path">1_lab2_word/task2_ptr_truncation_fix.cpp</span>
+        </div>
+        <div class="task-body">
+          <div class="code-container">
+            <div class="code-top-bar">
+              <span>task2_ptr_truncation_fix.cpp</span>
+              <span class="code-toggle">
+                <button class="toggle-btn active" onclick="toggleComments(this, true)">С комментариями</button>
+                <button class="toggle-btn" onclick="toggleComments(this, false)">Без комментариев</button>
+              </span>
+              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+            </div>
+            <pre class="code-with-comments"><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+
+// Исправлено: замена DWORD на DWORD_PTR для предотвращения усечения адреса в x64
+void ProcessData(DWORD_PTR dataStylePointer) {
+    int* pNumber = reinterpret_cast&lt;int*&gt;(dataStylePointer);
+    if (pNumber != nullptr) {
+        std::cout &lt;&lt; "Value: " &lt;&lt; *pNumber &lt;&lt; std::endl;
+    }
+}
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    int criticalValue = 2026;
+    int* lpContext = &amp;criticalValue;
+
+    // Исправлено: каст указателя в 64-битный тип DWORD_PTR вместо 32-битного DWORD
+    DWORD_PTR SAFE_PTR = (DWORD_PTR)lpContext;
+
+    ProcessData(SAFE_PTR);
+
+    return 0;
+}
+</code></pre>
+            <pre class="code-no-comments"><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+
+void ProcessData(DWORD_PTR dataStylePointer) {
+    int* pNumber = reinterpret_cast&lt;int*&gt;(dataStylePointer);
+    if (pNumber != nullptr) {
+        std::cout &lt;&lt; "Value: " &lt;&lt; *pNumber &lt;&lt; std::endl;
+    }
+}
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    int criticalValue = 2026;
+    int* lpContext = &amp;criticalValue;
+
+    DWORD_PTR SAFE_PTR = (DWORD_PTR)lpContext;
+
+    ProcessData(SAFE_PTR);
+
+    return 0;
+}
+</code></pre>
+          </div>
+
+<div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Только Windows</strong> — нужен <code>windows.h</code> (тип <code>DWORD_PTR</code>).</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task2_ptr_truncation_fix.cpp</code></li>
+              <li><strong>MinGW-w64:</strong> <code>g++ -Wall -Wextra -o task2_ptr_truncation_fix.exe task2_ptr_truncation_fix.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong> Ввод не требуется.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод:</strong></p>
+            <pre>Value: 2026</pre>
+            <p style="margin-top:6px;"><strong>Что сломается:</strong> если вернуть старый тип <code>DWORD</code>, в x64-сборке компилятор выдаст предупреждение C4311 (pointer truncation), а программа упадёт с Access Violation (0xC0000005) при разыменовании битого адреса.</p>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Задание 4 Word: Handles -->
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Задание 4: Хэндлы объектов ядра Windows</div>
+          <span class="task-path">1_lab2_word/task3_kernel_handles.cpp</span>
+        </div>
+        <div class="task-body">
+          <div class="code-container">
+            <div class="code-top-bar">
+              <span>task3_kernel_handles.cpp</span>
+              <span class="code-toggle">
+                <button class="toggle-btn active" onclick="toggleComments(this, true)">С комментариями</button>
+                <button class="toggle-btn" onclick="toggleComments(this, false)">Без комментариев</button>
+              </span>
+              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+            </div>
+            <pre class="code-with-comments"><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    // 1. Создание/открытие файла (объект ядра File)
+    HANDLE hFile = CreateFileW(
+        L"temp_kernel_demo.tmp",
+        GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
+        NULL
+    );
+
+    // 2. Создание события (объект ядра Event)
+    HANDLE hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    // 3. Получение дескриптора текущего процесса (псевдо-хэндл)
+    HANDLE hProcess = GetCurrentProcess();
+
+    std::cout &lt;&lt; "=== Объекты ядра Windows и их дескрипторы ===" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "1. File Handle (CreateFile):          " &lt;&lt; (void*)hFile    &lt;&lt; " (UINT_PTR: " &lt;&lt; (UINT_PTR)hFile    &lt;&lt; ")" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "2. Event Handle (CreateEvent):        " &lt;&lt; (void*)hEvent   &lt;&lt; " (UINT_PTR: " &lt;&lt; (UINT_PTR)hEvent   &lt;&lt; ")" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "3. Current Process (GetCurrentProcess): " &lt;&lt; (void*)hProcess &lt;&lt; " (UINT_PTR: " &lt;&lt; (UINT_PTR)hProcess &lt;&lt; ")" &lt;&lt; std::endl;
+
+    // Закрытие реальных дескрипторов
+    if (hFile != INVALID_HANDLE_VALUE) {
+        CloseHandle(hFile);
+    }
+    if (hEvent != NULL) {
+        CloseHandle(hEvent);
+    }
+    // Псевдо-дескриптор hProcess закрывать через CloseHandle не нужно!
+
+    return 0;
+}
+</code></pre>
+            <pre class="code-no-comments"><code>#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    HANDLE hFile = CreateFileW(
+        L"temp_kernel_demo.tmp",
+        GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
+        NULL
+    );
+
+    HANDLE hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    HANDLE hProcess = GetCurrentProcess();
+
+    std::cout &lt;&lt; "=== Объекты ядра Windows и их дескрипторы ===" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "1. File Handle (CreateFile):          " &lt;&lt; (void*)hFile    &lt;&lt; " (UINT_PTR: " &lt;&lt; (UINT_PTR)hFile    &lt;&lt; ")" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "2. Event Handle (CreateEvent):        " &lt;&lt; (void*)hEvent   &lt;&lt; " (UINT_PTR: " &lt;&lt; (UINT_PTR)hEvent   &lt;&lt; ")" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "3. Current Process (GetCurrentProcess): " &lt;&lt; (void*)hProcess &lt;&lt; " (UINT_PTR: " &lt;&lt; (UINT_PTR)hProcess &lt;&lt; ")" &lt;&lt; std::endl;
+
+    if (hFile != INVALID_HANDLE_VALUE) {
+        CloseHandle(hFile);
+    }
+    if (hEvent != NULL) {
+        CloseHandle(hEvent);
+    }
+
+    return 0;
+}
+</code></pre>
+          </div>
+
+<div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Только Windows</strong> — нужен <code>windows.h</code>.</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task3_kernel_handles.cpp</code></li>
+              <li><strong>MinGW-w64:</strong> <code>g++ -Wall -Wextra -o task3_kernel_handles.exe task3_kernel_handles.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно</strong> — программа сама создаёт <code>temp_kernel_demo.tmp</code> в рабочей папке (где лежит exe) и сама удаляет его при закрытии хэндла.</li>
+              <li><strong>Нужно право на запись</strong> в рабочей папке, иначе <code>CreateFileW</code> вернёт ошибку. Запускайте из папки с исходником, а не из системного каталога.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод</strong> (числа хэндлов различаются при каждом запуске):</p>
+            <pre>=== Объекты ядра Windows и их дескрипторы ===
+1. File Handle (CreateFile):          0x... (UINT_PTR: ...)
+2. Event Handle (CreateEvent):        0x... (UINT_PTR: ...)
+3. Current Process (GetCurrentProcess): 0xffffffffffffffff (UINT_PTR: 18446744073709551615)</pre>
+            <p style="margin-top:6px;"><strong>Что сломается:</strong> если после запуска в папке остался файл <code>temp_kernel_demo.tmp</code> — значит, хэндл не был закрыт (программа завершена аварийно). Третья строка всегда показывает −1 — это псевдо-хэндл, а не ошибка.</p>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- РАЗДЕЛ 2: ДОМАШНЕЕ ЗАДАНИЕ С ЛЕКЦИИ (ФОТО 1 И ФОТО 3)     -->
+    <!-- ======================================================== -->
+    <section id="sec-lecture" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag tag-lecture">Папка: 2_lecture_hw/</span>
+        <h2>2. Домашнее задание с лекции (Фото 1 и 3)</h2>
+      </div>
+
+      <!-- Фото 1 Задача 1: Указатели -->
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Задача 1 (Фото 1): Базовые операции с указателями</div>
+          <span class="task-path">2_lecture_hw/task1_pointers.cpp</span>
+        </div>
+        <div class="task-body">
+          <div class="code-container">
+            <div class="code-top-bar">
+              <span>task1_pointers.cpp</span>
+              <span class="code-toggle">
+                <button class="toggle-btn active" onclick="toggleComments(this, true)">С комментариями</button>
+                <button class="toggle-btn" onclick="toggleComments(this, false)">Без комментариев</button>
+              </span>
+              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+            </div>
+            <pre class="code-with-comments"><code>#include &lt;iostream&gt;
+
+int main() {
+    int a = 10;
+    int b = 20;
+    int* p = &amp;a;
+    *p = 30;
+    p = &amp;b;
+    *p = 40;
+
+    std::cout &lt;&lt; a &lt;&lt; " " &lt;&lt; b &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+            <pre class="code-no-comments"><code>#include &lt;iostream&gt;
+
+int main() {
+    int a = 10;
+    int b = 20;
+    int* p = &amp;a;
+    *p = 30;
+    p = &amp;b;
+    *p = 40;
+
+    std::cout &lt;&lt; a &lt;&lt; " " &lt;&lt; b &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+          </div>
+
+<div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Собирается везде</strong> (Windows, Linux, macOS) — только стандартный C++.</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task1_pointers.cpp</code></li>
+              <li><strong>MinGW-w64 / g++:</strong> <code>g++ -Wall -Wextra -o task1_pointers.exe task1_pointers.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong> Ввод не требуется.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод:</strong></p>
+            <pre>30 40</pre>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Фото 1 Задача 2: Строки и память -->
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Задача 2 (Фото 1): Строки и массивы в памяти</div>
+          <span class="task-path">2_lecture_hw/task2_strings_memory.cpp</span>
+        </div>
+        <div class="task-body">
+          <div class="code-container">
+            <div class="code-top-bar">
+              <span>task2_strings_memory.cpp</span>
+              <span class="code-toggle">
+                <button class="toggle-btn active" onclick="toggleComments(this, true)">С комментариями</button>
+                <button class="toggle-btn" onclick="toggleComments(this, false)">Без комментариев</button>
+              </span>
+              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+            </div>
+            <pre class="code-with-comments"><code>#include &lt;iostream&gt;
+
+int main() {
+    char str[] = "Hello";
+    const char* p = "Hello";
+
+    std::cout &lt;&lt; sizeof(str) &lt;&lt; " " &lt;&lt; sizeof(p) &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+            <pre class="code-no-comments"><code>#include &lt;iostream&gt;
+
+int main() {
+    char str[] = "Hello";
+    const char* p = "Hello";
+
+    std::cout &lt;&lt; sizeof(str) &lt;&lt; " " &lt;&lt; sizeof(p) &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+          </div>
+
+<div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Собирается везде</strong> (Windows, Linux, macOS) — только стандартный C++.</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task2_strings_memory.cpp</code></li>
+              <li><strong>MinGW-w64 / g++:</strong> <code>g++ -Wall -Wextra -o task2_strings_memory.exe task2_strings_memory.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong> Ввод не требуется.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод:</strong></p>
+            <pre>6 8</pre>
+            <p style="margin-top:6px;"><strong>Что сломается:</strong> в 32-битной сборке вывод будет <code>6 4</code> — это нормально: размер указателя зависит от архитектуры, а размер массива — нет.</p>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- РАЗДЕЛ 3: ДОМАШНЕЕ ЗАДАНИЕ НА ПРАКТИКУ (ФОТО 2)           -->
+    <!-- ======================================================== -->
+    <section id="sec-practice" class="section-wrap">
+      <div class="section-header">
+        <span class="section-tag tag-practice">Папка: 3_practice_hw/</span>
+        <h2>3. Домашнее задание на практику (Фото 2)</h2>
+      </div>
+
+      <!-- Практика Задача 1 -->
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Задача 1: Переменные, сдача и расчет скидки</div>
+          <span class="task-path">3_practice_hw/task1_vars_discount.cpp</span>
+        </div>
+        <div class="task-body">
+          <div class="code-container">
+            <div class="code-top-bar">
+              <span>task1_vars_discount.cpp</span>
+              <span class="code-toggle">
+                <button class="toggle-btn active" onclick="toggleComments(this, true)">С комментариями</button>
+                <button class="toggle-btn" onclick="toggleComments(this, false)">Без комментариев</button>
+              </span>
+              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+            </div>
+            <pre class="code-with-comments"><code>#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    int price = 350;        // Цена товара в рублях
+    int money = 500;        // Купюра покупателя
+    int change = money - price; // Сдача
+
+    double discount = 0.15; // Скидка 15%
+    double discountedPrice = price * (1.0 - discount); // Цена со скидкой
+
+    std::cout &lt;&lt; "Цена товара:          " &lt;&lt; price &lt;&lt; " руб." &lt;&lt; std::endl;
+    std::cout &lt;&lt; "Купюра покупателя:    " &lt;&lt; money &lt;&lt; " руб." &lt;&lt; std::endl;
+    std::cout &lt;&lt; "Сдача:                " &lt;&lt; change &lt;&lt; " руб." &lt;&lt; std::endl;
+
+    std::cout &lt;&lt; std::fixed &lt;&lt; std::setprecision(2);
+    std::cout &lt;&lt; "Скидка:               " &lt;&lt; (discount * 100.0) &lt;&lt; "%" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "Цена со скидкой:      " &lt;&lt; discountedPrice &lt;&lt; " руб." &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+            <pre class="code-no-comments"><code>#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    int price = 350;
+    int money = 500;
+    int change = money - price;
+
+    double discount = 0.15;
+    double discountedPrice = price * (1.0 - discount);
+
+    std::cout &lt;&lt; "Цена товара:          " &lt;&lt; price &lt;&lt; " руб." &lt;&lt; std::endl;
+    std::cout &lt;&lt; "Купюра покупателя:    " &lt;&lt; money &lt;&lt; " руб." &lt;&lt; std::endl;
+    std::cout &lt;&lt; "Сдача:                " &lt;&lt; change &lt;&lt; " руб." &lt;&lt; std::endl;
+
+    std::cout &lt;&lt; std::fixed &lt;&lt; std::setprecision(2);
+    std::cout &lt;&lt; "Скидка:               " &lt;&lt; (discount * 100.0) &lt;&lt; "%" &lt;&lt; std::endl;
+    std::cout &lt;&lt; "Цена со скидкой:      " &lt;&lt; discountedPrice &lt;&lt; " руб." &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+          </div>
+
+<div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Собирается везде</strong> (Windows, Linux, macOS) — только стандартный C++.</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task1_vars_discount.cpp</code></li>
+              <li><strong>MinGW-w64 / g++:</strong> <code>g++ -Wall -Wextra -o task1_vars_discount.exe task1_vars_discount.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong> Ввод не требуется.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод:</strong></p>
+            <pre>Цена товара:          350 руб.
+Купюра покупателя:    500 руб.
+Сдача:                150 руб.
+Скидка:               15.00%
+Цена со скидкой:      297.50 руб.</pre>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Практика Задача 2 -->
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Задача 2: Преобразование типов (a / b, double, 3 знака)</div>
+          <span class="task-path">3_practice_hw/task2_type_casting.cpp</span>
+        </div>
+        <div class="task-body">
+          <div class="code-container">
+            <div class="code-top-bar">
+              <span>task2_type_casting.cpp</span>
+              <span class="code-toggle">
+                <button class="toggle-btn active" onclick="toggleComments(this, true)">С комментариями</button>
+                <button class="toggle-btn" onclick="toggleComments(this, false)">Без комментариев</button>
+              </span>
+              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+            </div>
+            <pre class="code-with-comments"><code>#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    int a = 7;
+    int b = 3;
+
+    // Вариант 1: Целочисленное деление
+    int resInt = a / b;
+    std::cout &lt;&lt; "1. Целочисленное деление (a / b): " &lt;&lt; resInt &lt;&lt; std::endl;
+
+    // Вариант 2: Явное приведение типов к double и округление до 3 знаков
+    double resDouble = static_cast&lt;double&gt;(a) / b;
+    std::cout &lt;&lt; "2. Деление с явным приведением к double (3 знака): ";
+    std::cout &lt;&lt; std::fixed &lt;&lt; std::setprecision(3) &lt;&lt; resDouble &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+            <pre class="code-no-comments"><code>#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    int a = 7;
+    int b = 3;
+
+    int resInt = a / b;
+    std::cout &lt;&lt; "1. Целочисленное деление (a / b): " &lt;&lt; resInt &lt;&lt; std::endl;
+
+    double resDouble = static_cast&lt;double&gt;(a) / b;
+    std::cout &lt;&lt; "2. Деление с явным приведением к double (3 знака): ";
+    std::cout &lt;&lt; std::fixed &lt;&lt; std::setprecision(3) &lt;&lt; resDouble &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+          </div>
+
+<div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Собирается везде</strong> (Windows, Linux, macOS) — только стандартный C++.</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task2_type_casting.cpp</code></li>
+              <li><strong>MinGW-w64 / g++:</strong> <code>g++ -Wall -Wextra -o task2_type_casting.exe task2_type_casting.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong> Ввод не требуется.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод:</strong></p>
+            <pre>1. Целочисленное деление (a / b): 2
+2. Деление с явным приведением к double (3 знака): 2.333</pre>
+            <p style="margin-top:6px;"><strong>Что сломается:</strong> если написать <code>double x = a / b;</code> без каста, получится <code>2.0</code>, а не <code>2.333</code>: деление выполнится, пока оба операнда ещё <code>int</code>.</p>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Практика Задача 3 -->
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Задача 3: Посимвольное чтение через getchar()</div>
+          <span class="task-path">3_practice_hw/task3_char_reading.cpp</span>
+        </div>
+        <div class="task-body">
+          <div class="code-container">
+            <div class="code-top-bar">
+              <span>task3_char_reading.cpp</span>
+              <span class="code-toggle">
+                <button class="toggle-btn active" onclick="toggleComments(this, true)">С комментариями</button>
+                <button class="toggle-btn" onclick="toggleComments(this, false)">Без комментариев</button>
+              </span>
+              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+            </div>
+            <pre class="code-with-comments"><code>#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    std::cout &lt;&lt; "Введите строку текста и нажмите [Enter]: ";
+
+    int ch;
+    int spaceCount = 0;
+
+    // Считываем символы по одному до переноса строки '\n' или конца потока EOF
+    while ((ch = getchar()) != '\n' &amp;&amp; ch != EOF) {
+        if (ch == ' ') {
+            spaceCount++;
+        }
+    }
+
+    std::cout &lt;&lt; "Количество введенных пробелов: " &lt;&lt; spaceCount &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+            <pre class="code-no-comments"><code>#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    std::cout &lt;&lt; "Введите строку текста и нажмите [Enter]: ";
+
+    int ch;
+    int spaceCount = 0;
+
+    while ((ch = getchar()) != '\n' &amp;&amp; ch != EOF) {
+        if (ch == ' ') {
+            spaceCount++;
+        }
+    }
+
+    std::cout &lt;&lt; "Количество введенных пробелов: " &lt;&lt; spaceCount &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+          </div>
+
+<div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Собирается везде</strong> (Windows, Linux, macOS) — стандартные <code>&lt;iostream&gt;</code> и <code>&lt;cstdio&gt;</code>.</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task3_char_reading.cpp</code></li>
+              <li><strong>MinGW-w64 / g++:</strong> <code>g++ -Wall -Wextra -o task3_char_reading.exe task3_char_reading.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong></li>
+              <li><strong>Ввод обязателен:</strong> программа ждёт строку текста. Введите текст и нажмите Enter. Консоль Windows буферизует ввод построчно: символы попадут в программу только после Enter.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Пример запуска:</strong></p>
+            <pre>Введите строку текста и нажмите [Enter]: hello world test
+Количество введенных пробелов: 2</pre>
+            <p style="margin-top:6px;"><strong>Что сломается:</strong> программа «висит» без вывода — она ждёт ввода, это нормально. Завершить ввод без Enter можно концом потока: Ctrl+Z, затем Enter (Windows) или Ctrl+D (Linux/macOS). Если объявить <code>ch</code> как <code>char</code> вместо <code>int</code>, <code>EOF</code> (−1) станет неотличим от символа с кодом 255.</p>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Практика Задача 4 -->
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Задача 4: Преобразование числа в строку (sprintf / itoa)</div>
+          <span class="task-path">3_practice_hw/task4_num_to_string.cpp</span>
+        </div>
+        <div class="task-body">
+          <div class="code-container">
+            <div class="code-top-bar">
+              <span>task4_num_to_string.cpp</span>
+              <span class="code-toggle">
+                <button class="toggle-btn active" onclick="toggleComments(this, true)">С комментариями</button>
+                <button class="toggle-btn" onclick="toggleComments(this, false)">Без комментариев</button>
+              </span>
+              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+            </div>
+            <pre class="code-with-comments"><code>#define _CRT_SECURE_NO_WARNINGS
+#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+#include &lt;cstring&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    // Исходная строка с запасом памяти для добавления числа
+    char clientStr[128] = "Клиент №";
+    int ID = 245;
+
+    // Символьный массив для записи числа
+    char idStr[32];
+
+    // Переводим число ID в символьный массив с помощью sprintf
+    sprintf(idStr, "%d", ID);
+
+    // Добавляем символьный массив в конец исходной строки
+    strcat(clientStr, idStr);
+
+    // Выводим полученную строку: "Клиент №245"
+    std::cout &lt;&lt; clientStr &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+            <pre class="code-no-comments"><code>#define _CRT_SECURE_NO_WARNINGS
+#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+#include &lt;cstring&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    char clientStr[128] = "Клиент №";
+    int ID = 245;
+
+    char idStr[32];
+
+    sprintf(idStr, "%d", ID);
+
+    strcat(clientStr, idStr);
+
+    std::cout &lt;&lt; clientStr &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+          </div>
+
+<div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Собирается везде</strong> (Windows, Linux, macOS). В MSVC обязательна первая строка файла <code>#define _CRT_SECURE_NO_WARNINGS</code> — без неё предупреждение C4996 (а с флагом <code>/WX</code> — ошибка сборки).</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task4_num_to_string.cpp</code></li>
+              <li><strong>MinGW-w64 / g++:</strong> <code>g++ -Wall -Wextra -o task4_num_to_string.exe task4_num_to_string.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong> Ввод не требуется.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод:</strong></p>
+            <pre>Клиент №245</pre>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Практика Задача 4б -->
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Задача 4б: Перенос буквы «н» в начало (исходная строка не меняется)</div>
+          <span class="task-path">3_practice_hw/task4b_move_letter_n.cpp</span>
+        </div>
+        <div class="task-body">
+          <div class="code-container">
+            <div class="code-top-bar">
+              <span>task4b_move_letter_n.cpp</span>
+              <span class="code-toggle">
+                <button class="toggle-btn active" onclick="toggleComments(this, true)">С комментариями</button>
+                <button class="toggle-btn" onclick="toggleComments(this, false)">Без комментариев</button>
+              </span>
+              <button class="copy-btn" onclick="copyCode(this)">Скопировать</button>
+            </div>
+            <pre class="code-with-comments"><code>#define _CRT_SECURE_NO_WARNINGS
+#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+#include &lt;cstring&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    // Исходная переменная объявлена const — её НИКТО не меняет
+    const char clientStr[] = "Клиент";
+    int ID = 245;
+
+    // Число -&gt; строка
+    char idStr[32];
+    sprintf(idStr, "%d", ID);
+
+    // Буква 'н' (в UTF-8 это два байта)
+    const char letterN[] = "н";
+
+    // НОВАЯ строка-результат, исходную переменную не трогаем
+    char result[128] = "";
+
+    // 1. Кладём букву 'н' в НАЧАЛО результата
+    strcat(result, letterN);
+
+    // 2. Ищем букву 'н' в исходном слове
+    const char* posN = strstr(clientStr, letterN);
+    if (posN != nullptr) {
+        int before = (int)(posN - clientStr);      // байт до буквы 'н'
+
+        // 3. Копируем начало слова ("Клие") — уже без буквы 'н'
+        strncat(result, clientStr, before);
+
+        // 4. Копируем остаток после буквы 'н' ("т")
+        strcat(result, posN + strlen(letterN));
+    }
+
+    // 5. Приклеиваем число
+    strcat(result, idStr);
+
+    std::cout &lt;&lt; "Исходная строка (не изменена): " &lt;&lt; clientStr &lt;&lt; std::endl;
+    std::cout &lt;&lt; "Результат:                     " &lt;&lt; result &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+            <pre class="code-no-comments"><code>#define _CRT_SECURE_NO_WARNINGS
+#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+#include &lt;cstring&gt;
+
+int main() {
+    #if defined(_WIN32)
+    system("chcp 65001 &gt; nul");
+    #endif
+
+    const char clientStr[] = "Клиент";
+    int ID = 245;
+
+    char idStr[32];
+    sprintf(idStr, "%d", ID);
+
+    const char letterN[] = "н";
+
+    char result[128] = "";
+
+    strcat(result, letterN);
+
+    const char* posN = strstr(clientStr, letterN);
+    if (posN != nullptr) {
+        int before = (int)(posN - clientStr);
+
+        strncat(result, clientStr, before);
+
+        strcat(result, posN + strlen(letterN));
+    }
+
+    strcat(result, idStr);
+
+    std::cout &lt;&lt; "Исходная строка (не изменена): " &lt;&lt; clientStr &lt;&lt; std::endl;
+    std::cout &lt;&lt; "Результат:                     " &lt;&lt; result &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+          </div>
+
+<div class="run-box">
+            <span class="run-title">Как запустить</span>
+
+            <ul>
+              <li><strong>Собирается везде</strong> (Windows, Linux, macOS). В MSVC обязательна первая строка файла <code>#define _CRT_SECURE_NO_WARNINGS</code>.</li>
+              <li><strong>MSVC:</strong> <code>cl /EHsc /W4 task4b_move_letter_n.cpp</code></li>
+              <li><strong>MinGW-w64 / g++:</strong> <code>g++ -Wall -Wextra -o task4b_move_letter_n.exe task4b_move_letter_n.cpp</code></li>
+              <li><strong>Файлы заранее создавать не нужно.</strong> Ввод не требуется.</li>
+              <li><strong>Важно:</strong> файл должен быть сохранён в UTF-8 — иначе буква «н» займёт не 2 байта, и байтовые смещения дадут другой результат.</li>
+            </ul>
+            <p style="margin-top:6px;"><strong>Ожидаемый вывод:</strong></p>
+            <pre>Исходная строка (не изменена): Клиент
+Результат:                     нКлиет245</pre>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    Лабораторная работа №2 & Домашние задания по C++ и Win32 API • 2026 • <a href="explanations.html">Разбор, теория и словарь</a>
+  </footer>
+
+  <script>
+    function toggleComments(btn, withComments) {
+      const container = btn.closest('.code-container');
+      container.classList.toggle('show-clean', !withComments);
+      container.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function copyCode(btn) {
+      const container = btn.closest('.code-container');
+      const pre = container.classList.contains('show-clean')
+        ? container.querySelector('.code-no-comments')
+        : container.querySelector('.code-with-comments');
+      const text = pre.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = 'Скопировано!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Лабораторная работа №6 — Разбор, теория и словарь: процессы Windows и Environment Block</title>
+  <style>    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-page); color: var(--text-main); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; padding-bottom: 80px; }
+    header {
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-content { max-width: 760px; margin: 0 auto; }
+    .badge-sub { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    h1 { font-size: 19px; font-weight: 800; color: var(--text-main); line-height: 1.25; }
+    .nav-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px 0; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+    .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
+    main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+    .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .task-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .task-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .task-path { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-subtle); background: var(--bg-code); padding: 3px 7px; border-radius: 4px; }
+    .task-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .code-container { position: relative; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-code); overflow: hidden; }
+    .code-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: #e2e8f0; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); }
+    .copy-btn { background: #ffffff; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: var(--text-main); transition: all 0.2s; }
+    .copy-btn:hover { background: var(--primary); color: #ffffff; border-color: var(--primary); }
+    .copy-btn.copied { background: var(--accent-green); color: #ffffff; border-color: var(--accent-green); }
+    pre { padding: 12px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.45; color: #0f172a; }
+    .explanation-box { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .explanation-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); }
+    table.breakdown { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+    table.breakdown th { text-align: left; background: var(--primary-light); color: var(--primary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding: 7px 8px; border: 1px solid var(--border); }
+    table.breakdown td { padding: 7px 8px; border: 1px solid var(--border); vertical-align: top; color: var(--text-muted); line-height: 1.45; }
+    table.breakdown td code { font-family: var(--font-mono); font-size: 12px; color: #1e293b; font-weight: 700; word-break: break-word; }
+    table.breakdown tr:nth-child(even) td { background: #f8fafc; }
+    .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
+    .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
+    .run-box { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .run-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-main); }
+    .run-box ol, .run-box ul { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; color: var(--text-muted); }
+    .run-box code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-code); padding: 1px 5px; border-radius: 4px; color: #1e293b; }
+    footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --accent-red: #dc2626;
+      --accent-red-bg: #fef2f2;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    .section-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .section-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); }
+    .section-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .section-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; font-size: 14px; color: var(--text-muted); }
+    .section-body p { line-height: 1.6; }
+    .section-body code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-code); padding: 1px 5px; border-radius: 4px; color: #1e293b; }
+    .section-body ul, .section-body ol { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+    .section-body strong { color: var(--text-main); }
+    .sub-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); margin-top: 4px; }
+    .callout-danger { background: var(--accent-red-bg); border-left: 3px solid var(--accent-red); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #991b1b; }
+    .callout-info { background: var(--primary-light); border-left: 3px solid var(--primary); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #1e40af; }
+    table.theory { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.theory th { text-align: left; background: var(--primary-light); color: var(--primary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding: 7px 8px; border: 1px solid var(--border); }
+    table.theory td { padding: 7px 8px; border: 1px solid var(--border); vertical-align: top; color: var(--text-muted); line-height: 1.45; }
+    table.theory td code { font-family: var(--font-mono); font-size: 12px; color: #1e293b; font-weight: 700; }
+  
+    .term-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .term-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .term-name { font-size: 16px; font-weight: 800; color: var(--text-main); }
+    .term-name code { font-family: var(--font-mono); font-size: 15px; }
+    .term-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: var(--text-muted); line-height: 1.55; }
+    .term-body p { margin: 0; }
+    .term-example { background: var(--primary-light); border-left: 3px solid var(--primary); padding: 8px 12px; border-radius: 4px; font-size: 13.5px; }
+    .term-example b { color: var(--primary); }
+    .term-rule { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13.5px; color: #065f46; font-weight: 600; }
+    .term-rule b { color: #065f46; }
+    .intro-box { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; color: var(--text-muted); }
+    .intro-box b { color: var(--text-main); }
+    .gloss-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+    .gloss-nav a { font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; }
+    .gloss-nav a:hover { background: var(--primary); color: #ffffff; }
+    .ste-rules { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 10px 12px; border-radius: 4px; font-size: 13.5px; color: #92400e; display: flex; flex-direction: column; gap: 4px; }
+    .ste-rules ul { padding-left: 18px; display: flex; flex-direction: column; gap: 3px; }
+
+    .steps { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+    .step { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; background: #ffffff; }
+    .step-num { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 6px 12px; border-bottom: 1px solid var(--border); }
+    .step-code { background: var(--bg-code); padding: 10px 12px; margin: 0; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.45; color: #0f172a; border-bottom: 1px solid var(--border); white-space: pre-wrap; word-break: break-word; }
+    .step-text { padding: 10px 12px; font-size: 13.5px; color: var(--text-muted); line-height: 1.55; margin: 0; }
+    .step-text code { font-family: var(--font-mono); font-size: 12px; background: var(--bg-code); padding: 1px 5px; border-radius: 4px; color: #1e293b; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Лабораторная работа №6</span>
+      <h1>Разбор, теория и словарь: жизненный цикл процессов и Environment Block</h1>
+      <div class="nav-scroll">
+        <a href="#breakdown" class="nav-chip">Построчный разбор</a>
+        <a href="#theory" class="nav-chip">Теория</a>
+        <a href="#glossary" class="nav-chip">Словарь</a>
+        <a href="#ste" class="nav-chip">STE-версия</a>
+        <a href="programs.html" class="nav-chip">Код программ →</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <div id="breakdown">
+    <div class="section-card"><div class="section-header"><div class="section-title">Построчный разбор программ — обычная версия</div></div></div>
+    <div id="task1" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задание 1: Жизненный цикл процесса и очистка ресурсов ядра</div>
+        <span class="task-path">task1_createprocess_notepad.cpp</span>
+      </div>
+      <div class="task-body">
+<div class="explanation-box">
+          <span class="explanation-title">Полный построчный разбор — ни одна строка не пропущена</span>
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">Шаг 1</div>
+              <pre class="step-code"><code>#include &lt;windows.h&gt;</code></pre>
+              <p class="step-text">Подключает Win32 API: CreateProcess, WaitForSingleObject, CloseHandle, STARTUPINFO, PROCESS_INFORMATION, ZeroMemory, GetLastError. Без этого заголовка ни одна функция Windows недоступна — это главный API-заголовок для системного программирования.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 2</div>
+              <pre class="step-code"><code>#include &lt;iostream&gt;</code></pre>
+              <p class="step-text">Подключает std::cout / std::endl для вывода в консоль. Вывод нужен для наблюдения за жизненным циклом: запуск, ожидание, закрытие.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 3</div>
+              <pre class="step-code"><code>int main() {</code></pre>
+              <p class="step-text">Точка входа консольного приложения. Здесь живёт весь сценарий: запуск → ожидание → очистка.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 4</div>
+              <pre class="step-code"><code>#if defined(_WIN32) system("chcp 65001 &gt; nul"); #endif</code></pre>
+              <p class="step-text">Переключает кодовую страницу консоли на UTF-8 (65001), чтобы русский текст не превращался в кракозябры. Директива препроцессора: команда выполняется только под Windows; на других системах код просто не компилируется в программу.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 5</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "=== ЗАДАНИЕ 1 ..."</code></pre>
+              <p class="step-text">Печатает заголовок программы. Маркер в выводе: видно, какая программа запущена и что она делает.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 6</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Запускаем Блокнот..."</code></pre>
+              <p class="step-text">Сообщает пользователю о начале запуска. Пользователь понимает, что сейчас откроется окно Блокнота — это не случайный процесс.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 7</div>
+              <pre class="step-code"><code>STARTUPINFO si;</code></pre>
+              <p class="step-text">Объявляет структуру с параметрами запуска: внешний вид окна, дескрипторы стандартных потоков. Без неё CreateProcess не знает, как показать окно нового процесса.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 8</div>
+              <pre class="step-code"><code>PROCESS_INFORMATION pi;</code></pre>
+              <p class="step-text">Объявляет структуру для результатов: сюда система запишет дескрипторы процесса и потока и их ID. Это наш единственный способ получить дескриптор запущенного процесса — без него нельзя ни ждать его, ни закрыть.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 9</div>
+              <pre class="step-code"><code>ZeroMemory(&amp;si, sizeof(si));</code></pre>
+              <p class="step-text">Заполняет всю структуру si нулями. В локальных переменных — мусор из стека. Случайный бит во флагах STARTUPINFO может заставить CreateProcess вести себя непредсказуемо.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 10</div>
+              <pre class="step-code"><code>ZeroMemory(&amp;pi, sizeof(pi));</code></pre>
+              <p class="step-text">То же обнуление для структуры результатов. Защита от мусора: при ошибке CreateProcess поля pi останутся нулями, а не случайными значениями.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 11</div>
+              <pre class="step-code"><code>si.cb = sizeof(si);</code></pre>
+              <p class="step-text">Записывает в поле cb размер структуры в байтах. CreateProcess по этому полю определяет версию структуры. Если cb равен 0 или мусору — вызов завершится ошибкой ERROR_INVALID_PARAMETER.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 12</div>
+              <pre class="step-code"><code>wchar_t cmdLine[] = L"notepad.exe";</code></pre>
+              <p class="step-text">Создаёт изменяемый буфер с командной строкой запуска Блокнота (широкие символы, Unicode). Документация требует именно изменяемый буфер: CreateProcess имеет право менять строку на месте. Строковый литерал напрямую передавать нельзя — он в памяти только для чтения.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 13</div>
+              <pre class="step-code"><code>BOOL ok = CreateProcess( ... );</code></pre>
+              <p class="step-text">Создаёт новый процесс notepad.exe и возвращает TRUE при успехе, FALSE при ошибке. Это центральный вызов задания: только здесь рождается дочерний процесс. Результат обязательно проверяется.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 14</div>
+              <pre class="step-code"><code>NULL, // lpApplicationName</code></pre>
+              <p class="step-text">Имя исполняемого файла не задано отдельно. Когда первый параметр NULL, система берёт имя программы из командной строки — в нашем случае "notepad.exe".</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 15</div>
+              <pre class="step-code"><code>cmdLine, // lpCommandLine</code></pre>
+              <p class="step-text">Передаёт командную строку с именем программы. Система ищет notepad.exe по правилам поиска исполняемых файлов (каталог приложения, системные каталоги, PATH). Блокнот есть в любой Windows — путь указывать не нужно.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 16</div>
+              <pre class="step-code"><code>NULL, // lpProcessAttributes</code></pre>
+              <p class="step-text">Атрибуты безопасности процесса — по умолчанию. Дескриптор процесса нельзя будет унаследовать дочерними процессами; для задания это не нужно.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 17</div>
+              <pre class="step-code"><code>NULL, // lpThreadAttributes</code></pre>
+              <p class="step-text">Атрибуты безопасности главного потока — по умолчанию. То же, что и для процесса: наследование дескриптора потока не требуется.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 18</div>
+              <pre class="step-code"><code>FALSE, // bInheritHandles</code></pre>
+              <p class="step-text">Запрещает Блокноту наследовать дескрипторы нашей программы. Наследование открыло бы Блокноту доступ к нашим файлам и объектам. Здесь это не нужно и небезопасно.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 19</div>
+              <pre class="step-code"><code>0, // dwCreationFlags</code></pre>
+              <p class="step-text">Без особых флагов создания. Процесс создаётся обычным образом: не приостановленным, не в отдельной консоли, не с повышенными правами.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 20</div>
+              <pre class="step-code"><code>NULL, // lpEnvironment</code></pre>
+              <p class="step-text">Блок окружения для потомка не задан явно. NULL означает: потомок получает копию блока окружения родителя. Для Блокнота это нормально; механизм копии подробно разбирается в задании 2.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 21</div>
+              <pre class="step-code"><code>NULL, // lpCurrentDirectory</code></pre>
+              <p class="step-text">Рабочий каталог потомка не задан явно. NULL означает: потомок наследует текущий каталог родителя. Блокноту каталог не важен.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 22</div>
+              <pre class="step-code"><code>&amp;si, // lpStartupInfo</code></pre>
+              <p class="step-text">Передаёт заполненную структуру запуска. Система читает отсюда, как показать окно Блокнота (по умолчанию — обычное окно).</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 23</div>
+              <pre class="step-code"><code>&amp;pi // lpProcessInformation</code></pre>
+              <p class="step-text">Передаёт адрес структуры для результатов. Сюда система запишет hProcess, hThread, dwProcessId, dwThreadId — всё, что нужно для ожидания и очистки.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 24</div>
+              <pre class="step-code"><code>if (!ok) { ... return 1; }</code></pre>
+              <p class="step-text">Если CreateProcess вернул FALSE — печатает код ошибки через GetLastError() и завершает программу с кодом 1. Без этой проверки программа продолжила бы ждать по мусорному дескриптору. Код 1 сигнализирует системе, что запуск не удался.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 25</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Блокнот запущен. PID процесса: " &lt;&lt; pi.dwProcessId ...</code></pre>
+              <p class="step-text">Выводит ID процесса и ID его главного потока. PID — доказательство, что процесс реально создан; по нему его можно найти в Диспетчере задач.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 26</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Ждём, пока вы закроете Блокнот..."</code></pre>
+              <p class="step-text">Объясняет, почему консоль «зависла». Без этой строки ожидание выглядит как зависание программы; пользователь должен знать, что нужно закрыть Блокнот.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 27</div>
+              <pre class="step-code"><code>DWORD waitResult = WaitForSingleObject(pi.hProcess, INFINITE);</code></pre>
+              <p class="step-text">Блокирует поток до тех пор, пока дескриптор процесса не станет сигнальным, то есть пока Блокнот не завершится. Ждёт без ограничения времени. Это и есть «дождаться закрытия»: дескриптор процесса переходит в сигнальное состояние ровно в момент его завершения. INFINITE — пользователь может держать Блокнот открытым сколь угодно долго.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 28</div>
+              <pre class="step-code"><code>if (waitResult == WAIT_OBJECT_0) { ... }</code></pre>
+              <p class="step-text">Проверяет, что ожидание завершилось именно завершением процесса, а не ошибкой. WAIT_OBJECT_0 — нормальный исход. Любой другой код означает сбой ожидания, и его надо показать, а не молча идти дальше.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 29</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Блокнот закрыт пользователем."</code></pre>
+              <p class="step-text">Подтверждает, что ожидание закончилось. Пользователь видит, что программа заметила закрытие Блокнота.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 30</div>
+              <pre class="step-code"><code>else { std::cout &lt;&lt; "WaitForSingleObject вернул неожиданный код..." }</code></pre>
+              <p class="step-text">Ветка ошибки ожидания: печатает код возврата и GetLastError(). Честная диагностика вместо молчания: если ожидание сорвалось, причина должна быть видна.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 31</div>
+              <pre class="step-code"><code>CloseHandle(pi.hProcess);</code></pre>
+              <p class="step-text">Закрывает дескриптор процесса Блокнота. КРИТИЧЕСКОЕ УСЛОВИЕ ЗАДАНИЯ. Пока дескриптор открыт, ядро хранит объект процесса и его код завершения в памяти, даже после завершения процесса. Незакрытый дескриптор — утечка ресурса ядра и занятая запись в таблице дескрипторов.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 32</div>
+              <pre class="step-code"><code>CloseHandle(pi.hThread);</code></pre>
+              <p class="step-text">Закрывает дескриптор главного потока Блокнота. CreateProcess возвращает ДВА дескриптора, и закрыть нужно ОБА. Забытый hThread — та же утечка, что и забытый hProcess. Порядок закрытия значения не имеет.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 33</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Дескрипторы ... закрыты ..."</code></pre>
+              <p class="step-text">Подтверждает выполнение очистки. На защите видно, что программа дошла до CloseHandle, а не завершилась раньше.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 34</div>
+              <pre class="step-code"><code>return 0;</code></pre>
+              <p class="step-text">Успешное завершение программы с кодом 0. Код 0 — общепринятый признак нормального завершения; его видит вызывающая среда.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="task2parent" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задание 2 (часть 1): Parent.exe — родитель</div>
+        <span class="task-path">task2_parent.cpp</span>
+      </div>
+      <div class="task-body">
+<div class="explanation-box">
+          <span class="explanation-title">Полный построчный разбор — Parent.exe</span>
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">Шаг 1</div>
+              <pre class="step-code"><code>#include &lt;windows.h&gt;</code></pre>
+              <p class="step-text">Подключает Win32 API: SetEnvironmentVariable, CreateProcess, CloseHandle, STARTUPINFO, PROCESS_INFORMATION. Все ключевые функции задания — из этого заголовка.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 2</div>
+              <pre class="step-code"><code>#include &lt;iostream&gt;</code></pre>
+              <p class="step-text">Подключает std::cout и std::wcout для вывода. Нужен и обычный, и широкий вывод: значения переменных хранятся в wchar_t.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 3</div>
+              <pre class="step-code"><code>int main() {</code></pre>
+              <p class="step-text">Точка входа программы Parent.exe. Весь сценарий родителя: установить → запустить → перезаписать → завершить.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 4</div>
+              <pre class="step-code"><code>#if defined(_WIN32) system("chcp 65001 &gt; nul"); #endif</code></pre>
+              <p class="step-text">Переключает консоль на UTF-8 для корректного русского текста. Без этого русские строки в выводе превратятся в кракозябры. Выполняется только под Windows.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 5</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "=== ЗАДАНИЕ 2: PARENT ..."</code></pre>
+              <p class="step-text">Печатает заголовок программы. В двух окнах консолей (родителя и потомка) сразу видно, где чья программа.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 6</div>
+              <pre class="step-code"><code>const wchar_t* varName = L"STUDENT_ID";</code></pre>
+              <p class="step-text">Имя переменной окружения как широкая строка (Unicode). Win32-функции окружения в этой программе — широкие (W-версии), им нужны wchar_t-строки с префиксом L.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 7</div>
+              <pre class="step-code"><code>const wchar_t* valueBefore = L"19045";</code></pre>
+              <p class="step-text">Исходное значение переменной — номер студента из задания. Именно это значение должен увидеть потомок. Константа вынесена отдельно, чтобы не дублировать литерал.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 8</div>
+              <pre class="step-code"><code>if (!SetEnvironmentVariable(varName, valueBefore)) { ... return 1; }</code></pre>
+              <p class="step-text">Создаёт (или изменяет) переменную STUDENT_ID=19045 в блоке окружения ТЕКУЩЕГО процесса. При ошибке печатает код через GetLastError() и выходит с кодом 1. Это шаг 1 задания. Важно: меняется только память этого процесса — ни система, ни другие процессы переменную не увидят. Проверка обязательна: без переменной запускать потомка бессмысленно.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 9</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Parent: установлена переменная STUDENT_ID="; std::wcout &lt;&lt; valueBefore</code></pre>
+              <p class="step-text">Выводит установленное значение на экран. Фиксирует «до»: на защите видно, что переменная была именно 19045 до запуска потомка. std::wcout нужен для широкой строки — обычный cout её не напечатает корректно.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 10</div>
+              <pre class="step-code"><code>STARTUPINFO si;</code></pre>
+              <p class="step-text">Объявляет структуру параметров запуска потомка. Без неё CreateProcess не вызвать.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 11</div>
+              <pre class="step-code"><code>PROCESS_INFORMATION pi;</code></pre>
+              <p class="step-text">Объявляет структуру для результатов запуска. Отсюда возьмём PID потомка и дескрипторы для последующего CloseHandle.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 12</div>
+              <pre class="step-code"><code>ZeroMemory(&amp;si, sizeof(si));</code></pre>
+              <p class="step-text">Обнуляет структуру запуска. Мусор в полях STARTUPINFO — классическая причина сбоев CreateProcess.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 13</div>
+              <pre class="step-code"><code>ZeroMemory(&amp;pi, sizeof(pi));</code></pre>
+              <p class="step-text">Обнуляет структуру результатов. При ошибке запуска поля останутся нулями, а не мусором.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 14</div>
+              <pre class="step-code"><code>si.cb = sizeof(si);</code></pre>
+              <p class="step-text">Указывает размер структуры STARTUPINFO. Без корректного cb CreateProcess вернёт ошибку ERROR_INVALID_PARAMETER.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 15</div>
+              <pre class="step-code"><code>wchar_t cmdLine[] = L"Child.exe";</code></pre>
+              <p class="step-text">Изменяемый буфер командной строки с относительным именем потомка. Относительное имя — суть условия запуска: Child.exe ищется рядом с Parent.exe. Буфер должен быть изменяемым, потому что CreateProcess может менять строку на месте.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 16</div>
+              <pre class="step-code"><code>BOOL ok = CreateProcess( ... );</code></pre>
+              <p class="step-text">Создаёт процесс Child.exe, возвращает TRUE при успехе. Центральный вызов: именно в этот момент система копирует блок окружения родителя потомку.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 17</div>
+              <pre class="step-code"><code>NULL, // lpApplicationName</code></pre>
+              <p class="step-text">Имя программы не задано отдельно. Имя берётся из командной строки — "Child.exe".</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 18</div>
+              <pre class="step-code"><code>cmdLine, // lpCommandLine</code></pre>
+              <p class="step-text">Командная строка запуска потомка. Относительный путь: поиск идёт сначала в каталоге Parent.exe, затем в системных каталогах и PATH.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 19</div>
+              <pre class="step-code"><code>NULL, // lpProcessAttributes</code></pre>
+              <p class="step-text">Атрибуты безопасности процесса — по умолчанию. Дескриптор потомка не наследуется дальше; для задания это не нужно.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 20</div>
+              <pre class="step-code"><code>NULL, // lpThreadAttributes</code></pre>
+              <p class="step-text">Атрибуты безопасности потока — по умолчанию. То же: наследование дескриптора потока не требуется.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 21</div>
+              <pre class="step-code"><code>FALSE, // bInheritHandles</code></pre>
+              <p class="step-text">Потомок не наследует дескрипторы родителя. Потомку не нужны открытые файлы и объекты родителя; наследование только расширило бы поверхность доступа.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 22</div>
+              <pre class="step-code"><code>0, // dwCreationFlags</code></pre>
+              <p class="step-text">Без особых флагов создания. Потомок стартует сразу, в обычном режиме, в той же консоли неявно (у консольного потомка — своё окно/консоль по правилам системы).</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 23</div>
+              <pre class="step-code"><code>NULL, // lpEnvironment</code></pre>
+              <p class="step-text">Явный блок окружения не передан. КЛЮЧЕВОЙ МОМЕНТ ЗАДАНИЯ: NULL означает «передай потомку копию моего блока окружения». Копия делается в момент CreateProcess — позже родитель свою копию меняет, а у потомка остаётся снимок.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 24</div>
+              <pre class="step-code"><code>NULL, // lpCurrentDirectory</code></pre>
+              <p class="step-text">Рабочий каталог потомка не задан. Потомок наследует текущий каталог родителя — для поиска Child.exe это не влияет, важен каталог Parent.exe.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 25</div>
+              <pre class="step-code"><code>&amp;si, // lpStartupInfo</code></pre>
+              <p class="step-text">Передаёт параметры запуска. Система читает отсюда настройки окна потомка.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 26</div>
+              <pre class="step-code"><code>&amp;pi // lpProcessInformation</code></pre>
+              <p class="step-text">Передаёт структуру для результатов. Отсюда берём dwProcessId потомка и дескрипторы hProcess/hThread.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 27</div>
+              <pre class="step-code"><code>if (!ok) { ... return 1; }</code></pre>
+              <p class="step-text">При ошибке запуска печатает текст и код GetLastError(), выходит с кодом 1. Самая частая причина ошибки здесь — Child.exe не лежит рядом с Parent.exe. Сообщение прямо подсказывает это.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 28</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Parent: Child.exe запущен. PID потомка: " &lt;&lt; pi.dwProcessId</code></pre>
+              <p class="step-text">Выводит PID запущенного потомка. Доказательство, что потомок реально создан; по PID его видно в Диспетчере задач.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 29</div>
+              <pre class="step-code"><code>const wchar_t* valueAfter = L"99999";</code></pre>
+              <p class="step-text">Новое значение переменной для перезаписи у себя. Любое, отличное от 19045, — чтобы разница была очевидна. Вынесено в константу для наглядности.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 30</div>
+              <pre class="step-code"><code>if (!SetEnvironmentVariable(varName, valueAfter)) { ... }</code></pre>
+              <p class="step-text">Перезаписывает STUDENT_ID на 99999 В СВОЁМ блоке окружения. Ветка else печатает оба факта: у себя стало 99999, а у потомка осталась копия 19045. Это шаг 3 задания — доказательство автономности. Порядок критичен: перезапись идёт СТРОГО ПОСЛЕ CreateProcess. Если бы она была до — потомок получил бы уже 99999, и эксперимент был бы испорчен.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 31</div>
+              <pre class="step-code"><code>CloseHandle(pi.hProcess);</code></pre>
+              <p class="step-text">Закрывает дескриптор процесса-потомка. Родитель не ждёт потомка, но дескриптор всё равно надо закрыть: иначе объект процесса будет висеть в ядре как утечка (см. задание 1). Закрытие дескриптора НЕ завершает потомка.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 32</div>
+              <pre class="step-code"><code>CloseHandle(pi.hThread);</code></pre>
+              <p class="step-text">Закрывает дескриптор главного потока потомка. Оба дескриптора из PROCESS_INFORMATION закрываются всегда, даже если ожидание не использовалось.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 33</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Parent: дескрипторы потомка закрыты..."</code></pre>
+              <p class="step-text">Сообщает о завершении очистки. Видно, что родитель дошёл до конца сценария и ничего не забыл.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 34</div>
+              <pre class="step-code"><code>return 0;</code></pre>
+              <p class="step-text">Родитель мгновенно завершается с кодом 0. Это шаг 3 задания: родитель уходит сразу, а потомок продолжает жить сам — завершение родителя потомка не убивает.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="task2child" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задание 2 (часть 2): Child.exe — потомок</div>
+        <span class="task-path">task2_child.cpp</span>
+      </div>
+      <div class="task-body">
+<div class="explanation-box">
+          <span class="explanation-title">Полный построчный разбор — Child.exe</span>
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">Шаг 1</div>
+              <pre class="step-code"><code>#include &lt;windows.h&gt;</code></pre>
+              <p class="step-text">Подключает Win32 API: GetEnvironmentVariable, ERROR_ENVVAR_NOT_FOUND. Чтение переменных окружения — функция Windows API.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 2</div>
+              <pre class="step-code"><code>#include &lt;iostream&gt;</code></pre>
+              <p class="step-text">Подключает std::cout и std::wcout для вывода. Вывод значения переменной и доказательства автономности.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 3</div>
+              <pre class="step-code"><code>int main() {</code></pre>
+              <p class="step-text">Точка входа программы Child.exe. Сценарий потомка: прочитать переменную → сравнить → доказать → ждать клавишу.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 4</div>
+              <pre class="step-code"><code>#if defined(_WIN32) system("chcp 65001 &gt; nul"); #endif</code></pre>
+              <p class="step-text">Переключает консоль на UTF-8 для русского текста. Без этого русский вывод станет кракозябрами. Только под Windows.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 5</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "=== ЗАДАНИЕ 2: CHILD ..."</code></pre>
+              <p class="step-text">Печатает заголовок программы. Различает окна родителя и потомка на экране.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 6</div>
+              <pre class="step-code"><code>const wchar_t* varName = L"STUDENT_ID";</code></pre>
+              <p class="step-text">Имя искомой переменной окружения. То же имя, что устанавливал родитель; опечатка здесь — и переменная «не найдётся».</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 7</div>
+              <pre class="step-code"><code>wchar_t buffer[256];</code></pre>
+              <p class="step-text">Буфер на стеке для значения переменной (256 широких символов). GetEnvironmentVariable не возвращает строку, а копирует её в буфер, который даёт вызывающий. 256 символов с запасом хватает для короткого значения.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 8</div>
+              <pre class="step-code"><code>DWORD len = GetEnvironmentVariable(varName, buffer, sizeof(buffer) / sizeof(buffer[0]));</code></pre>
+              <p class="step-text">Читает STUDENT_ID из собственного блока окружения процесса в буфер. Возвращает длину значения без завершающего нуля; 0 — переменная не найдена или пуста. Это шаг 4 задания: потомок читает то, что получил в копии блока при старте. Размер передаётся в символах, а не в байтах, поэтому sizeof делят на sizeof(wchar_t).</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 9</div>
+              <pre class="step-code"><code>if (len == 0) {</code></pre>
+              <p class="step-text">Ветка: переменная не прочитана. Ноль — единственный сигнал проблемы; дальше нужно выяснить причину через GetLastError().</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 10</div>
+              <pre class="step-code"><code>DWORD err = GetLastError();</code></pre>
+              <p class="step-text">Сохраняет код последней ошибки сразу после неудачного вызова. GetLastError() нужно читать немедленно: любой следующий вызов API перезапишет код. Сохранение в переменную — правильный приём.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 11</div>
+              <pre class="step-code"><code>if (err == ERROR_ENVVAR_NOT_FOUND) { ... }</code></pre>
+              <p class="step-text">Если код равен 203 (ERROR_ENVVAR_NOT_FOUND) — печатает понятное объяснение: переменная не задана, скорее всего Child запущен напрямую без Parent.exe. Это главный диагностический случай: отдельный запуск Child.exe — штатная ситуация, и программа должна объяснить её, а не просто упасть.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 12</div>
+              <pre class="step-code"><code>else { std::cout &lt;&lt; "Ошибка GetEnvironmentVariable: " &lt;&lt; err ... }</code></pre>
+              <p class="step-text">Любая другая ошибка — печатается её код. Например, ERROR_ENVVAR_NOT_FOUND — не единственная возможность: слишком маленький буфер даёт другую логику (возврат нужной длины), а прочие коды — редкие сбои API.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 13</div>
+              <pre class="step-code"><code>} else {</code></pre>
+              <p class="step-text">Ветка успеха: переменная найдена и прочитана в buffer. Основная ветка сценария — дальше идёт вывод и проверка.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 14</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Child: прочитана переменная STUDENT_ID="; std::wcout &lt;&lt; buffer</code></pre>
+              <p class="step-text">Выводит прочитанное значение. Главный вывод программы: то, что реально лежит в блоке окружения потомка. std::wcout — потому что buffer широкий (wchar_t).</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 15</div>
+              <pre class="step-code"><code>if (wcscmp(buffer, L"19045") == 0) {</code></pre>
+              <p class="step-text">Сравнивает прочитанное значение с ожидаемым "19045" (wcscmp возвращает 0 при равенстве широких строк). Это и есть доказательство: если значение равно 19045 — значит, перезапись родителя на 99999 на потомка не повлияла.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 16</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Child: значение равно 19045 — оно НЕ изменилось..."</code></pre>
+              <p class="step-text">Печатает вывод-доказательство: значение не изменилось вслед за родителем. Формулировка результата для защиты: эксперимент удался, автономность подтверждена.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 17</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Child: доказано — Environment Block копируется..."</code></pre>
+              <p class="step-text">Печатает объяснение механизма: блок окружения копируется при создании процесса. Связывает наблюдаемый факт с теорией: потомок живёт со своим снимком, а не с общей памятью.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 18</div>
+              <pre class="step-code"><code>} else { std::cout &lt;&lt; "Child: ВНИМАНИЕ: значение отличается..." }</code></pre>
+              <p class="step-text">Ветка несовпадения: предупреждает, что значение не 19045, и предполагает причину — запуск не из-под Parent.exe, а из среды с другой STUDENT_ID. Честная обработка неожиданного результата: программа не врёт, что «всё хорошо», а называет возможную причину.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 19</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Child: родитель уже завершён, а потомок продолжает работу сам."</code></pre>
+              <p class="step-text">Сообщает, что потомок живёт после завершения родителя. Второе доказательство автономности процессов: смерть родителя потомка не убивает.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 20</div>
+              <pre class="step-code"><code>system("pause");</code></pre>
+              <p class="step-text">Выводит «Для продолжения нажмите любую клавишу...» и ждёт нажатия клавиши. Без паузы окно потомка закрылось бы мгновенно, и вывод никто бы не успел прочитать. Пауза — это и есть «продолжает работу» из задания.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 21</div>
+              <pre class="step-code"><code>return 0;</code></pre>
+              <p class="step-text">Успешное завершение потомка после нажатия клавиши. Код 0 — нормальное завершение; программа уходит только после того, как пользователь увидел вывод.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    </div>
+
+    <div id="theory">
+    <div class="section-card"><div class="section-header"><div class="section-title">Теория: процессы Windows и Environment Block</div></div></div>
+    <div id="proc" class="section-card">
+      <div class="section-header"><div class="section-title">1. Процессы в Windows: дескрипторы, ядро, таблица хэндлов</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> Процесс — это экземпляр выполняющейся программы: собственное виртуальное адресное пространство, набор потоков, открытые ресурсы и блок окружения. Процессы в Windows полностью изолированы друг от друга: один процесс не может напрямую читать или менять память другого. Внутри процесса работает минимум один поток — единица выполнения кода на процессоре.</p>
+        <p><strong>Зачем это знать.</strong> Вся лабораторная работа №6 построена на изоляции процессов: родитель и потомок — отдельные процессы, и именно поэтому изменение переменной у родителя не затрагивает потомка, а завершение родителя не убивает потомка.</p>
+        <p><strong>Объекты ядра и дескрипторы.</strong> Процесс, поток, файл, событие, мьютекс — это объекты ядра (kernel objects): структуры данных, живущие в памяти ядра и недоступные напрямую из пользовательского кода. Программа обращается к ним только через дескриптор (handle, HANDLE) — целое число, индекс в таблице дескрипторов процесса. Дескриптор — это не указатель на объект, а «пропуск» к нему: по нему ядро находит объект и проверяет права доступа.</p>
+        <p><strong>Таблица дескрипторов.</strong> У каждого процесса своя таблица хэндлов. Один и тот же числовой дескриптор в разных процессах означает разные объекты (или ничего). Поэтому дескриптор процесса-потомка, полученный через <code>PROCESS_INFORMATION</code>, действителен только в процессе-родителе, и закрывать его должен тоже родитель.</p>
+        <p><strong>Счётчик ссылок.</strong> У каждого объекта ядра есть счётчик использований: он увеличивается при открытии нового дескриптора и уменьшается при <code>CloseHandle</code>. Объект уничтожается ядром только когда счётчик падает до нуля. Поэтому завершённый процесс продолжает «жить» в ядре как объект до тех пор, пока хоть кто-то держит его дескриптор открытым.</p>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li>Процессы изолированы: память, дескрипторы и окружение у каждого свои.</li>
+          <li>Дескриптор — это индекс в таблице процесса, а не адрес объекта.</li>
+          <li>Завершение процесса не уничтожает его объект ядра, пока открыт хоть один дескриптор.</li>
+          <li>Завершение родителя не завершает потомка: у потомка своя жизнь.</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Считать, что дескриптор из одного процесса можно использовать в другом (без наследования или дублирования через <code>DuplicateHandle</code>).</li>
+          <li>Думать, что после завершения процесса его дескриптор «сам исчезнет» — нет, объект ядра останется до <code>CloseHandle</code>.</li>
+          <li>Путать PID (идентификатор процесса, число) и HANDLE (дескриптор объекта): PID — для поиска процесса, HANDLE — для операций с ним (ожидание, завершение, закрытие).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="createprocess" class="section-card">
+      <div class="section-header"><div class="section-title">2. CreateProcess и структуры STARTUPINFO / PROCESS_INFORMATION</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> <code>CreateProcess</code> — основная функция Win32 API для создания нового процесса. Она загружает исполняемый файл, создаёт для него адресное пространство, объект процесса, главный поток и запускает его. Возвращает <code>TRUE</code> при успехе и <code>FALSE</code> при ошибке (код — через <code>GetLastError()</code>).</p>
+        <p><strong>Зачем.</strong> Без <code>CreateProcess</code> программа не может запустить другую программу: это единственный штатный путь программного запуска в Win32 API (обёртки вроде <code>system()</code> внутри сами вызывают её же, но без контроля над дескрипторами и окружением).</p>
+        <div class="sub-title">STARTUPINFO — «как запускать»</div>
+        <p>Описывает внешний вид и начальные условия нового процесса: заголовок окна, его положение и размер, дескрипторы стандартных потоков ввода/вывода/ошибок, рабочий стол. Обязательные шаги: <code>ZeroMemory(&amp;si, sizeof(si))</code>, затем <code>si.cb = sizeof(si)</code> — по полю <code>cb</code> система определяет версию структуры. В наших программах остальные поля остаются нулевыми — окно показывается обычным образом, потоки наследуются по умолчанию.</p>
+        <div class="sub-title">PROCESS_INFORMATION — «что получилось»</div>
+        <p>Сюда система записывает результат запуска — четыре поля:</p>
+        <table class="theory">
+          <tr><th>Поле</th><th>Что это</th><th>Зачем нужно</th></tr>
+          <tr><td><code>hProcess</code></td><td>Дескриптор объекта процесса-потомка</td><td>Ожидание завершения (<code>WaitForSingleObject</code>), получение кода выхода, завершение процесса</td></tr>
+          <tr><td><code>hThread</code></td><td>Дескриптор главного потока потомка</td><td>Управление потоком; закрывается вместе с <code>hProcess</code></td></tr>
+          <tr><td><code>dwProcessId</code></td><td>PID процесса (число)</td><td>Идентификация процесса, поиск в Диспетчере задач</td></tr>
+          <tr><td><code>dwThreadId</code></td><td>ID главного потока (число)</td><td>Идентификация потока</td></tr>
+        </table>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li>Всегда обнулять обе структуры через <code>ZeroMemory</code> перед вызовом и ставить <code>si.cb = sizeof(si)</code>.</li>
+          <li>Командная строка (<code>lpCommandLine</code>) должна быть в изменяемом буфере (<code>wchar_t cmdLine[]</code>), а не строковым литералом: функция имеет право менять её на месте.</li>
+          <li>Всегда проверять возвращаемое значение: <code>FALSE</code> — процесс не создан, полей <code>pi</code> нет, закрывать нечего.</li>
+          <li><code>lpApplicationName = NULL</code> — имя программы берётся из командной строки; относительное имя ищется в каталоге приложения, системных каталогах и PATH.</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Неинициализированная <code>STARTUPINFO</code> (мусор в полях) — непредсказуемые сбои запуска.</li>
+          <li>Передача строкового литерала как <code>lpCommandLine</code> — потенциальное нарушение доступа, так как литерал в памяти только для чтения.</li>
+          <li>Забытая проверка результата: программа продолжает работать с пустым <code>pi</code> и падает на <code>WaitForSingleObject</code> или <code>CloseHandle</code> по мусорному дескриптору.</li>
+          <li>Ожидание, что <code>CreateProcess</code> найдёт exe «где-то»: относительное имя ищется по строгим правилам — exe должен лежать рядом или быть в PATH.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="wait" class="section-card">
+      <div class="section-header"><div class="section-title">3. Ожидание завершения: WaitForSingleObject</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> <code>WaitForSingleObject(hHandle, dwMilliseconds)</code> блокирует вызвавший поток до тех пор, пока указанный объект не перейдёт в сигнальное состояние (signaled), либо пока не истечёт тайм-аут. Дескриптор процесса становится сигнальным ровно в момент завершения процесса.</p>
+        <p><strong>Зачем.</strong> Это способ синхронизации жизненного цикла: родитель узнаёт, что потомок закончил работу, и только потом продолжает свой сценарий (например, читает результаты или освобождает ресурсы). В задании 1 без ожидания программа завершилась бы сразу, не дождавшись закрытия Блокнота.</p>
+        <div class="sub-title">Возвращаемые значения</div>
+        <table class="theory">
+          <tr><th>Код</th><th>Значение</th></tr>
+          <tr><td><code>WAIT_OBJECT_0</code></td><td>Объект стал сигнальным — процесс завершился (нормальный исход)</td></tr>
+          <tr><td><code>WAIT_TIMEOUT</code></td><td>Истёк тайм-аут, процесс всё ещё работает (бывает только при конечном тайм-ауте)</td></tr>
+          <tr><td><code>WAIT_FAILED</code></td><td>Ошибка ожидания (например, неверный дескриптор) — код через <code>GetLastError()</code></td></tr>
+        </table>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li><code>INFINITE</code> — ждать без ограничения времени; подходит, когда момент завершения заранее неизвестен (пользователь сам закрывает Блокнот).</li>
+          <li>Результат ожидания всегда проверять: <code>WAIT_OBJECT_0</code> — это единственный признак «процесс завершён».</li>
+          <li>Ждать можно только по действительному дескриптору, полученному от <code>CreateProcess</code> (или открытому через <code>OpenProcess</code>).</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Ожидание по <code>hThread</code> вместо <code>hProcess</code>: поток может завершиться раньше процесса (или процесс может породить другие потоки), и ожидание даст ложный сигнал.</li>
+          <li>Использование <code>INFINITE</code> там, где процесс может зависнуть навсегда: программа тоже зависнет без возможности отмены. Для таких случаев — конечный тайм-аут в цикле с проверкой.</li>
+          <li>Ожидание завершения потомка, которого родитель уже «отпустил» (закрыл дескриптор): ждать не по чему.</li>
+        </ul>
+        <div class="callout-info">В задании 2 родитель намеренно НЕ вызывает WaitForSingleObject: он завершается мгновенно, а потомок продолжает работу. Это демонстрирует, что ожидание — выбор родителя, а не обязанность, и жизнь потомка от него не зависит.</div>
+      </div>
+    </div>
+
+    <div id="handles" class="section-card">
+      <div class="section-header"><div class="section-title">4. Утечка дескрипторов и зачем нужен CloseHandle</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> <code>CloseHandle(h)</code> закрывает дескриптор: удаляет запись из таблицы дескрипторов процесса и уменьшает счётчик ссылок объекта ядра. Когда счётчик падает до нуля, ядро уничтожает объект и освобождает его память.</p>
+        <p><strong>Зачем.</strong> <code>CreateProcess</code> возвращает сразу два дескриптора — процесса и потока. Пока хотя бы один из них открыт, ядро хранит объект завершённого процесса (включая его код завершения) в памяти. Если дескрипторы не закрывать, записи копятся: в короткой программе это незаметно, а в долгоживущем сервисе, запускающем тысячи процессов, таблица дескрипторов переполняется и новые <code>CreateProcess</code> начинают завершаться ошибкой. Это и есть утечка дескрипторов (handle leak) — аналог утечки памяти, но на уровне ядра.</p>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li>Закрывать ОБА дескриптора из <code>PROCESS_INFORMATION</code>: и <code>hProcess</code>, и <code>hThread</code>. Забытый <code>hThread</code> — та же утечка.</li>
+          <li>Порядок закрытия значения не имеет.</li>
+          <li>Закрывать нужно даже если родитель не ждал потомка (задание 2): ожидание и закрытие — независимые действия.</li>
+          <li>Закрытие дескриптора НЕ завершает процесс и НЕ убивает поток: оно лишь отпускает ссылку родителя на объект ядра.</li>
+          <li>Закрывать дескриптор нужно ровно один раз: повторный <code>CloseHandle</code> по тому же значению может закрыть уже другой объект, которому система успела выдать тот же номер.</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Закрыт только <code>hProcess</code>, а <code>hThread</code> забыт (или наоборот).</li>
+          <li><code>CloseHandle</code> пропущен в ветке ошибки после удачного <code>CreateProcess</code> (например, при ошибке <code>WaitForSingleObject</code> программа выходит, не закрыв дескрипторы).</li>
+          <li>Вера в то, что завершение родителя «само всё закроет»: да, при завершении процесса система закрывает все его дескрипторы, но пока родитель живёт и запускает процессы в цикле, утечка копится при его жизни.</li>
+        </ul>
+        <div class="callout-danger">Правило на защиту: «CreateProcess вернул два дескриптора — значит, в программе должно быть два CloseHandle». Если в коде один CloseHandle — это ошибка, даже если программа «работает».</div>
+      </div>
+    </div>
+
+    <div id="envblock" class="section-card">
+      <div class="section-header"><div class="section-title">5. Environment Block: как устроен и почему потомок получает копию</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> Environment Block (блок окружения) — область памяти процесса, в которой хранятся переменные окружения в виде строк <code>ИМЯ=ЗНАЧЕНИЕ</code>, разделённых нулевыми символами и завершающихся двойным нулём. Блок создаётся для каждого процесса при его запуске и живёт только в его собственном адресном пространстве.</p>
+        <p><strong>Зачем.</strong> Переменные окружения — простейший механизм передачи конфигурации процессу на старте: пути (<code>PATH</code>, <code>TEMP</code>), настройки программ, в нашем случае — <code>STUDENT_ID</code>. Процесс читает их через <code>GetEnvironmentVariable</code>, не зная ничего о том, кто и как их задал.</p>
+        <p><strong>Копирование при создании процесса.</strong> Когда родитель вызывает <code>CreateProcess</code> с <code>lpEnvironment = NULL</code>, система берёт блок окружения родителя, копирует его байт в байт и передаёт копию новому процессу. Копия — это ключевое слово: после этого у родителя и потомка два независимых блока в двух независимых адресных пространствах. Никакой общей памяти между ними нет.</p>
+        <p><strong>Почему изменение у родителя не влияет на потомка.</strong> <code>SetEnvironmentVariable</code> меняет строку только в блоке текущего процесса. Родитель меняет свою копию, потомок свою копию не трогает — он о ней даже не знает. Поэтому порядок операций решает всё: то, что родитель установил ДО <code>CreateProcess</code>, попадёт в снимок потомка; то, что он поменял ПОСЛЕ, — уже нет. Это и демонстрирует задание 2: родитель ставит 19045, запускает потомка, меняет у себя на 99999 — потомок видит 19045.</p>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li>Блок окружения принадлежит процессу и копируется при его создании (снимок «на момент старта»).</li>
+          <li>Передача конфигурации через окружение работает только в одну сторону и только в момент запуска: потомок не может «вернуть» значение родителю через окружение.</li>
+          <li>Если передать <code>lpEnvironment</code> не NULL, а собственный блок, потомок получит именно его вместо копии родительского (механизм явного задания окружения).</li>
+          <li>Изменения окружения действуют только на текущий процесс и его будущих потомков, но не на уже запущенные процессы и не на систему в целом.</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Ожидание, что <code>SetEnvironmentVariable</code> у родителя изменит переменную у уже запущенного потомка («общая память») — нет, это копия.</li>
+          <li>Установка переменной ПОСЛЕ <code>CreateProcess</code> с надеждой, что потомок её увидит, — потомок уже получил снимок без неё.</li>
+          <li>Запуск потомка из среды, где переменная уже задана иначе (например, глобально в системе), и удивление, что потомок видит не то значение.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="setenv" class="section-card">
+      <div class="section-header"><div class="section-title">6. SetEnvironmentVariable и GetEnvironmentVariable: переменная против блока</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> <code>SetEnvironmentVariable(имя, значение)</code> — устанавливает, изменяет или удаляет (если значение NULL) переменную окружения в блоке ТЕКУЩЕГО процесса. <code>GetEnvironmentVariable(имя, буфер, размер)</code> — читает переменную из блока текущего процесса в буфер, возвращая длину значения; 0 означает «не найдена» (тогда <code>GetLastError()</code> вернёт <code>ERROR_ENVVAR_NOT_FOUND</code>, код 203) или пустое значение.</p>
+        <p><strong>Переменная против блока.</strong> Переменная — одна строка <code>ИМЯ=ЗНАЧЕНИЕ</code>; блок — весь набор таких строк процесса. <code>SetEnvironmentVariable</code> правит одну строку в своём блоке, <code>CreateProcess</code> с <code>lpEnvironment = NULL</code> копирует весь блок целиком. Поэтому: установить переменную — это про один процесс; запустить потомка — это про передачу всего блока снимком.</p>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li><code>SetEnvironmentVariable</code> влияет только на текущий процесс (и на его будущих потомков через копирование блока).</li>
+          <li>Она не меняет системные переменные и не видна другим уже запущенным программам; чтобы поменять переменную «для всей системы», нужна запись в реестр и рассылка сообщения <code>WM_SETTINGCHANGE</code> — это другой механизм.</li>
+          <li>У <code>GetEnvironmentVariable</code> размер буфера задаётся в символах, а не в байтах: для <code>wchar_t buffer[256]</code> это <code>sizeof(buffer) / sizeof(buffer[0])</code> = 256.</li>
+          <li>Код ошибки <code>GetLastError()</code> читать сразу после неудачного вызова: следующий вызов API его перезапишет.</li>
+          <li>Если значение не помещается в буфер, <code>GetEnvironmentVariable</code> возвращает требуемую длину — это не ошибка «не найдено», а сигнал дать буфер больше.</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Путаница <code>SetEnvironmentVariable</code> (локально, в процессе) с системными переменными среды Windows (реестр, «Свойства системы»): первая не видна другим программам.</li>
+          <li>Передача размера буфера в байтах вместо символов для широкой версии функции — буфер «обрезается» в два раза.</li>
+          <li>Игнорирование возврата 0 без проверки <code>GetLastError()</code>: ноль может означать и «переменная не задана», и «значение пустое».</li>
+          <li>Сравнение широких строк через <code>strcmp</code> вместо <code>wcscmp</code> — сравнение пойдёт по байтам и даст неверный результат.</li>
+        </ul>
+        <div class="callout-success">Итог лабораторной: задание 1 показывает, как процесс рождается, ожидается и аккуратно «убирается» из ядра (CreateProcess → WaitForSingleObject → CloseHandle × 2). Задание 2 показывает, что процессы — автономные миры: конфигурация передаётся только снимком блока окружения в момент старта, а дальше каждый живёт своей жизнью.</div>
+      </div>
+    </div>
+
+    </div>
+
+    <div id="glossary">
+    <div class="section-card"><div class="section-header"><div class="section-title">Словарь терминов — обычная версия</div></div></div>
+    <div class="intro-box"><b>Как пользоваться словарём.</b> Термины идут по алфавиту: сначала русские, потом латинские. Каждое определение — 1–2 коротких предложения, а аналогия из обычной жизни помогает запомнить смысл. У каждого термина указано, в какой задаче он встречается. Слова «программа», «функция», «структура», «файл», «память», «окно» и «Windows» считаются известными и в словаре не объясняются.</div>
+    <div class="gloss-nav"><a href="#term-descriptor">Дескриптор</a><a href="#term-env-inherit">Наследование окружения</a><a href="#term-env-var">Переменная окружения</a><a href="#term-thread">Поток</a><a href="#term-process">Процесс</a><a href="#term-handle-leak">Утечка дескрипторов</a><a href="#term-kernel">Ядро</a><a href="#term-closehandle">CloseHandle</a><a href="#term-createprocess">CreateProcess</a><a href="#term-env-block">Environment Block</a><a href="#term-getenv">GetEnvironmentVariable</a><a href="#term-pid">PID</a><a href="#term-proc-info">PROCESS_INFORMATION</a><a href="#term-setenv">SetEnvironmentVariable</a><a href="#term-startupinfo">STARTUPINFO</a><a href="#term-wait">WaitForSingleObject</a></div>
+    <div class="term-card" id="term-descriptor"><div class="term-header"><span class="term-name">Дескриптор</span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p>Номер-пропуск, который Windows выдаёт программе для доступа к процессу или потоку. Программа показывает этот номер ядру, когда хочет подождать завершения процесса или закрыть его.</p><div class="term-example"><b>Аналогия:</b> Как номерок в гардеробе: сам номерок — не пальто, но без него пальто не получить.</div></div></div>
+    <div class="term-card" id="term-env-inherit"><div class="term-header"><span class="term-name">Наследование окружения</span><span class="task-path">Задача 2</span></div><div class="term-body"><p>Способ передачи настроек от родителя потомку: родитель отдаёт потомку не свой блок окружения, а его копию. После запуска потомок живёт со своей копией, и изменения у родителя на неё не влияют.</p><div class="term-example"><b>Аналогия:</b> Как ксерокопия конспекта: у каждого свой лист, и пометки на одном листе на другом не появляются.</div></div></div>
+    <div class="term-card" id="term-env-var"><div class="term-header"><span class="term-name">Переменная окружения</span><span class="task-path">Задача 2</span></div><div class="term-body"><p>Пара «имя = значение», которая хранится в блоке окружения процесса. В лабе это STUDENT_ID=19045: имя — STUDENT_ID, значение — 19045.</p><div class="term-example"><b>Аналогия:</b> Как запись в телефонной книге: имя — это имя человека, а значение — его номер телефона.</div></div></div>
+    <div class="term-card" id="term-thread"><div class="term-header"><span class="term-name">Поток</span><span class="task-path">Задача 1</span></div><div class="term-body"><p>Самая маленькая единица работы внутри процесса: именно поток выполняет команды программы. У каждого процесса есть хотя бы один главный поток.</p><div class="term-example"><b>Аналогия:</b> Если процесс — это кухня, то поток — это повар, который готовит.</div></div></div>
+    <div class="term-card" id="term-process"><div class="term-header"><span class="term-name">Процесс</span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p>Запущенная программа, у которой есть своя память. Windows видит процесс как отдельный объект в ядре и даёт ему номер — PID.</p><div class="term-example"><b>Аналогия:</b> Как отдельная комната в общежитии: у каждого жильца своя комната, и один жилец не может просто так зайти в комнату другого.</div></div></div>
+    <div class="term-card" id="term-handle-leak"><div class="term-header"><span class="term-name">Утечка дескрипторов</span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p>Дескриптор, который программа забыла закрыть через CloseHandle. Ядро продолжает хранить объект процесса, хотя сам процесс уже завершился, и память не освобождается.</p><div class="term-example"><b>Аналогия:</b> Как забытый открытым кран: вода уже не нужна, а счётчик крутится.</div></div></div>
+    <div class="term-card" id="term-kernel"><div class="term-header"><span class="term-name">Ядро</span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p>Главная часть Windows, которая управляет процессами, памятью и дескрипторами. Программа сама не трогает процессы напрямую — она просит ядро сделать это за неё.</p><div class="term-example"><b>Аналогия:</b> Как диспетчер в аэропорту: самолёты сами не решают, когда взлетать, — это решает диспетчер.</div></div></div>
+    <div class="term-card" id="term-closehandle"><div class="term-header"><span class="term-name"><code>CloseHandle</code></span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p>Функция, которая закрывает дескриптор и говорит ядру: этот процесс или поток мне больше не нужен, освободи память. В лабе её вызывают два раза — для дескриптора процесса и для дескриптора потока.</p><div class="term-example"><b>Аналогия:</b> Как сдать номерок в гардероб: пальто забрали, номерок больше не нужен.</div></div></div>
+    <div class="term-card" id="term-createprocess"><div class="term-header"><span class="term-name"><code>CreateProcess</code></span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p>Функция, которая просит Windows запустить новый процесс. Она получает имя программы и настройки запуска, а возвращает дескрипторы и PID нового процесса.</p><div class="term-example"><b>Аналогия:</b> Как кнопка «старт» на пульте: нажал — и новый процесс начал работу.</div></div></div>
+    <div class="term-card" id="term-env-block"><div class="term-header"><span class="term-name"><code>Environment Block</code></span><span class="task-path">Задача 2</span></div><div class="term-body"><p>Список всех переменных окружения процесса — его личные настройки на момент запуска. Родитель передаёт потомку копию этого списка, а не сам список.</p><div class="term-example"><b>Аналогия:</b> Как список покупок, который мама переписала для сына: у сына свой листок, и если мама допишет что-то в свой, у сына ничего не изменится.</div></div></div>
+    <div class="term-card" id="term-getenv"><div class="term-header"><span class="term-name"><code>GetEnvironmentVariable</code></span><span class="task-path">Задача 2</span></div><div class="term-body"><p>Функция, которая читает значение переменной окружения из блока окружения процесса. Она возвращает длину значения; ноль означает, что такой переменной нет.</p><div class="term-example"><b>Аналогия:</b> Как спросить у списка: «Какое значение у имени STUDENT_ID?» — и получить ответ «19045».</div></div></div>
+    <div class="term-card" id="term-pid"><div class="term-header"><span class="term-name"><code>PID</code></span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p>Номер процесса, который Windows присваивает каждому процессу при запуске. По этому номеру можно узнать, какой именно процесс запущен.</p><div class="term-example"><b>Аналогия:</b> Как номер паспорта: у каждого человека свой номер, и по нему человека можно найти.</div></div></div>
+    <div class="term-card" id="term-proc-info"><div class="term-header"><span class="term-name"><code>PROCESS_INFORMATION</code></span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p>Структура, в которую CreateProcess записывает сведения о новом процессе: дескриптор процесса, дескриптор потока, номер процесса (PID) и номер потока. Программа читает эти сведения, когда ждёт завершения или закрывает дескрипторы.</p><div class="term-example"><b>Аналогия:</b> Как свидетельство о рождении: там записаны все данные нового процесса.</div></div></div>
+    <div class="term-card" id="term-setenv"><div class="term-header"><span class="term-name"><code>SetEnvironmentVariable</code></span><span class="task-path">Задача 2</span></div><div class="term-body"><p>Функция, которая задаёт переменную окружения в блоке окружения процесса. Она меняет переменную только в памяти текущего процесса — другие процессы этого не замечают.</p><div class="term-example"><b>Аналогия:</b> Как написать своё имя на своём листке: на листке соседа ничего не изменится.</div></div></div>
+    <div class="term-card" id="term-startupinfo"><div class="term-header"><span class="term-name"><code>STARTUPINFO</code></span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p>Структура, в которой родитель описывает, как должен выглядеть новый процесс: его окно и другие настройки запуска. Перед запуском её обнуляют и указывают её размер в поле cb.</p><div class="term-example"><b>Аналогия:</b> Как анкета при заселении: в ней указано, какой должна быть комната.</div></div></div>
+    <div class="term-card" id="term-wait"><div class="term-header"><span class="term-name"><code>WaitForSingleObject</code></span><span class="task-path">Задача 1</span></div><div class="term-body"><p>Функция, которая останавливает поток и ждёт, пока процесс завершится. Она ждёт столько, сколько нужно: с INFINITE — без ограничения по времени.</p><div class="term-example"><b>Аналогия:</b> Как ожидание у двери: стоишь и ждёшь, пока друг выйдет, и никуда не уходишь.</div></div></div>
+    <div class="callout-success">Термины взяты из кода task1_createprocess_notepad.cpp, task2_parent.cpp, task2_child.cpp и теории. Сначала идут термины на русском, потом — имена функций и структур Windows на латинице.</div>
+    </div>
+
+    <div id="ste">
+    <div class="section-card"><div class="section-header"><div class="section-title">STE-версия: разбор, теория и словарь в стиле ASD-STE100</div></div></div>
+    <div class="explanation-box">
+      <span class="explanation-title">STE-версия: как читать этот файл</span>
+      <p>Этот файл переписывает объяснения по правилам ASD-STE100. Код не меняется. Правила: одно предложение — одна мысль. Инструкция — не больше 20 слов. Описание — не больше 25 слов. Текст использует действительный залог. Одно понятие — одно слово. Сначала ответ, потом подробности.</p>
+      <p>Термины в файле всегда одни и те же. Список терминов: программа, процесс, поток, родитель, потомок, дескриптор, объект ядра, ядро, блок окружения, переменная окружения, структура, консоль, значение, код ошибки, снимок, утечка. Словарь терминов: <a href="#ste-glossary">STE-словарь</a>. Обычная версия: <a href="#breakdown">обычный разбор</a>.</p>
+    </div>
+
+    <div id="ste-breakdown">
+    <div class="section-card"><div class="section-header"><div class="section-title">STE-разбор программ</div></div></div>
+    <div id="ste-task1" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задание 1: Жизненный цикл процесса и очистка ресурсов ядра</div>
+        <span class="task-path">task1_createprocess_notepad.cpp</span>
+      </div>
+      <div class="task-body">
+<div class="explanation-box">
+          <span class="explanation-title">Полный построчный разбор — ни одна строка не пропущена</span>
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">Шаг 1</div>
+              <pre class="step-code"><code>#include &lt;windows.h&gt;</code></pre>
+              <p class="step-text">Заголовок даёт программе функции Windows: <code>CreateProcess</code>, <code>WaitForSingleObject</code>, <code>CloseHandle</code>, <code>STARTUPINFO</code>, <code>PROCESS_INFORMATION</code>, <code>ZeroMemory</code>, <code>GetLastError</code>. Без заголовка программа не вызывает ни одну функцию Windows. Заголовок — главный API-заголовок для системного программирования.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 2</div>
+              <pre class="step-code"><code>#include &lt;iostream&gt;</code></pre>
+              <p class="step-text">Заголовок даёт программе <code>std::cout</code> и <code>std::endl</code> для вывода в консоль. Вывод показывает жизненный цикл: запуск, ожидание, закрытие.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 3</div>
+              <pre class="step-code"><code>int main() {</code></pre>
+              <p class="step-text">Функция <code>main</code> — точка входа программы. Функция <code>main</code> запускает процесс, ждёт его завершения и закрывает дескрипторы.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 4</div>
+              <pre class="step-code"><code>#if defined(_WIN32) system("chcp 65001 &gt; nul"); #endif</code></pre>
+              <p class="step-text">Директива включает команду только в Windows. Команда переключает консоль на UTF-8 (код 65001). Консоль показывает русский текст правильно. Без UTF-8 консоль показывает русский текст как кракозябры. Директива работает только в Windows.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 5</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "=== ЗАДАНИЕ 1 ..."</code></pre>
+              <p class="step-text">Команда печатает заголовок программы. Заголовок показывает, какая программа работает и что она делает.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 6</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Запускаем Блокнот..."</code></pre>
+              <p class="step-text">Команда сообщает пользователю о начале запуска. Пользователь понимает: сейчас открывается окно Блокнота. Процесс не появляется случайно.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 7</div>
+              <pre class="step-code"><code>STARTUPINFO si;</code></pre>
+              <p class="step-text">Объявление создаёт структуру <code>si</code>. Структура хранит параметры запуска: вид окна и дескрипторы стандартных потоков. Без структуры <code>si</code> функция <code>CreateProcess</code> не знает, как показать окно нового процесса.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 8</div>
+              <pre class="step-code"><code>PROCESS_INFORMATION pi;</code></pre>
+              <p class="step-text">Объявление создаёт структуру <code>pi</code>. Структура принимает результаты: дескрипторы процесса и потока и их ID. Только структура <code>pi</code> даёт программе дескриптор запущенного процесса. Без дескриптора программа не ждёт процесс и не закрывает его.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 9</div>
+              <pre class="step-code"><code>ZeroMemory(&amp;si, sizeof(si));</code></pre>
+              <p class="step-text">Функция заполняет структуру <code>si</code> нулями. Локальные переменные хранят мусор из стека. Случайный бит во флагах меняет поведение функции <code>CreateProcess</code>. Ноль убирает мусор.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 10</div>
+              <pre class="step-code"><code>ZeroMemory(&amp;pi, sizeof(pi));</code></pre>
+              <p class="step-text">Функция заполняет структуру <code>pi</code> нулями. При ошибке функции <code>CreateProcess</code> поля <code>pi</code> остаются нулями, а не мусором. Ноль защищает программу от случайных значений.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 11</div>
+              <pre class="step-code"><code>si.cb = sizeof(si);</code></pre>
+              <p class="step-text">Команда записывает в поле <code>cb</code> размер структуры в байтах. Функция <code>CreateProcess</code> читает поле <code>cb</code> и узнаёт версию структуры. Поле <code>cb</code> со значением 0 или мусором даёт ошибку <code>ERROR_INVALID_PARAMETER</code>.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 12</div>
+              <pre class="step-code"><code>wchar_t cmdLine[] = L"notepad.exe";</code></pre>
+              <p class="step-text">Объявление создаёт изменяемый буфер <code>cmdLine</code>. Буфер хранит командную строку «notepad.exe» в широких символах (Unicode). Документация требует изменяемый буфер: функция <code>CreateProcess</code> может менять строку на месте. Строковый литерал лежит в памяти только для чтения. Программа не передаёт литерал напрямую.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 13</div>
+              <pre class="step-code"><code>BOOL ok = CreateProcess( ... );</code></pre>
+              <p class="step-text">Функция создаёт новый процесс <code>notepad.exe</code>. Функция возвращает <code>TRUE</code> при успехе и <code>FALSE</code> при ошибке. Это главный вызов задания: только здесь рождается потомок. Программа всегда проверяет результат вызова.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 14</div>
+              <pre class="step-code"><code>NULL, // lpApplicationName</code></pre>
+              <p class="step-text">Параметр не задаёт имя исполняемого файла отдельно. Первый параметр равен <code>NULL</code>. Система берёт имя программы из командной строки: «notepad.exe».</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 15</div>
+              <pre class="step-code"><code>cmdLine, // lpCommandLine</code></pre>
+              <p class="step-text">Параметр передаёт командную строку с именем программы. Система ищет файл <code>notepad.exe</code> в каталоге приложения, в системных каталогах и в PATH. Блокнот есть в каждой Windows. Путь указывать не нужно.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 16</div>
+              <pre class="step-code"><code>NULL, // lpProcessAttributes</code></pre>
+              <p class="step-text">Параметр задаёт атрибуты безопасности процесса по умолчанию. Потомки не наследуют дескриптор процесса. Задание не требует наследования.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 17</div>
+              <pre class="step-code"><code>NULL, // lpThreadAttributes</code></pre>
+              <p class="step-text">Параметр задаёт атрибуты безопасности главного потока по умолчанию. Потомки не наследуют дескриптор потока. Задание не требует наследования.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 18</div>
+              <pre class="step-code"><code>FALSE, // bInheritHandles</code></pre>
+              <p class="step-text">Параметр запрещает Блокноту наследовать дескрипторы программы. Наследование открывает Блокноту доступ к файлам и объектам программы. Задание не требует наследования. Запрет защищает программу.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 19</div>
+              <pre class="step-code"><code>0, // dwCreationFlags</code></pre>
+              <p class="step-text">Параметр задаёт ноль особых флагов создания. Процесс создаётся обычным образом: не приостановленным, не в отдельной консоли, без повышенных прав.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 20</div>
+              <pre class="step-code"><code>NULL, // lpEnvironment</code></pre>
+              <p class="step-text">Параметр не задаёт блок окружения для потомка. Значение <code>NULL</code> даёт потомку копию блока окружения родителя. Для Блокнота копия подходит. Задание 2 разбирает механизм копии подробно.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 21</div>
+              <pre class="step-code"><code>NULL, // lpCurrentDirectory</code></pre>
+              <p class="step-text">Параметр не задаёт рабочий каталог потомка. Значение <code>NULL</code> даёт потомку текущий каталог родителя. Блокноту каталог не важен.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 22</div>
+              <pre class="step-code"><code>&amp;si, // lpStartupInfo</code></pre>
+              <p class="step-text">Параметр передаёт заполненную структуру запуска. Система читает структуру и показывает окно Блокнота обычным образом.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 23</div>
+              <pre class="step-code"><code>&amp;pi // lpProcessInformation</code></pre>
+              <p class="step-text">Параметр передаёт адрес структуры для результатов. Система записывает сюда <code>hProcess</code>, <code>hThread</code>, <code>dwProcessId</code> и <code>dwThreadId</code>. Эти значения нужны для ожидания и очистки.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 24</div>
+              <pre class="step-code"><code>if (!ok) { ... return 1; }</code></pre>
+              <p class="step-text">При значении <code>FALSE</code> программа печатает код ошибки из <code>GetLastError()</code>. Программа завершается с кодом 1. Без проверки программа ждёт по мусорному дескриптору. Код 1 сообщает системе: запуск не удался.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 25</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Блокнот запущен. PID процесса: " &lt;&lt; pi.dwProcessId ...</code></pre>
+              <p class="step-text">Команда выводит ID процесса и ID его главного потока. PID доказывает: процесс реально создан. Пользователь находит процесс в Диспетчере задач по PID.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 26</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Ждём, пока вы закроете Блокнот..."</code></pre>
+              <p class="step-text">Команда объясняет, почему консоль ждёт. Без строки ожидание выглядит как зависание программы. Пользователь знает: нужно закрыть Блокнот.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 27</div>
+              <pre class="step-code"><code>DWORD waitResult = WaitForSingleObject(pi.hProcess, INFINITE);</code></pre>
+              <p class="step-text">Функция останавливает поток, пока Блокнот не завершится. Дескриптор процесса становится сигнальным ровно при завершении процесса. Параметр <code>INFINITE</code> снимает ограничение времени. Это и есть ожидание закрытия. Пользователь держит Блокнот открытым сколько угодно. Функция ждёт без ограничения времени.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 28</div>
+              <pre class="step-code"><code>if (waitResult == WAIT_OBJECT_0) { ... }</code></pre>
+              <p class="step-text">Проверка подтверждает: ожидание завершилось завершением процесса, а не ошибкой. Код <code>WAIT_OBJECT_0</code> — нормальный исход. Другой код означает сбой ожидания. Программа показывает сбой, а не молчит о нём.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 29</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Блокнот закрыт пользователем."</code></pre>
+              <p class="step-text">Команда подтверждает закрытие Блокнота. Пользователь видит: программа заметила закрытие Блокнота.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 30</div>
+              <pre class="step-code"><code>else { std::cout &lt;&lt; "WaitForSingleObject вернул неожиданный код..." }</code></pre>
+              <p class="step-text">Ветка ошибки печатает код возврата и код из <code>GetLastError()</code>. Честная диагностика показывает причину сбоя. Программа не молчит при сбое ожидания.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 31</div>
+              <pre class="step-code"><code>CloseHandle(pi.hProcess);</code></pre>
+              <p class="step-text">Функция закрывает дескриптор процесса Блокнота. Это критическое условие задания. Пока дескриптор открыт, ядро хранит объект процесса и код завершения. Незакрытый дескриптор — утечка ресурса ядра.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 32</div>
+              <pre class="step-code"><code>CloseHandle(pi.hThread);</code></pre>
+              <p class="step-text">Функция закрывает дескриптор главного потока Блокнота. Функция <code>CreateProcess</code> возвращает два дескриптора. Программа закрывает оба. Забытый дескриптор потока — та же утечка. Порядок закрытия не важен.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 33</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Дескрипторы ... закрыты ..."</code></pre>
+              <p class="step-text">Команда подтверждает выполнение очистки. На защите видно: программа дошла до <code>CloseHandle</code> и не завершилась раньше.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 34</div>
+              <pre class="step-code"><code>return 0;</code></pre>
+              <p class="step-text">Программа завершается с кодом 0. Код 0 означает нормальное завершение. Вызывающая среда читает код 0.</p>
+            </div>
+          </div>
+        </div>
+        <h3 id="ste-run-task1">STE — Как запустить: задача 1</h3>
+        <div class="run-box">
+          <span class="run-title">Как запустить</span>
+          <ol>
+            <li>Не создавайте файлы заранее. Утилита <code>notepad.exe</code> есть в каждой Windows.</li>
+            <li>Скомпилируйте файл. MSVC: выполните команду <code>cl /EHsc task1_createprocess_notepad.cpp</code>. Команда создаёт файл <code>task1_createprocess_notepad.exe</code>. MinGW: выполните команду <code>g++ -o task1.exe task1_createprocess_notepad.cpp</code>.</li>
+            <li>Запустите exe из консоли. Блокнот открывается. Консоль ждёт закрытия Блокнота.</li>
+            <li>Закройте Блокнот: нажмите крестик или клавиши Alt+F4. Консоль показывает сообщение о закрытии и о закрытых дескрипторах. Затем программа завершается.</li>
+          </ol>
+          <div class="callout-success">Ожидаемый вывод. Программа показывает строку о запуске с PID процесса и потока. Затем программа показывает строку «Ждём, пока вы закроете Блокнот...». После закрытия Блокнота программа показывает строку «Блокнот закрыт пользователем.». Затем программа показывает строку «Дескрипторы процесса и потока закрыты (CloseHandle). Ресурсы ядра освобождены.».</div>
+          <div class="callout-warn">Закрытие консоли раньше Блокнота не закрывает Блокнот. Завершение родителя не завершает потомка. Процессы в Windows независимы. Это нормальное поведение.</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="ste-task2parent" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задание 2 (часть 1): Parent.exe — родитель</div>
+        <span class="task-path">task2_parent.cpp</span>
+      </div>
+      <div class="task-body">
+<div class="explanation-box">
+          <span class="explanation-title">Полный построчный разбор — Parent.exe</span>
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">Шаг 1</div>
+              <pre class="step-code"><code>#include &lt;windows.h&gt;</code></pre>
+              <p class="step-text">Заголовок даёт программе функции Windows: <code>SetEnvironmentVariable</code>, <code>CreateProcess</code>, <code>CloseHandle</code>, <code>STARTUPINFO</code>, <code>PROCESS_INFORMATION</code>. Все главные функции задания приходят из этого заголовка.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 2</div>
+              <pre class="step-code"><code>#include &lt;iostream&gt;</code></pre>
+              <p class="step-text">Заголовок даёт программе <code>std::cout</code> и <code>std::wcout</code> для вывода. Значения переменных хранятся в <code>wchar_t</code>. Программа использует обычный и широкий вывод.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 3</div>
+              <pre class="step-code"><code>int main() {</code></pre>
+              <p class="step-text">Функция <code>main</code> — точка входа программы Parent.exe. Функция <code>main</code> устанавливает переменную, запускает потомка, перезаписывает переменную и завершается.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 4</div>
+              <pre class="step-code"><code>#if defined(_WIN32) system("chcp 65001 &gt; nul"); #endif</code></pre>
+              <p class="step-text">Директива включает команду только в Windows. Команда переключает консоль на UTF-8. Консоль показывает русский текст правильно. Без UTF-8 русские строки в выводе превращаются в кракозябры.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 5</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "=== ЗАДАНИЕ 2: PARENT ..."</code></pre>
+              <p class="step-text">Команда печатает заголовок программы. Заголовок различает окно родителя и окно потомка.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 6</div>
+              <pre class="step-code"><code>const wchar_t* varName = L"STUDENT_ID";</code></pre>
+              <p class="step-text">Объявление задаёт имя переменной окружения: STUDENT_ID. Имя хранится как широкая строка (Unicode). Функции окружения в программе — широкие (W-версии). Широкие функции требуют строки <code>wchar_t</code> с префиксом L.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 7</div>
+              <pre class="step-code"><code>const wchar_t* valueBefore = L"19045";</code></pre>
+              <p class="step-text">Объявление задаёт исходное значение переменной: 19045. Значение — номер студента из задания. Именно это значение должен увидеть потомок. Константа хранит литерал в одном месте. Программа не дублирует литерал.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 8</div>
+              <pre class="step-code"><code>if (!SetEnvironmentVariable(varName, valueBefore)) { ... return 1; }</code></pre>
+              <p class="step-text">Функция создаёт переменную STUDENT_ID=19045 в блоке окружения текущего процесса. При ошибке программа печатает код из <code>GetLastError()</code>. Программа завершается с кодом 1. Это шаг 1 задания. Функция меняет только память этого процесса. Система и другие процессы не видят переменную. Без переменной запускать потомка бессмысленно.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 9</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Parent: установлена переменная STUDENT_ID="; std::wcout &lt;&lt; valueBefore</code></pre>
+              <p class="step-text">Команда выводит установленное значение на экран. Вывод фиксирует значение «до»: переменная равна 19045 до запуска потомка. Обычный <code>cout</code> не печатает широкую строку правильно. Программа использует <code>std::wcout</code> для широкой строки.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 10</div>
+              <pre class="step-code"><code>STARTUPINFO si;</code></pre>
+              <p class="step-text">Объявление создаёт структуру параметров запуска потомка. Без структуры функция <code>CreateProcess</code> не вызывается.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 11</div>
+              <pre class="step-code"><code>PROCESS_INFORMATION pi;</code></pre>
+              <p class="step-text">Объявление создаёт структуру для результатов запуска. Структура даёт PID потомка и дескрипторы для <code>CloseHandle</code>.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 12</div>
+              <pre class="step-code"><code>ZeroMemory(&amp;si, sizeof(si));</code></pre>
+              <p class="step-text">Функция заполняет структуру <code>si</code> нулями. Мусор в полях структуры <code>STARTUPINFO</code> — частая причина сбоев функции <code>CreateProcess</code>.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 13</div>
+              <pre class="step-code"><code>ZeroMemory(&amp;pi, sizeof(pi));</code></pre>
+              <p class="step-text">Функция заполняет структуру <code>pi</code> нулями. При ошибке запуска поля остаются нулями, а не мусором.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 14</div>
+              <pre class="step-code"><code>si.cb = sizeof(si);</code></pre>
+              <p class="step-text">Команда записывает размер структуры <code>STARTUPINFO</code> в поле <code>cb</code>. Без корректного значения <code>cb</code> функция <code>CreateProcess</code> возвращает ошибку <code>ERROR_INVALID_PARAMETER</code>.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 15</div>
+              <pre class="step-code"><code>wchar_t cmdLine[] = L"Child.exe";</code></pre>
+              <p class="step-text">Объявление создаёт изменяемый буфер <code>cmdLine</code>. Буфер хранит относительное имя потомка: Child.exe. Относительное имя ищет файл Child.exe рядом с Parent.exe. Это условие запуска. Функция <code>CreateProcess</code> может менять строку на месте. Буфер должен быть изменяемым.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 16</div>
+              <pre class="step-code"><code>BOOL ok = CreateProcess( ... );</code></pre>
+              <p class="step-text">Функция создаёт процесс Child.exe. Функция возвращает <code>TRUE</code> при успехе. Это главный вызов. В этот момент система копирует блок окружения родителя потомку.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 17</div>
+              <pre class="step-code"><code>NULL, // lpApplicationName</code></pre>
+              <p class="step-text">Параметр не задаёт имя программы отдельно. Имя берётся из командной строки: «Child.exe».</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 18</div>
+              <pre class="step-code"><code>cmdLine, // lpCommandLine</code></pre>
+              <p class="step-text">Параметр передаёт командную строку запуска потомка. Относительный путь ищет файл сначала в каталоге Parent.exe, затем в системных каталогах и в PATH.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 19</div>
+              <pre class="step-code"><code>NULL, // lpProcessAttributes</code></pre>
+              <p class="step-text">Параметр задаёт атрибуты безопасности процесса по умолчанию. Дескриптор потомка не наследуется дальше. Задание не требует наследования.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 20</div>
+              <pre class="step-code"><code>NULL, // lpThreadAttributes</code></pre>
+              <p class="step-text">Параметр задаёт атрибуты безопасности потока по умолчанию. Дескриптор потока не наследуется дальше. Задание не требует наследования.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 21</div>
+              <pre class="step-code"><code>FALSE, // bInheritHandles</code></pre>
+              <p class="step-text">Параметр запрещает потомку наследовать дескрипторы родителя. Потомку не нужны открытые файлы и объекты родителя. Наследование только расширяет доступ потомка.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 22</div>
+              <pre class="step-code"><code>0, // dwCreationFlags</code></pre>
+              <p class="step-text">Параметр задаёт ноль особых флагов создания. Потомок стартует сразу, в обычном режиме.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 23</div>
+              <pre class="step-code"><code>NULL, // lpEnvironment</code></pre>
+              <p class="step-text">Параметр не передаёт явный блок окружения. Это главный момент задания. Значение <code>NULL</code> передаёт потомку копию блока окружения родителя. Система делает копию в момент вызова <code>CreateProcess</code>. Позже родитель меняет свою копию. У потомка остаётся снимок.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 24</div>
+              <pre class="step-code"><code>NULL, // lpCurrentDirectory</code></pre>
+              <p class="step-text">Параметр не задаёт рабочий каталог потомка. Потомок наследует текущий каталог родителя. Поиск файла Child.exe от каталога не зависит: важен каталог Parent.exe.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 25</div>
+              <pre class="step-code"><code>&amp;si, // lpStartupInfo</code></pre>
+              <p class="step-text">Параметр передаёт параметры запуска. Система читает параметры и настраивает окно потомка.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 26</div>
+              <pre class="step-code"><code>&amp;pi // lpProcessInformation</code></pre>
+              <p class="step-text">Параметр передаёт структуру для результатов. Структура даёт <code>dwProcessId</code> потомка и дескрипторы <code>hProcess</code> и <code>hThread</code>.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 27</div>
+              <pre class="step-code"><code>if (!ok) { ... return 1; }</code></pre>
+              <p class="step-text">При ошибке запуска программа печатает текст и код из <code>GetLastError()</code>. Программа завершается с кодом 1. Частая причина ошибки: файл Child.exe не лежит рядом с Parent.exe. Сообщение прямо подсказывает причину.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 28</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Parent: Child.exe запущен. PID потомка: " &lt;&lt; pi.dwProcessId</code></pre>
+              <p class="step-text">Команда выводит PID запущенного потомка. PID доказывает: потомок реально создан. Пользователь находит потомка в Диспетчере задач по PID.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 29</div>
+              <pre class="step-code"><code>const wchar_t* valueAfter = L"99999";</code></pre>
+              <p class="step-text">Объявление задаёт новое значение переменной: 99999. Новое значение отличается от 19045. Разница видна сразу. Константа хранит значение в одном месте.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 30</div>
+              <pre class="step-code"><code>if (!SetEnvironmentVariable(varName, valueAfter)) { ... }</code></pre>
+              <p class="step-text">Функция перезаписывает переменную STUDENT_ID на 99999 в своём блоке окружения. Ветка <code>else</code> печатает два факта: у родителя стало 99999, у потомка осталась копия 19045. Это шаг 3 задания. Порядок решает всё: перезапись идёт строго после вызова <code>CreateProcess</code>. Перезапись до вызова дала бы потомку уже 99999. Эксперимент потерял бы смысл.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 31</div>
+              <pre class="step-code"><code>CloseHandle(pi.hProcess);</code></pre>
+              <p class="step-text">Функция закрывает дескриптор процесса-потомка. Родитель не ждёт потомка. Дескриптор всё равно нужно закрыть. Иначе объект процесса висит в ядре как утечка. Закрытие дескриптора не завершает потомка.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 32</div>
+              <pre class="step-code"><code>CloseHandle(pi.hThread);</code></pre>
+              <p class="step-text">Функция закрывает дескриптор главного потока потомка. Программа закрывает оба дескриптора из структуры <code>PROCESS_INFORMATION</code> всегда, даже без ожидания.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 33</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Parent: дескрипторы потомка закрыты..."</code></pre>
+              <p class="step-text">Команда сообщает о завершении очистки. Видно: родитель дошёл до конца сценария и ничего не забыл.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 34</div>
+              <pre class="step-code"><code>return 0;</code></pre>
+              <p class="step-text">Родитель завершается сразу с кодом 0. Это шаг 3 задания. Родитель уходит сразу. Потомок продолжает жить сам. Завершение родителя не завершает потомка.</p>
+            </div>
+          </div>
+        </div>
+        <h3 id="ste-run-task2parent">STE — Как запустить: задача 2 (Parent.exe)</h3>
+        <div class="run-box">
+          <span class="run-title">Как запустить — Parent.exe</span>
+          <ol>
+            <li>Скомпилируйте оба файла отдельно. MSVC: выполните команду <code>cl /EHsc task2_parent.cpp</code>. Команда создаёт файл <code>task2_parent.exe</code>. Переименуйте файл в <code>Parent.exe</code>. Выполните команду <code>cl /EHsc task2_child.cpp</code>. Переименуйте файл в <code>Child.exe</code>. MinGW: выполните команду <code>g++ -o Parent.exe task2_parent.cpp</code>. Выполните команду <code>g++ -o Child.exe task2_child.cpp</code>.</li>
+            <li>Положите файлы <code>Parent.exe</code> и <code>Child.exe</code> в одну папку. Это обязательное условие. Родитель ищет файл <code>Child.exe</code> по относительному имени рядом с собой.</li>
+            <li>Запустите файл <code>Parent.exe</code> двойным щелчком или из консоли. Откроется окно Child.exe. Окно Parent закроется почти сразу.</li>
+          </ol>
+          <div class="callout-warn">Не перезаписывайте переменную до вызова <code>CreateProcess</code>. Потомок получит уже новое значение 99999. Эксперимент потеряет смысл. Доказать автономность будет нечем. Порядок решает всё: сначала <code>CreateProcess</code>, потом перезапись.</div>
+          <div class="callout-warn">Файл Child.exe в другой папке даёт ошибку. Функция <code>CreateProcess</code> возвращает <code>FALSE</code>. Родитель печатает ошибку с кодом из <code>GetLastError</code>. Обычно код равен 2 (<code>ERROR_FILE_NOT_FOUND</code>). Родитель завершается с кодом 1.</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="ste-task2child" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Задание 2 (часть 2): Child.exe — потомок</div>
+        <span class="task-path">task2_child.cpp</span>
+      </div>
+      <div class="task-body">
+<div class="explanation-box">
+          <span class="explanation-title">Полный построчный разбор — Child.exe</span>
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">Шаг 1</div>
+              <pre class="step-code"><code>#include &lt;windows.h&gt;</code></pre>
+              <p class="step-text">Заголовок даёт программе функцию <code>GetEnvironmentVariable</code> и код <code>ERROR_ENVVAR_NOT_FOUND</code>. Чтение переменных окружения — функция Windows API.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 2</div>
+              <pre class="step-code"><code>#include &lt;iostream&gt;</code></pre>
+              <p class="step-text">Заголовок даёт программе <code>std::cout</code> и <code>std::wcout</code> для вывода. Вывод показывает значение переменной и доказательство автономности.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 3</div>
+              <pre class="step-code"><code>int main() {</code></pre>
+              <p class="step-text">Функция <code>main</code> — точка входа программы Child.exe. Функция <code>main</code> читает переменную, сравнивает значение, доказывает автономность и ждёт клавишу.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 4</div>
+              <pre class="step-code"><code>#if defined(_WIN32) system("chcp 65001 &gt; nul"); #endif</code></pre>
+              <p class="step-text">Директива включает команду только в Windows. Команда переключает консоль на UTF-8. Консоль показывает русский текст правильно. Без UTF-8 русский вывод превращается в кракозябры.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 5</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "=== ЗАДАНИЕ 2: CHILD ..."</code></pre>
+              <p class="step-text">Команда печатает заголовок программы. Заголовок различает окна родителя и потомка на экране.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 6</div>
+              <pre class="step-code"><code>const wchar_t* varName = L"STUDENT_ID";</code></pre>
+              <p class="step-text">Объявление задаёт имя искомой переменной окружения: STUDENT_ID. Родитель устанавливал переменную с тем же именем. Опечатка в имени даёт ошибку «переменная не найдена».</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 7</div>
+              <pre class="step-code"><code>wchar_t buffer[256];</code></pre>
+              <p class="step-text">Объявление создаёт буфер на стеке. Буфер принимает значение переменной: 256 широких символов. Функция <code>GetEnvironmentVariable</code> не возвращает строку. Функция копирует строку в буфер вызывающего. Буфер на 256 символов с запасом принимает короткое значение.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 8</div>
+              <pre class="step-code"><code>DWORD len = GetEnvironmentVariable(varName, buffer, sizeof(buffer) / sizeof(buffer[0]));</code></pre>
+              <p class="step-text">Функция читает переменную STUDENT_ID из собственного блока окружения процесса. Функция копирует значение в буфер. Функция возвращает длину значения без завершающего нуля. Значение 0 означает: переменная не найдена или пуста. Это шаг 4 задания. Потомок читает копию блока, которую он получил при старте. Размер передаётся в символах, а не в байтах. Программа делит <code>sizeof(buffer)</code> на <code>sizeof(buffer[0])</code>.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 9</div>
+              <pre class="step-code"><code>if (len == 0) {</code></pre>
+              <p class="step-text">Ветка обрабатывает случай: переменная не прочитана. Ноль — единственный сигнал проблемы. Программа выясняет причину через <code>GetLastError()</code>.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 10</div>
+              <pre class="step-code"><code>DWORD err = GetLastError();</code></pre>
+              <p class="step-text">Команда сохраняет код последней ошибки сразу после неудачного вызова. Код ошибки нужно читать немедленно. Любой следующий вызов API перезаписывает код. Сохранение в переменную — правильный приём.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 11</div>
+              <pre class="step-code"><code>if (err == ERROR_ENVVAR_NOT_FOUND) { ... }</code></pre>
+              <p class="step-text">При коде 203 (<code>ERROR_ENVVAR_NOT_FOUND</code>) программа печатает понятное объяснение: переменная не задана. Вероятно, пользователь запустил файл Child.exe напрямую, без Parent.exe. Это главный диагностический случай. Отдельный запуск файла Child.exe — штатная ситуация. Программа объясняет ситуацию, а не просто завершается.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 12</div>
+              <pre class="step-code"><code>else { std::cout &lt;&lt; "Ошибка GetEnvironmentVariable: " &lt;&lt; err ... }</code></pre>
+              <p class="step-text">При другой ошибке программа печатает её код. Код <code>ERROR_ENVVAR_NOT_FOUND</code> — не единственная возможность. Маленький буфер даёт другую логику: функция возвращает нужную длину. Прочие коды означают редкие сбои API.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 13</div>
+              <pre class="step-code"><code>} else {</code></pre>
+              <p class="step-text">Ветка успеха: переменная найдена. Значение лежит в буфере. Основная ветка сценария. Дальше программа выводит значение и проверяет его.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 14</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Child: прочитана переменная STUDENT_ID="; std::wcout &lt;&lt; buffer</code></pre>
+              <p class="step-text">Команда выводит прочитанное значение. Это главный вывод программы: значение реально лежит в блоке окружения потомка. Буфер широкий (<code>wchar_t</code>). Программа использует <code>std::wcout</code> для широкого буфера.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 15</div>
+              <pre class="step-code"><code>if (wcscmp(buffer, L"19045") == 0) {</code></pre>
+              <p class="step-text">Функция сравнивает прочитанное значение с ожидаемым значением «19045». Функция <code>wcscmp</code> возвращает 0 при равенстве широких строк. Это и есть доказательство. Значение 19045 означает: перезапись родителя на 99999 не повлияла на потомка.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 16</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Child: значение равно 19045 — оно НЕ изменилось..."</code></pre>
+              <p class="step-text">Команда печатает вывод-доказательство: значение не изменилось вслед за родителем. Формулировка результата подходит для защиты. Эксперимент удался. Автономность подтверждена.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 17</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Child: доказано — Environment Block копируется..."</code></pre>
+              <p class="step-text">Команда печатает объяснение механизма: блок окружения копируется при создании процесса. Объяснение связывает наблюдаемый факт с теорией. Потомок живёт со своим снимком, а не с общей памятью.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 18</div>
+              <pre class="step-code"><code>} else { std::cout &lt;&lt; "Child: ВНИМАНИЕ: значение отличается..." }</code></pre>
+              <p class="step-text">Ветка несовпадения предупреждает: значение не равно 19045. Программа называет возможную причину: запуск не из-под Parent.exe, а из среды с другой переменной STUDENT_ID. Честная обработка неожиданного результата. Программа не утверждает, что всё хорошо. Программа называет возможную причину.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 19</div>
+              <pre class="step-code"><code>std::cout &lt;&lt; "Child: родитель уже завершён, а потомок продолжает работу сам."</code></pre>
+              <p class="step-text">Команда сообщает: потомок живёт после завершения родителя. Это второе доказательство автономности процессов. Смерть родителя не убивает потомка.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 20</div>
+              <pre class="step-code"><code>system("pause");</code></pre>
+              <p class="step-text">Функция выводит строку «Для продолжения нажмите любую клавишу...». Функция ждёт нажатия клавиши. Без паузы окно потомка закрылось бы сразу. Никто не успел бы прочитать вывод. Пауза — это и есть «продолжает работу» из задания.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">Шаг 21</div>
+              <pre class="step-code"><code>return 0;</code></pre>
+              <p class="step-text">Потомок завершается с кодом 0 после нажатия клавиши. Код 0 означает нормальное завершение. Программа уходит только после того, как пользователь увидел вывод.</p>
+            </div>
+          </div>
+        </div>
+        <h3 id="ste-run-task2child">STE — Как запустить: задача 2 (Child.exe)</h3>
+        <div class="run-box">
+          <span class="run-title">Как запустить — Child.exe и ожидаемый вывод</span>
+          <ol>
+            <li>Не создавайте файлы заранее. Компиляция описана в карточке Parent. MinGW: выполните команду <code>g++ -o Child.exe task2_child.cpp</code>. MSVC: выполните команду <code>cl /EHsc task2_child.cpp</code>. Переименуйте файл в <code>Child.exe</code>.</li>
+            <li>Обычный сценарий: запустите программу через Parent.exe. Оба файла exe лежат в одной папке. Запускается Parent. Потомок выводит значение STUDENT_ID=19045. Потомок выводит строку «значение равно 19045 — оно НЕ изменилось вслед за родителем». Потомок ждёт нажатия клавиши.</li>
+            <li>Отдельный запуск тоже возможен. Запустите файл Child.exe без Parent: двойным щелчком или из консоли. Переменная STUDENT_ID не задана в окружении потомка. Потомок выводит ошибку: «переменная STUDENT_ID не найдена в блоке окружения». Потомок объясняет: его запустили напрямую, без Parent.exe. Это нормальное поведение, а не ошибка.</li>
+          </ol>
+          <div class="callout-success">Ожидаемый вывод полного сценария. Окно Parent показывает строки по порядку. Первая строка: «установлена переменная STUDENT_ID=19045». Вторая строка: «Child.exe запущен. PID потомка: ...». Третья строка: «переменная у СЕБЯ перезаписана на STUDENT_ID=99999». Четвёртая строка: «у потомка осталась КОПИЯ со значением 19045». Затем окно Parent закрывается. Окно Child показывает строки по порядку. Первая строка: «прочитана переменная STUDENT_ID=19045». Вторая строка: «значение равно 19045 — оно НЕ изменилось вслед за родителем». Затем потомок ждёт нажатия клавиши.</div>
+        </div>
+      </div>
+    </div>
+
+    </div>
+
+    <div id="ste-theory">
+    <div class="section-card"><div class="section-header"><div class="section-title">STE-теория: процессы Windows и Environment Block</div></div></div>
+    <div class="callout-info">
+      <p><strong>STE-версия.</strong> Этот файл переписывает теорию по правилам ASD-STE100. Правила: одно предложение — одна мысль. Инструкция — не больше 20 слов. Описание — не больше 25 слов. Текст использует действительный залог. Одно понятие — одно слово. Сначала ответ, потом подробности.</p>
+      <p>Термины в файле всегда одни и те же. Список терминов: программа, процесс, поток, родитель, потомок, дескриптор, объект ядра, ядро, блок окружения, переменная окружения, структура, консоль, значение, код ошибки, снимок, утечка. Словарь терминов: <a href="#ste-glossary">STE-словарь</a>. Обычная версия: <a href="#theory">обычная теория</a>.</p>
+    </div>
+
+    <div id="ste-proc" class="section-card">
+      <div class="section-header"><div class="section-title">1. Процессы в Windows: дескрипторы, ядро, таблица хэндлов</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> Процесс — экземпляр выполняющейся программы. Процесс имеет собственное виртуальное адресное пространство, набор потоков, открытые ресурсы и блок окружения. Процессы в Windows полностью изолированы друг от друга. Один процесс не читает и не меняет память другого процесса напрямую. Внутри процесса работает минимум один поток. Поток — единица выполнения кода на процессоре.</p>
+        <p><strong>Зачем это знать.</strong> Вся лабораторная работа №6 построена на изоляции процессов. Родитель и потомок — отдельные процессы. Изменение переменной у родителя не затрагивает потомка. Завершение родителя не завершает потомка.</p>
+        <p><strong>Объекты ядра и дескрипторы.</strong> Процесс, поток, файл, событие и мьютекс — объекты ядра (kernel objects). Объекты ядра — структуры данных в памяти ядра. Пользовательский код не обращается к ним напрямую. Программа обращается к объектам только через дескриптор (handle, HANDLE). Дескриптор — целое число. Дескриптор — индекс в таблице дескрипторов процесса. Дескриптор — не указатель на объект. Дескриптор — «пропуск» к объекту. Ядро находит объект по дескриптору. Ядро проверяет права доступа по дескриптору.</p>
+        <p><strong>Таблица дескрипторов.</strong> У каждого процесса своя таблица хэндлов. Один и тот же числовой дескриптор в разных процессах означает разные объекты или ничего. Дескриптор процесса-потомка из структуры <code>PROCESS_INFORMATION</code> действителен только в процессе-родителе. Закрывать дескриптор должен тоже родитель.</p>
+        <p><strong>Счётчик ссылок.</strong> У каждого объекта ядра есть счётчик использований. Счётчик растёт при открытии нового дескриптора. Счётчик падает при вызове <code>CloseHandle</code>. Ядро уничтожает объект только при счётчике, равном нулю. Завершённый процесс продолжает «жить» в ядре как объект, пока хоть кто-то держит его дескриптор открытым.</p>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li>Процессы изолированы. Память, дескрипторы и окружение у каждого процесса свои.</li>
+          <li>Дескриптор — это индекс в таблице процесса, а не адрес объекта.</li>
+          <li>Завершение процесса не уничтожает объект ядра. Объект живёт, пока открыт хоть один дескриптор.</li>
+          <li>Завершение родителя не завершает потомка. У потомка своя жизнь.</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Не используйте дескриптор из одного процесса в другом процессе. Наследование или дублирование через <code>DuplicateHandle</code> — единственные исключения.</li>
+          <li>Не ждите, что дескриптор исчезнет сам после завершения процесса. Объект ядра остаётся до вызова <code>CloseHandle</code>.</li>
+          <li>Не путайте PID и HANDLE. PID — число для поиска процесса. HANDLE — дескриптор для операций с процессом: ожидание, завершение, закрытие.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="ste-createprocess" class="section-card">
+      <div class="section-header"><div class="section-title">2. CreateProcess и структуры STARTUPINFO / PROCESS_INFORMATION</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> <code>CreateProcess</code> — главная функция Win32 API для создания нового процесса. Функция загружает исполняемый файл. Функция создаёт адресное пространство, объект процесса и главный поток. Функция запускает главный поток. Функция возвращает <code>TRUE</code> при успехе и <code>FALSE</code> при ошибке. Код ошибки даёт функция <code>GetLastError()</code>.</p>
+        <p><strong>Зачем.</strong> Без функции <code>CreateProcess</code> программа не запускает другую программу. Это единственный штатный путь программного запуска в Win32 API. Обёртки вроде <code>system()</code> внутри сами вызывают ту же функцию. Обёртки не дают контроля над дескрипторами и окружением.</p>
+        <div class="sub-title">STARTUPINFO — «как запускать»</div>
+        <p>Структура описывает внешний вид и начальные условия нового процесса: заголовок окна, его положение и размер, дескрипторы стандартных потоков ввода, вывода и ошибок, рабочий стол. Выполните обязательные шаги: вызовите <code>ZeroMemory(&amp;si, sizeof(si))</code>, затем задайте <code>si.cb = sizeof(si)</code>. Система определяет версию структуры по полю <code>cb</code>. В наших программах остальные поля остаются нулевыми. Окно показывается обычным образом. Потоки наследуются по умолчанию.</p>
+        <div class="sub-title">PROCESS_INFORMATION — «что получилось»</div>
+        <p>Система записывает результат запуска сюда. Структура имеет четыре поля:</p>
+        <table class="theory"><tr><th>Поле</th><th>Что это</th><th>Зачем нужно</th></tr><tr><td><code>hProcess</code></td><td>Дескриптор объекта процесса-потомка.</td><td>Программа ждёт завершение через <code>WaitForSingleObject</code>. Программа получает код выхода. Программа завершает процесс.</td></tr><tr><td><code>hThread</code></td><td>Дескриптор главного потока потомка.</td><td>Программа управляет потоком. Программа закрывает дескриптор вместе с <code>hProcess</code>.</td></tr><tr><td><code>dwProcessId</code></td><td>PID процесса (число).</td><td>PID идентифицирует процесс. Пользователь находит процесс в Диспетчере задач по PID.</td></tr><tr><td><code>dwThreadId</code></td><td>ID главного потока (число).</td><td>ID идентифицирует поток.</td></tr></table>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li>Всегда обнуляйте обе структуры через <code>ZeroMemory</code> перед вызовом. Всегда задавайте <code>si.cb = sizeof(si)</code>.</li>
+          <li>Держите командную строку (<code>lpCommandLine</code>) в изменяемом буфере (<code>wchar_t cmdLine[]</code>). Не передавайте строковый литерал. Функция имеет право менять строку на месте.</li>
+          <li>Всегда проверяйте возвращаемое значение. Значение <code>FALSE</code> означает: процесс не создан. Полей <code>pi</code> нет. Закрывать нечего.</li>
+          <li>При <code>lpApplicationName = NULL</code> имя программы берётся из командной строки. Относительное имя ищется в каталоге приложения, в системных каталогах и в PATH.</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Не оставляйте структуру <code>STARTUPINFO</code> без инициализации. Мусор в полях даёт непредсказуемые сбои запуска.</li>
+          <li>Не передавайте строковый литерал как <code>lpCommandLine</code>. Литерал лежит в памяти только для чтения. Вызов даёт нарушение доступа.</li>
+          <li>Не забывайте проверку результата. Программа продолжает работу с пустым <code>pi</code>. Программа падает на <code>WaitForSingleObject</code> или <code>CloseHandle</code> по мусорному дескриптору.</li>
+          <li>Не ждите, что функция <code>CreateProcess</code> найдёт файл exe «где-то». Относительное имя ищется по строгим правилам. Файл exe лежит рядом или находится в PATH.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="ste-wait" class="section-card">
+      <div class="section-header"><div class="section-title">3. Ожидание завершения: WaitForSingleObject</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> Функция <code>WaitForSingleObject(hHandle, dwMilliseconds)</code> останавливает вызвавший поток. Поток ждёт, пока объект не перейдёт в сигнальное состояние (signaled). Поток ждёт до истечения тайм-аута. Дескриптор процесса становится сигнальным ровно при завершении процесса.</p>
+        <p><strong>Зачем.</strong> Это способ синхронизации жизненного цикла. Родитель узнаёт: потомок закончил работу. Только потом родитель продолжает сценарий. Например, родитель читает результаты или освобождает ресурсы. В задании 1 без ожидания программа завершилась бы сразу. Программа не дождалась бы закрытия Блокнота.</p>
+        <div class="sub-title">Возвращаемые значения</div>
+        <table class="theory"><tr><th>Код</th><th>Значение</th></tr><tr><td><code>WAIT_OBJECT_0</code></td><td>Объект стал сигнальным. Процесс завершился. Это нормальный исход.</td></tr><tr><td><code>WAIT_TIMEOUT</code></td><td>Тайм-аут истёк. Процесс всё ещё работает. Код бывает только при конечном тайм-ауте.</td></tr><tr><td><code>WAIT_FAILED</code></td><td>Ожидание дало ошибку. Пример: неверный дескриптор. Код ошибки даёт функция <code>GetLastError()</code>.</td></tr></table>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li><code>INFINITE</code> означает: ждать без ограничения времени. <code>INFINITE</code> подходит, когда момент завершения заранее неизвестен. Пример: пользователь сам закрывает Блокнот.</li>
+          <li>Всегда проверяйте результат ожидания. Только код <code>WAIT_OBJECT_0</code> означает «процесс завершён».</li>
+          <li>Ждите только по действительному дескриптору. Дескриптор даёт функция <code>CreateProcess</code> или функция <code>OpenProcess</code>.</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Не ждите по <code>hThread</code> вместо <code>hProcess</code>. Поток завершается раньше процесса. Процесс порождает другие потоки. Ожидание даёт ложный сигнал.</li>
+          <li>Не используйте <code>INFINITE</code> там, где процесс может зависнуть навсегда. Программа тоже зависнет без возможности отмены. Используйте конечный тайм-аут в цикле с проверкой.</li>
+          <li>Не ждите завершения потомка после закрытия дескриптора. Родитель уже «отпустил» потомка. Ждать не по чему.</li>
+        </ul>
+        <div class="callout-info">В задании 2 родитель намеренно не вызывает <code>WaitForSingleObject</code>. Родитель завершается сразу. Потомок продолжает работу. Ожидание — выбор родителя, а не обязанность. Жизнь потомка от ожидания не зависит.</div>
+      </div>
+    </div>
+
+    <div id="ste-handles" class="section-card">
+      <div class="section-header"><div class="section-title">4. Утечка дескрипторов и зачем нужен CloseHandle</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> Функция <code>CloseHandle(h)</code> закрывает дескриптор. Функция удаляет запись из таблицы дескрипторов процесса. Функция уменьшает счётчик ссылок объекта ядра. При счётчике, равном нулю, ядро уничтожает объект. Ядро освобождает память объекта.</p>
+        <p><strong>Зачем.</strong> Функция <code>CreateProcess</code> возвращает сразу два дескриптора: дескриптор процесса и дескриптор потока. Пока хоть один дескриптор открыт, ядро хранит объект завершённого процесса в памяти. Ядро хранит и код завершения процесса. Без закрытия дескрипторы копятся. В короткой программе накопление незаметно. В долгоживущем сервисе таблица дескрипторов переполняется. Сервис запускает тысячи процессов. Новые вызовы <code>CreateProcess</code> завершаются ошибкой. Это и есть утечка дескрипторов (handle leak). Утечка дескрипторов — аналог утечки памяти, но на уровне ядра.</p>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li>Закрывайте оба дескриптора из структуры <code>PROCESS_INFORMATION</code>: <code>hProcess</code> и <code>hThread</code>. Забытый дескриптор <code>hThread</code> — та же утечка.</li>
+          <li>Порядок закрытия значения не имеет.</li>
+          <li>Закрывайте дескрипторы, даже если родитель не ждал потомка (задание 2). Ожидание и закрытие — независимые действия.</li>
+          <li>Закрытие дескриптора не завершает процесс. Закрытие дескриптора не убивает поток. Закрытие лишь отпускает ссылку родителя на объект ядра.</li>
+          <li>Закрывайте дескриптор ровно один раз. Повторный вызов <code>CloseHandle</code> по тому же значению закрывает уже другой объект. Система успела выдать тот же номер другому объекту.</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Не закрывайте только <code>hProcess</code> и не забывайте <code>hThread</code> (или наоборот).</li>
+          <li>Не пропускайте вызов <code>CloseHandle</code> в ветке ошибки после удачного вызова <code>CreateProcess</code>. Пример: при ошибке <code>WaitForSingleObject</code> программа выходит без закрытия дескрипторов.</li>
+          <li>Не надейтесь, что завершение родителя «само всё закроет». Да, при завершении процесса система закрывает все его дескрипторы. Но пока родитель живёт и запускает процессы в цикле, утечка копится при его жизни.</li>
+        </ul>
+        <div class="callout-danger">Правило на защиту. Функция <code>CreateProcess</code> вернула два дескриптора. Значит, в программе должно быть два вызова <code>CloseHandle</code>. Один вызов <code>CloseHandle</code> в коде — ошибка, даже если программа «работает».</div>
+      </div>
+    </div>
+
+    <div id="ste-envblock" class="section-card">
+      <div class="section-header"><div class="section-title">5. Environment Block: как устроен и почему потомок получает копию</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> Environment Block (блок окружения) — область памяти процесса. Блок хранит переменные окружения как строки ИМЯ=ЗНАЧЕНИЕ. Строки разделяются нулевыми символами. Блок завершается двойным нулём. Блок создаётся для каждого процесса при его запуске. Блок живёт только в собственном адресном пространстве процесса.</p>
+        <p><strong>Зачем.</strong> Переменные окружения — простейший механизм передачи конфигурации процессу на старте. Примеры: пути <code>PATH</code> и <code>TEMP</code>, настройки программ, в нашем случае — <code>STUDENT_ID</code>. Процесс читает переменные через функцию <code>GetEnvironmentVariable</code>. Процесс не знает, кто и как задал переменные.</p>
+        <p><strong>Копирование при создании процесса.</strong> Родитель вызывает функцию <code>CreateProcess</code> с параметром <code>lpEnvironment = NULL</code>. Система берёт блок окружения родителя. Система копирует блок байт в байт. Система передаёт копию новому процессу. Копия — это главное слово. После копирования у родителя и потомка два независимых блока в двух независимых адресных пространствах. Общей памяти между ними нет.</p>
+        <p><strong>Почему изменение у родителя не влияет на потомка.</strong> Функция <code>SetEnvironmentVariable</code> меняет строку только в блоке текущего процесса. Родитель меняет свою копию. Потомок свою копию не трогает. Потомок о копии родителя даже не знает. Порядок операций решает всё. То, что родитель установил до вызова <code>CreateProcess</code>, попадает в снимок потомка. То, что родитель поменял после вызова, уже не попадает. Задание 2 показывает это: родитель ставит 19045, запускает потомка, меняет у себя на 99999. Потомок видит 19045.</p>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li>Блок окружения принадлежит процессу. Блок копируется при создании процесса. Копия — снимок «на момент старта».</li>
+          <li>Передача конфигурации через окружение работает только в одну сторону. Передача работает только в момент запуска. Потомок не возвращает значение родителю через окружение.</li>
+          <li>При <code>lpEnvironment</code> не <code>NULL</code> потомок получает ваш собственный блок. Потомок не получает копию родительского блока. Это механизм явного задания окружения.</li>
+          <li>Изменения окружения действуют только на текущий процесс и его будущих потомков. Изменения не действуют на уже запущенные процессы. Изменения не действуют на систему в целом.</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Не ждите, что <code>SetEnvironmentVariable</code> у родителя изменит переменную у уже запущенного потомка. Общей памяти нет. Это копия.</li>
+          <li>Не устанавливайте переменную после вызова <code>CreateProcess</code> с надеждой, что потомок её увидит. Потомок уже получил снимок без неё.</li>
+          <li>Не запускайте потомка из среды, где переменная уже задана иначе. Пример: переменная задана глобально в системе. Потомок видит другое значение.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="ste-setenv" class="section-card">
+      <div class="section-header"><div class="section-title">6. SetEnvironmentVariable и GetEnvironmentVariable: переменная против блока</div></div>
+      <div class="section-body">
+        <p><strong>Что это.</strong> Функция <code>SetEnvironmentVariable(имя, значение)</code> устанавливает, изменяет или удаляет переменную окружения в блоке текущего процесса. Значение <code>NULL</code> удаляет переменную. Функция <code>GetEnvironmentVariable(имя, буфер, размер)</code> читает переменную из блока текущего процесса в буфер. Функция возвращает длину значения. Значение 0 означает «не найдена» или пустое значение. При коде «не найдена» функция <code>GetLastError()</code> возвращает <code>ERROR_ENVVAR_NOT_FOUND</code> (код 203).</p>
+        <p><strong>Переменная против блока.</strong> Переменная — одна строка ИМЯ=ЗНАЧЕНИЕ. Блок — весь набор таких строк процесса. Функция <code>SetEnvironmentVariable</code> правит одну строку в своём блоке. Функция <code>CreateProcess</code> с параметром <code>lpEnvironment = NULL</code> копирует весь блок целиком. Вывод: установка переменной касается одного процесса. Запуск потомка передаёт весь блок снимком.</p>
+        <div class="sub-title">Ключевые правила</div>
+        <ul>
+          <li>Функция <code>SetEnvironmentVariable</code> влияет только на текущий процесс. Функция влияет и на его будущих потомков через копирование блока.</li>
+          <li>Функция не меняет системные переменные. Функция не видна другим уже запущенным программам. Переменная «для всей системы» требует записи в реестр и рассылки сообщения <code>WM_SETTINGCHANGE</code>. Это другой механизм.</li>
+          <li>Функция <code>GetEnvironmentVariable</code> задаёт размер буфера в символах, а не в байтах. Для <code>wchar_t buffer[256]</code> размер равен <code>sizeof(buffer) / sizeof(buffer[0])</code> = 256.</li>
+          <li>Читайте код ошибки <code>GetLastError()</code> сразу после неудачного вызова. Следующий вызов API перезаписывает код.</li>
+          <li>Если значение не помещается в буфер, функция <code>GetEnvironmentVariable</code> возвращает требуемую длину. Это не ошибка «не найдено». Это сигнал: дайте буфер больше.</li>
+        </ul>
+        <div class="sub-title">Типичные ошибки</div>
+        <ul>
+          <li>Не путайте функцию <code>SetEnvironmentVariable</code> с системными переменными среды Windows. Функция работает локально, в процессе. Системные переменные живут в реестре («Свойства системы»). Функция не видна другим программам.</li>
+          <li>Не передавайте размер буфера в байтах вместо символов для широкой версии функции. Буфер «обрезается» в два раза.</li>
+          <li>Не игнорируйте возврат 0 без проверки <code>GetLastError()</code>. Ноль означает и «переменная не задана», и «значение пустое».</li>
+          <li>Не сравнивайте широкие строки через <code>strcmp</code>. Используйте функцию <code>wcscmp</code>. Функция <code>strcmp</code> сравнивает по байтам и даёт неверный результат.</li>
+        </ul>
+        <div class="callout-success">Итог лабораторной. Задание 1 показывает жизненный цикл процесса. Процесс рождается, ожидается и аккуратно «убирается» из ядра: <code>CreateProcess</code>, затем <code>WaitForSingleObject</code>, затем два вызова <code>CloseHandle</code>. Задание 2 показывает автономность процессов. Конфигурация передаётся только снимком блока окружения в момент старта. Дальше каждый процесс живёт своей жизнью.</div>
+      </div>
+    </div>
+
+    </div>
+
+    <div id="ste-glossary">
+    <div class="section-card"><div class="section-header"><div class="section-title">STE-словарь терминов</div></div></div>
+    <div class="intro-box"><b>Как пользоваться словарём.</b> Этот словарь написан по правилам ASD-STE100 примерно на 60%. Правила действуют на сами определения; вступление, примеры и примечания написаны обычным языком. Слова «программа», «функция», «структура», «файл», «память», «окно» и «Windows» считаются известными и в словаре не объясняются.<div class="ste-rules"><b>Какие правила применены (стиль ASD-STE100, примерно 60%):</b>
+<ul>
+<li>Одна мысль — одно предложение.</li>
+<li>Описание — не больше 25 слов. Инструкция — не больше 20 слов.</li>
+<li>Действительный залог: пиши, кто что делает («Windows даёт номер», а не «номер даётся»).</li>
+<li>Одно понятие — всегда одно и то же слово: «процесс», «поток», «дескриптор», «ядро», «родитель», «потомок», «блок окружения», «значение», «завершение». Синонимы не используются.</li>
+<li>Сначала ответ, потом подробности: первое предложение — само определение, дальше только детали или пример.</li>
+<li>Один абзац — одна тема, не больше шести предложений.</li>
+</ul>
+<p>Не применено: запрет на аналогии (примеры оставлены, они помогают запомнить), словарь одобренных слов STE на английском (словарь — на русском), ограничение в 25 слов для вступления и примечаний.</p></div></div>
+    <div class="gloss-nav"><a href="#ste-term-descriptor">Дескриптор</a><a href="#ste-term-env-inherit">Наследование окружения</a><a href="#ste-term-env-var">Переменная окружения</a><a href="#ste-term-thread">Поток</a><a href="#ste-term-process">Процесс</a><a href="#ste-term-handle-leak">Утечка дескрипторов</a><a href="#ste-term-kernel">Ядро</a><a href="#ste-term-closehandle">CloseHandle</a><a href="#ste-term-createprocess">CreateProcess</a><a href="#ste-term-env-block">Environment Block</a><a href="#ste-term-getenv">GetEnvironmentVariable</a><a href="#ste-term-pid">PID</a><a href="#ste-term-proc-info">PROCESS_INFORMATION</a><a href="#ste-term-setenv">SetEnvironmentVariable</a><a href="#ste-term-startupinfo">STARTUPINFO</a><a href="#ste-term-wait">WaitForSingleObject</a></div>
+    <div class="term-card" id="ste-term-descriptor"><div class="term-header"><span class="term-name">Дескриптор</span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">Дескриптор — номер, который Windows даёт программе для доступа к процессу.</p><p class="ste-def">Программа показывает дескриптор ядру, и ядро выполняет действие с процессом.</p><div class="term-example ste-example"><b>Пример:</b> Дескриптор похож на номерок в гардеробе: номерок — не пальто, но без номерка пальто не получить.</div></div></div>
+    <div class="term-card" id="ste-term-env-inherit"><div class="term-header"><span class="term-name">Наследование окружения</span><span class="task-path">Задача 2</span></div><div class="term-body"><p class="ste-def">Наследование окружения — передача копии блока окружения от родителя потомку.</p><p class="ste-def">Родитель не даёт потомку свой блок окружения: родитель даёт потомку копию блока окружения.</p><p class="ste-def">После запуска потомок живёт со своей копией, и изменения у родителя не меняют копию потомка.</p><div class="term-example ste-example"><b>Пример:</b> Наследование окружения похоже на ксерокопию конспекта: у каждого свой лист, и пометки на одном листе не появляются на другом листе.</div></div></div>
+    <div class="term-card" id="ste-term-env-var"><div class="term-header"><span class="term-name">Переменная окружения</span><span class="task-path">Задача 2</span></div><div class="term-body"><p class="ste-def">Переменная окружения — пара «имя = значение» в блоке окружения процесса.</p><p class="ste-def">В лабе переменная окружения STUDENT_ID имеет значение 19045.</p><div class="term-example ste-example"><b>Пример:</b> Переменная окружения похожа на запись в телефонной книге: имя — это имя человека, а значение — его номер телефона.</div></div></div>
+    <div class="term-card" id="ste-term-thread"><div class="term-header"><span class="term-name">Поток</span><span class="task-path">Задача 1</span></div><div class="term-body"><p class="ste-def">Поток — самая маленькая работа, которую выполняет процессор внутри процесса.</p><p class="ste-def">Каждый процесс имеет хотя бы один поток, и этот поток выполняет команды процесса.</p><div class="term-example ste-example"><b>Пример:</b> Процесс похож на кухню, а поток похож на повара, который готовит на кухне.</div></div></div>
+    <div class="term-card" id="ste-term-process"><div class="term-header"><span class="term-name">Процесс</span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">Процесс — работа, которую Windows выполняет из файла.</p><p class="ste-def">Windows даёт процессу номер PID и отдельную память.</p><div class="term-example ste-example"><b>Пример:</b> Процесс похож на отдельную комнату в общежитии: каждый жилец живёт в своей комнате.</div></div></div>
+    <div class="term-card" id="ste-term-handle-leak"><div class="term-header"><span class="term-name">Утечка дескрипторов</span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">Утечка дескрипторов — дескриптор, который процесс забыл закрыть.</p><p class="ste-def">Ядро продолжает хранить объект процесса, хотя процесс уже завершился.</p><div class="term-example ste-example"><b>Пример:</b> Утечка дескрипторов похожа на забытый открытым кран: вода уже не нужна, а счётчик крутится.</div><div class="term-rule ste-rule"><b>Правило:</b> Закрывай каждый дескриптор через CloseHandle.</div></div></div>
+    <div class="term-card" id="ste-term-kernel"><div class="term-header"><span class="term-name">Ядро</span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">Ядро — главная часть Windows, которая управляет процессами.</p><p class="ste-def">Ядро управляет процессами, памятью и дескрипторами.</p><p class="ste-def">Процесс не управляет процессами: процесс просит ядро выполнить действие.</p><div class="term-example ste-example"><b>Пример:</b> Ядро похоже на диспетчера в аэропорту: диспетчер решает, когда самолёт взлетает.</div></div></div>
+    <div class="term-card" id="ste-term-closehandle"><div class="term-header"><span class="term-name"><code>CloseHandle</code></span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">CloseHandle — функция, которая закрывает дескриптор.</p><p class="ste-def">CloseHandle говорит ядру: этот процесс или этот поток больше не нужен, освободи память.</p><p class="ste-def">В лабе CloseHandle закрывает два дескриптора: дескриптор процесса и дескриптор потока.</p><div class="term-example ste-example"><b>Пример:</b> CloseHandle похож на сдачу номерка в гардероб: пальто забрали, номерок больше не нужен.</div><div class="term-rule ste-rule"><b>Правило:</b> Вызывай CloseHandle для каждого дескриптора.</div></div></div>
+    <div class="term-card" id="ste-term-createprocess"><div class="term-header"><span class="term-name"><code>CreateProcess</code></span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">CreateProcess — функция, которая просит Windows запустить процесс.</p><p class="ste-def">CreateProcess получает имя файла и настройки запуска, а возвращает дескрипторы и PID процесса.</p><div class="term-example ste-example"><b>Пример:</b> CreateProcess похож на кнопку «старт»: нажал кнопку — и процесс начал работу.</div></div></div>
+    <div class="term-card" id="ste-term-env-block"><div class="term-header"><span class="term-name"><code>Environment Block</code></span><span class="task-path">Задача 2</span></div><div class="term-body"><p class="ste-def">Блок окружения — список всех переменных окружения процесса.</p><p class="ste-def">Родитель передаёт потомку копию блока окружения, а не сам блок окружения.</p><div class="term-example ste-example"><b>Пример:</b> Блок окружения похож на список покупок, который мама переписала для сына: у сына свой листок.</div><div class="term-example ste-example"><b>Пример:</b> Если мама допишет что-то в свой список, список сына не изменится.</div></div></div>
+    <div class="term-card" id="ste-term-getenv"><div class="term-header"><span class="term-name"><code>GetEnvironmentVariable</code></span><span class="task-path">Задача 2</span></div><div class="term-body"><p class="ste-def">GetEnvironmentVariable — функция, которая читает значение переменной окружения.</p><p class="ste-def">GetEnvironmentVariable возвращает длину значения, а ноль означает: такой переменной окружения нет.</p><div class="term-example ste-example"><b>Пример:</b> Работа GetEnvironmentVariable похожа на вопрос: какое значение имеет имя STUDENT_ID?</div></div></div>
+    <div class="term-card" id="ste-term-pid"><div class="term-header"><span class="term-name"><code>PID</code></span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">PID — номер, который Windows даёт процессу при запуске.</p><p class="ste-def">PID показывает, какой именно процесс запущен.</p><div class="term-example ste-example"><b>Пример:</b> PID похож на номер паспорта: у каждого человека свой номер.</div></div></div>
+    <div class="term-card" id="ste-term-proc-info"><div class="term-header"><span class="term-name"><code>PROCESS_INFORMATION</code></span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">PROCESS_INFORMATION — структура, в которую CreateProcess записывает сведения о процессе.</p><p class="ste-def">PROCESS_INFORMATION хранит дескриптор процесса, дескриптор потока, номер PID и номер потока.</p><div class="term-example ste-example"><b>Пример:</b> PROCESS_INFORMATION похож на свидетельство о рождении: там записаны все данные процесса.</div></div></div>
+    <div class="term-card" id="ste-term-setenv"><div class="term-header"><span class="term-name"><code>SetEnvironmentVariable</code></span><span class="task-path">Задача 2</span></div><div class="term-body"><p class="ste-def">SetEnvironmentVariable — функция, которая задаёт переменную окружения в блоке окружения.</p><p class="ste-def">SetEnvironmentVariable меняет переменную окружения только в памяти текущего процесса.</p><p class="ste-def">Другие процессы не замечают это изменение.</p><div class="term-example ste-example"><b>Пример:</b> SetEnvironmentVariable похож на запись своего имени на своём листке: на листке соседа ничего не изменится.</div></div></div>
+    <div class="term-card" id="ste-term-startupinfo"><div class="term-header"><span class="term-name"><code>STARTUPINFO</code></span><span class="task-path">Задачи 1, 2</span></div><div class="term-body"><p class="ste-def">STARTUPINFO — структура, в которой родитель описывает вид нового процесса.</p><p class="ste-def">Родитель обнуляет STARTUPINFO и указывает её размер в поле cb.</p><div class="term-example ste-example"><b>Пример:</b> STARTUPINFO похож на анкету при заселении: анкета описывает, какой должна быть комната.</div><div class="term-rule ste-rule"><b>Правило:</b> Обнуляй STARTUPINFO перед запуском процесса.</div></div></div>
+    <div class="term-card" id="ste-term-wait"><div class="term-header"><span class="term-name"><code>WaitForSingleObject</code></span><span class="task-path">Задача 1</span></div><div class="term-body"><p class="ste-def">WaitForSingleObject — функция, которая останавливает поток и ждёт завершения процесса.</p><p class="ste-def">WaitForSingleObject ждёт столько, сколько нужно: с INFINITE — без ограничения по времени.</p><div class="term-example ste-example"><b>Пример:</b> WaitForSingleObject похож на ожидание у двери: стоишь у двери и ждёшь, пока друг выйдет.</div><div class="term-rule ste-rule"><b>Правило:</b> Вызывай WaitForSingleObject, если нужно дождаться завершения процесса.</div></div></div>
+    <div class="callout-success">Термины взяты из кода task1_createprocess_notepad.cpp, task2_parent.cpp, task2_child.cpp и теории. Сначала идут термины на русском, потом — имена функций и структур Windows на латинице.</div>
+    </div>
+    </div>
+
+  </main>
+
+  <footer>
+    Лабораторная работа №6 • Системное программирование C++ и Win32 API • 2026<br>
+    Код программ: <a href="programs.html">programs.html</a>
+  </footer>
+
+</body>
+</html>

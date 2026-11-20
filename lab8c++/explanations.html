@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Лабораторная работа №8 — Разбор, теория и словарь</title>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-subtle: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-hover: #1d4ed8;
+      --accent-green: #059669;
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-bg: #fffbeb;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-page); color: var(--text-main); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; padding-bottom: 80px; }
+    header { background: rgba(255, 255, 255, 0.96); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(8px); padding: 12px 16px; box-shadow: var(--shadow-sm); }
+    .header-content { max-width: 760px; margin: 0 auto; }
+    .badge-sub { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    h1 { font-size: 19px; font-weight: 800; color: var(--text-main); line-height: 1.25; }
+    .nav-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px 0; scrollbar-width: none; }
+    .nav-scroll::-webkit-scrollbar { display: none; }
+    .nav-chip { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: var(--bg-code); color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
+    .nav-chip:hover, .nav-chip:active { background: var(--primary); color: #ffffff; }
+    main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+    .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .task-header { padding: 12px 16px; background: #fafbfc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .task-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .task-path { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-subtle); background: var(--bg-code); padding: 3px 7px; border-radius: 4px; }
+    .task-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .task-body h3 { font-size: 14px; font-weight: 800; color: var(--text-main); margin-top: 6px; }
+    .task-body p, .task-body li { font-size: 13.5px; color: var(--text-muted); }
+    .task-body ul, .task-body ol { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+    .task-body code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-code); padding: 1px 5px; border-radius: 4px; color: #1e293b; }
+    .explanation-box { background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid var(--primary); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; }
+    .explanation-title { font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); }
+    table.breakdown { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+    table.breakdown th { text-align: left; background: var(--primary-light); color: var(--primary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding: 7px 8px; border: 1px solid var(--border); }
+    table.breakdown td { padding: 7px 8px; border: 1px solid var(--border); vertical-align: top; color: var(--text-muted); line-height: 1.45; }
+    table.breakdown td code { font-family: var(--font-mono); font-size: 12px; color: #1e293b; font-weight: 700; word-break: break-word; }
+    table.breakdown tr:nth-child(even) td { background: #f8fafc; }
+    .steps { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+    .step { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; background: #ffffff; }
+    .step-num { display: inline-block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary); background: var(--primary-light); padding: 2px 8px; border-radius: 6px; }
+    .step pre { background: var(--bg-code); border-radius: 6px; padding: 8px 10px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.45; color: #1e293b; margin: 8px 0; white-space: pre-wrap; word-break: break-word; }
+    .step p { font-size: 13.5px; color: var(--text-muted); }
+    .step p.noexp { color: var(--text-subtle); font-style: italic; }
+    .callout-warn { background: var(--accent-amber-bg); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #92400e; }
+    .callout-success { background: var(--accent-green-bg); border-left: 3px solid var(--accent-green); padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #065f46; }
+    .ste-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent-green); background: var(--accent-green-bg); padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; }
+    footer { text-align: center; font-size: 12px; color: var(--text-subtle); margin-top: 30px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <span class="badge-sub">Лабораторная работа №8</span>
+      <h1>Разбор, теория и словарь: потоки, CRT и перехват через RIP</h1>
+      <div class="nav-scroll">
+        <a href="#razbor" class="nav-chip">Разбор</a>
+        <a href="#teoriya" class="nav-chip">Теория</a>
+        <a href="#slovar" class="nav-chip">Словарь</a>
+        <a href="#ste" class="nav-chip">STE-версия</a>
+        <a href="programs.html" class="nav-chip">Программы →</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ============ РАЗБОР ============ -->
+    <div id="razbor" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Построчный разбор программ — обычная версия</div>
+        <span class="task-path">programs.html</span>
+      </div>
+      <div class="task-body">
+
+        <h3>Задание 1: task1_createthread_vs_beginthreadex.cpp</h3>
+        <div class="explanation-box">
+          <span class="explanation-title">Полный построчный разбор — ни одна строка не пропущена</span>
+          <div class="steps">
+            <div class="step">
+              <span class="step-num">Шаг 1</span>
+              <pre>#include &lt;windows.h&gt;</pre>
+              <p>Подключает Win32 API: CreateThread, WaitForSingleObject, CloseHandle, GetLastError. Без этого заголовка ни одна функция Windows недоступна — это главный API-заголовок для системного программирования.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 2</span>
+              <pre>#include &lt;process.h&gt;</pre>
+              <p>Подключает _beginthreadex — CRT-обёртку для создания потоков. Именно ради этой функции нужен заголовок: второй вариант программы без него не скомпилируется.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 3</span>
+              <pre>#include &lt;psapi.h&gt;</pre>
+              <p>Подключает GetProcessMemoryInfo и структуру PROCESS_MEMORY_COUNTERS_EX. Эта функция читает потребление памяти процесса — без неё рост было бы видно только в диспетчере задач.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 4</span>
+              <pre>#include &lt;iostream&gt;</pre>
+              <p>Подключает std::cout и std::endl для вывода в консоль. Вывод нужен для наблюдения: какой вариант запущен, сколько потоков создано, сколько памяти занято.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 5</span>
+              <pre>#include &lt;cstring&gt;</pre>
+              <p>Подключает strtok и strcpy для работы со строками. Функция потока разбирает строку именно через strtok — заголовок даёт её объявление.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 6</span>
+              <pre>const int THREAD_COUNT = 10000;</pre>
+              <p>Задаёт число создаваемых потоков — 10 000, как требует задание. Константа вместо «магического числа» в цикле: число легко найти и поменять в одном месте.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 7</span>
+              <pre>const int STRTOK_CALLS = 100;</pre>
+              <p>Задаёт, сколько раз один поток разбирает тестовую строку. Один вызов strtok почти ничего не стоит; сто вызовов подряд гарантируют, что поток реально пользуется CRT-функциями.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 8</span>
+              <pre>const char* TEST_STRING = &quot;один,два,три;четыре пять:шесть&quot;;</pre>
+              <p>Тестовая строка с разными разделителями: запятая, точка с запятой, пробел, двоеточие. Разные разделители показывают, что strtok режет строку по любому символу из набора, а не по одному.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 9</span>
+              <pre>DWORD WINAPI WorkerThread(LPVOID param)</pre>
+              <p>Функция потока — код, который выполняет каждый из 10 000 потоков. Такую сигнатуру требует CreateThread: код возврата DWORD, соглашение о вызове WINAPI, один параметр-указатель.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 10</span>
+              <pre>char buffer[128];</pre>
+              <p>Локальный буфер потока для копии тестовой строки. У каждого потока свой стек, поэтому свой буфер: потоки не мешают друг другу и не портят общую строку.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 11</span>
+              <pre>for (int i = 0; i &lt; STRTOK_CALLS; ++i) {</pre>
+              <p>Повторяет разбор строки 100 раз внутри одного потока. Многократный вызов — условие задания: именно повторение заставляет CRT каждый раз обращаться к своему состоянию потока.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 12</span>
+              <pre>strcpy(buffer, TEST_STRING);</pre>
+              <p>Копирует исходную строку в буфер потока перед каждым разбором. strtok портит строку: ставит нули вместо разделителей. Без свежей копии второй разбор уже нечего было бы разбирать.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 13</span>
+              <pre>char* token = strtok(buffer, &quot;,;: &quot;);</pre>
+              <p>Первый вызов strtok: начинает разбор буфера и возвращает первое слово. Первый вызов всегда получает указатель на строку, а разделители задаются строкой &quot;,;: &quot; — любой из этих символов режет слово.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 14</span>
+              <pre>while (token != nullptr) { token = strtok(nullptr, &quot;,;: &quot;); }</pre>
+              <p>Доразбирает строку до конца: каждый следующий вызов с NULL продолжает с места остановки. Так устроен strtok: NULL означает «продолжай ту же строку». Цикл заканчивается, когда слова кончились и strtok вернул NULL.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 15</span>
+              <pre>return 0;</pre>
+              <p>Функция потока возвращает 0 — поток завершается успешно. Возврат из функции потока — нормальный способ его завершить; система освободит его стек и закроет поток.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 16</span>
+              <pre>void PrintMemory(const char* label)</pre>
+              <p>Вспомогательная функция: печатает потребление памяти с подписью. Вынесена отдельно, чтобы не дублировать один и тот же код трижды: на старте, каждые 1000 потоков и на финише.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 17</span>
+              <pre>PROCESS_MEMORY_COUNTERS_EX pmc;</pre>
+              <p>Объявляет структуру, куда система запишет счётчики памяти процесса. Расширенная версия структуры нужна ради поля PrivateUsage — в обычной PROCESS_MEMORY_COUNTERS его нет.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 18</span>
+              <pre>if (GetProcessMemoryInfo(GetCurrentProcess(), ...)) {</pre>
+              <p>Запрашивает у системы счётчики памяти текущего процесса. GetCurrentProcess возвращает псевдодескриптор своего процесса — удобный способ спросить систему о самом себе.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 19</span>
+              <pre>std::cout &lt;&lt; label &lt;&lt; &quot; WorkingSet: &quot; &lt;&lt; pmc.WorkingSetSize / 1024 &lt;&lt; &quot; КБ&quot; &lt;&lt; &quot; PrivateUsage: &quot; &lt;&lt; pmc.PrivateUsage / 1024 &lt;&lt; &quot; КБ&quot;</pre>
+              <p>Печатает рабочий набор и частную память процесса в килобайтах. Деление на 1024 переводит байты в килобайты — числа получаются короткими и читаемыми. Именно PrivateUsage соответствует столбцу Private Bytes в диспетчере задач.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 20</span>
+              <pre>else { std::cout &lt;&lt; label &lt;&lt; &quot; (не удалось прочитать память...&quot; }</pre>
+              <p>Если чтение памяти не удалось — печатает подпись и код ошибки GetLastError(). Честная диагностика вместо молчания: сбой чтения памяти не должен выглядеть как нулевое потребление.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 21</span>
+              <pre>int main(int argc, char* argv[])</pre>
+              <p>Точка входа программы с доступом к аргументам командной строки. Аргументы нужны для выбора варианта: без аргумента или create — CreateThread, begin — _beginthreadex.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 22</span>
+              <pre>#if defined(_WIN32) system(&quot;chcp 65001 &gt; nul&quot;); #endif</pre>
+              <p>Переключает кодовую страницу консоли на UTF-8 (65001), чтобы русский текст не превращался в кракозябры. Директива препроцессора: команда выполняется только под Windows; на других системах код просто не компилируется в программу.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 23</span>
+              <pre>bool useBeginThreadEx = (argc &gt; 1 &amp;&amp; strcmp(argv[1], &quot;begin&quot;) == 0);</pre>
+              <p>Проверяет первый аргумент: равен ли он слову &quot;begin&quot;. Один флаг решает всё поведение программы дальше: какая функция создаёт потоки. Любой другой аргумент (или его отсутствие) означает вариант CreateThread.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 24</span>
+              <pre>std::cout &lt;&lt; &quot;=== ЗАДАНИЕ 1 ...&quot; / &quot;Вариант: ...&quot; / &quot;Потоков к созданию: ...&quot;</pre>
+              <p>Печатает заголовок, выбранный вариант и число потоков. Сразу видно, какой вариант запущен: при сравнении двух прогонов нельзя перепутать, где какой.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 25</span>
+              <pre>PrintMemory(&quot;Старт:   &quot;);</pre>
+              <p>Печатает потребление памяти до создания потоков. Базовая точка для сравнения: рост считается от этого значения.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 26</span>
+              <pre>for (int i = 0; i &lt; THREAD_COUNT; ++i) {</pre>
+              <p>Главный цикл: 10 000 раз создаёт краткоживущий поток. Это и есть эксперимент задания: много коротких потоков подряд, каждый живёт долю секунды.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 27</span>
+              <pre>HANDLE hThread = nullptr;</pre>
+              <p>Объявляет переменную дескриптора потока и обнуляет её. Обе функции создания возвращают дескриптор разного типа, а дальше код общий: одна переменная HANDLE принимает оба результата.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 28</span>
+              <pre>if (useBeginThreadEx) { uintptr_t h = _beginthreadex(nullptr, 0, reinterpret_cast&lt;unsigned (__stdcall*)(void*)&gt;(WorkerThread), nullptr, 0, nullptr); hThread = reinterpret_cast&lt;HANDLE&gt;(h); }</pre>
+              <p>Создаёт поток через _beginthreadex — с инициализацией CRT-состояния потока. Это «правильный» вариант для программ на C/C++: _beginthreadex готовит CRT-данные потока до его старта. WorkerThread приводится к нужному типу указателя на функцию — сигнатуры совпадают по соглашению о вызовах, различается только тип возврата.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 29</span>
+              <pre>else { hThread = CreateThread(nullptr, 0, WorkerThread, nullptr, 0, nullptr); }</pre>
+              <p>Создаёт поток «голым» вызовом CreateThread — без инициализации CRT. Это «проблемный» вариант задания: система создаёт поток, но CRT о нём ничего не знает и его данные никто не готовит.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 30</span>
+              <pre>if (hThread == nullptr) { std::cout &lt;&lt; &quot;Ошибка создания потока №&quot; &lt;&lt; i ... return 1; }</pre>
+              <p>Проверяет, что поток создан; при ошибке печатает номер потока и код GetLastError() и завершает программу с кодом 1. Без проверки программа ждала бы по нулевому дескриптору. Номер потока показывает, на каком месте цикл сорвался.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 31</span>
+              <pre>WaitForSingleObject(hThread, INFINITE); CloseHandle(hThread);</pre>
+              <p>Ждёт завершения потока, затем закрывает его дескриптор. Поток краткоживущий по условию: следующий создаётся только после завершения предыдущего. CloseHandle обязателен — незакрытый дескриптор держит объект потока в ядре.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 32</span>
+              <pre>if ((i + 1) % 1000 == 0) { std::cout &lt;&lt; &quot;Создано потоков: &quot; &lt;&lt; (i + 1) &lt;&lt; &quot;  &quot;; PrintMemory(&quot;&quot;); }</pre>
+              <p>Каждую тысячу потоков печатает счётчик и текущий срез памяти. По этим строкам видна динамика: растёт ли память равномерно или стоит на месте. Печать на каждой итерации только замусорила бы вывод.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 33</span>
+              <pre>std::cout &lt;&lt; &quot;Создано потоков всего: &quot; &lt;&lt; THREAD_COUNT ... PrintMemory(&quot;Финиш:  &quot;);</pre>
+              <p>Печатает итог: всего потоков и финальный срез памяти. Финальная точка для сравнения со стартом: разница «Финиш минус Старт» — и есть результат эксперимента.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 34</span>
+              <pre>std::cout &lt;&lt; &quot;Сравните PrivateUsage ...&quot; / &quot;С CreateThread ... с _beginthreadex ...&quot;</pre>
+              <p>Подсказывает, как читать результат, и формулирует ожидаемый вывод опыта. На защите не нужно помнить теорию наизусть: программа сама говорит, что должно получиться.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 35</span>
+              <pre>return 0;</pre>
+              <p>Успешное завершение программы с кодом 0. Код 0 — общепринятый признак нормального завершения; его видит вызывающая среда.</p>
+            </div>
+          </div>
+        </div>
+
+        <h3>Задание 2: task2_suspended_hook.cpp</h3>
+        <div class="explanation-box">
+          <span class="explanation-title">Полный построчный разбор — ни одна строка не пропущена</span>
+          <div class="steps">
+            <div class="step">
+              <span class="step-num">Шаг 1</span>
+              <pre>#include &lt;windows.h&gt;</pre>
+              <p>Подключает Win32 API: CreateThread, GetThreadContext, SetThreadContext, ResumeThread, CONTEXT, CREATE_SUSPENDED. Все ключевые функции задания — из этого заголовка; без него не скомпилируется ни один вызов.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 2</span>
+              <pre>#include &lt;iostream&gt;</pre>
+              <p>Подключает std::cout и std::endl для вывода в консоль. Вывод — доказательство перехвата: сообщения «ПЕРЕХВАТ» и «ОРИГИНАЛ» видны на экране.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 3</span>
+              <pre>const int FIB_N = 40;</pre>
+              <p>Задаёт номер Фибоначчи для расчёта — 40. Константа в одном месте: поменять число для эксперимента можно одной правкой.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 4</span>
+              <pre>long long g_result = -1;</pre>
+              <p>Глобальная переменная для результата расчёта, начальное значение −1 («ещё не посчитано»). Поток и main делят эту переменную: поток записывает ответ, main читает его после WaitForSingleObject. Значение −1 сразу показывает, что расчёт не выполнялся.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 5</span>
+              <pre>long long FibRecursive(int n) { if (n &lt;= 1) return n; return FibRecursive(n - 1) + FibRecursive(n - 2); }</pre>
+              <p>Рекурсивно вычисляет n-е число Фибоначчи: база — 0 и 1, остальное — сумма двух предыдущих. Выбран именно рекурсивный вариант: он тяжёлый (Fib(40) — около 100 миллионов вызовов, несколько секунд работы), поэтому поток — «настоящая работа», а не мгновенное действие. Итеративный вариант посчитал бы ответ за микросекунды и не показал бы, что поток реально трудился.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 6</span>
+              <pre>DWORD WINAPI FibThread(LPVOID param)</pre>
+              <p>Оригинальная функция потока — та, с которой поток должен был стартовать. Её адрес передаётся в CreateThread как точка входа. Если перехват сработал, она не выполнится ни разу — это и есть проверка.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 7</span>
+              <pre>std::cout &lt;&lt; &quot;ОРИГИНАЛ: поток стартовал со своей функции FibThread.&quot;</pre>
+              <p>Печатает сообщение о том, что выполняется оригинальная функция. Маркер-ловушка: если эта строка появилась в выводе — перехват не сработал. При успешном перехвате её не должно быть.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 8</span>
+              <pre>g_result = FibRecursive(FIB_N); std::cout &lt;&lt; &quot;ОРИГИНАЛ: Fib(&quot; &lt;&lt; FIB_N &lt;&lt; &quot;) = &quot; &lt;&lt; g_result</pre>
+              <p>Считает Fib(40) и печатает результат с пометкой «ОРИГИНАЛ». Показывает, что должна была делать исходная функция, если бы перехват не вмешался.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 9</span>
+              <pre>DWORD WINAPI HookThread(LPVOID param)</pre>
+              <p>Функция-перехватчик (хук) — та, с которой поток реально стартует после подмены RIP. Сигнатура такая же, как у функции потока: система запустит её как точку входа потока, передав тот же параметр в регистре RCX.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 10</span>
+              <pre>std::cout &lt;&lt; &quot;ПЕРЕХВАТ: поток стартовал с хука HookThread, а не с FibThread!&quot;</pre>
+              <p>Печатает сообщение о том, что выполнился именно хук. Главное доказательство перехвата: эта строка появляется только если процессор начал выполнять поток с адреса HookThread.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 11</span>
+              <pre>std::cout &lt;&lt; &quot;ПЕРЕХВАТ: выполняю расчёт Fib(&quot; &lt;&lt; FIB_N &lt;&lt; &quot;)...&quot; g_result = FibRecursive(FIB_N); std::cout &lt;&lt; &quot;ПЕРЕХВАТ: Fib(&quot; &lt;&lt; FIB_N &lt;&lt; &quot;) = &quot; &lt;&lt; g_result</pre>
+              <p>Хук сам выполняет расчёт и печатает результат с пометкой «ПЕРЕХВАТ». Хук не просто заявляет о себе, а делает работу за оригинал: вызывает ту же FibRecursive и записывает ответ в ту же переменную g_result.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 12</span>
+              <pre>int main() {</pre>
+              <p>Точка входа программы. Весь сценарий: создать спящий поток → подменить RIP → оживить → дождаться результата.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 13</span>
+              <pre>#if defined(_WIN32) system(&quot;chcp 65001 &gt; nul&quot;); #endif</pre>
+              <p>Переключает кодовую страницу консоли на UTF-8 (65001), чтобы русский текст не превращался в кракозябры. Директива препроцессора: команда выполняется только под Windows; на других системах код просто не компилируется в программу.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 14</span>
+              <pre>std::cout &lt;&lt; &quot;=== ЗАДАНИЕ 2 ...&quot; / &quot;Расчёт: Fib(40) рекурсивно.&quot;</pre>
+              <p>Печатает заголовок программы и описание расчёта. Сразу видно, какая программа запущена и что она считает.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 15</span>
+              <pre>HANDLE hThread = CreateThread(nullptr, 0, FibThread, nullptr, CREATE_SUSPENDED, nullptr);</pre>
+              <p>Создаёт поток приостановленным: поток создан, но не выполнил ни одной инструкции. Флаг CREATE_SUSPENDED — условие задания: только спящий поток можно безопасно «перехватить», пока он ещё ничего не начал делать.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 16</span>
+              <pre>if (hThread == nullptr) { std::cout &lt;&lt; &quot;Ошибка CreateThread: &quot; &lt;&lt; GetLastError() ... return 1; }</pre>
+              <p>Проверяет создание потока; при ошибке печатает код и выходит с кодом 1. Без потока продолжать нечего: нет ни контекста, ни перехвата. Проверка обязательна.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 17</span>
+              <pre>std::cout &lt;&lt; &quot;Поток создан с CREATE_SUSPENDED и пока спит.&quot;</pre>
+              <p>Подтверждает, что поток создан и приостановлен. В выводе фиксируется состояние «поток спит» — дальше с ним можно делать подмену контекста.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 18</span>
+              <pre>CONTEXT ctx; ZeroMemory(&amp;ctx, sizeof(ctx));</pre>
+              <p>Объявляет структуру контекста потока и обнуляет её. В локальной переменной — мусор из стека. Необнулённая структура может передать системе случайные флаги и значения регистров.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 19</span>
+              <pre>ctx.ContextFlags = CONTEXT_FULL;</pre>
+              <p>Запрашивает полный набор регистров: все основные регистры, включая RIP. ОБЯЗАТЕЛЬНОЕ условие: без этого флага GetThreadContext не заполнит поле Rip (вернёт структуру с нулями), и подменять будет нечего.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 20</span>
+              <pre>if (!GetThreadContext(hThread, &amp;ctx)) { ... return 1; }</pre>
+              <p>Читает контекст приостановленного потока в структуру ctx. При ошибке печатает код и выходит. Это чтение «снимка» регистров потока в момент его сна. На работающем потоке так делать нельзя: регистры меняются каждую инструкцию, и снимок будет бессмысленным.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 21</span>
+              <pre>#ifdef _WIN64 std::cout &lt;&lt; &quot;Исходный RIP потока: 0x&quot; &lt;&lt; std::hex &lt;&lt; ctx.Rip</pre>
+              <p>На 64-битной сборке печатает исходное значение регистра RIP в шестнадцатеричном виде. Видно «до»: RIP указывает на начало FibThread. Шестнадцатеричный формат — стандарт для адресов.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 22</span>
+              <pre>ctx.Rip = reinterpret_cast&lt;DWORD64&gt;(HookThread);</pre>
+              <p>Подменяет адрес следующей инструкции потока на адрес функции-перехватчика. Центральный шаг задания: процессор начнёт поток не с FibThread, а с HookThread. На x64 регистр называется RIP (на x86 был бы EIP) — поэтому код различает архитектуры.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 23</span>
+              <pre>std::cout &lt;&lt; &quot;Новый RIP потока: 0x&quot; &lt;&lt; std::hex &lt;&lt; ctx.Rip &lt;&lt; &quot; (адрес HookThread)&quot;</pre>
+              <p>Печатает новое значение RIP после подмены. Видно «после»: адрес изменился на адрес хука — подмена зафиксирована до запуска потока.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 24</span>
+              <pre>#else ... ctx.Eip = reinterpret_cast&lt;DWORD&gt;(HookThread); ... #endif</pre>
+              <p>На 32-битной сборке делает то же самое с регистром EIP вместо RIP. На x86 указатель инструкций называется EIP и занимает 32 бита. Ветка нужна для переносимости, хотя задание рассчитано на x64.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 25</span>
+              <pre>if (!SetThreadContext(hThread, &amp;ctx)) { ... return 1; }</pre>
+              <p>Записывает изменённый контекст обратно в поток. При ошибке печатает код и выходит. Без этого шага подмена осталась бы только в локальной структуре ctx и ни на что не повлияла бы: система узнаёт о новом RIP только через SetThreadContext.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 26</span>
+              <pre>std::cout &lt;&lt; &quot;Контекст изменён: поток стартует с хука.&quot;</pre>
+              <p>Подтверждает, что контекст записан. В выводе фиксируется момент: подмена завершена, можно будить поток.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 27</span>
+              <pre>DWORD prevSuspend = ResumeThread(hThread);</pre>
+              <p>Оживляет поток: уменьшает счётчик приостановки, поток начинает выполняться. Это «пуск»: первая же инструкция потока выполнится по новому адресу RIP — из HookThread. Возвращаемое значение — прежний счётчик приостановки (здесь 1).</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 28</span>
+              <pre>std::cout &lt;&lt; &quot;ResumeThread вызван (счётчик приостановки был &quot; &lt;&lt; prevSuspend &lt;&lt; &quot;). Поток работает...&quot;</pre>
+              <p>Печатает прежний счётчик приостановки и факт запуска. Счётчик 1 подтверждает, что поток действительно был приостановлен ровно один раз и теперь работает.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 29</span>
+              <pre>WaitForSingleObject(hThread, INFINITE); CloseHandle(hThread);</pre>
+              <p>Ждёт завершения потока (окончания расчёта), затем закрывает его дескриптор. Расчёт Fib(40) занимает секунды, main не должен завершиться раньше потока. CloseHandle освобождает объект потока в ядре.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 30</span>
+              <pre>std::cout &lt;&lt; &quot;Поток завершён. Итог: Fib(&quot; &lt;&lt; FIB_N &lt;&lt; &quot;) = &quot; &lt;&lt; g_result</pre>
+              <p>Печатает итоговый результат расчёта из общей переменной. Main читает g_result только после WaitForSingleObject — значит, поток уже записал туда ответ, гонки нет.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 31</span>
+              <pre>if (g_result == 102334155) { std::cout &lt;&lt; &quot;Результат верный: Fib(40) = 102334155.&quot; }</pre>
+              <p>Проверяет результат по известному значению Fib(40) = 102334155. Независимая проверка правильности: если хук посчитал неверно или вообще не посчитал, это сразу видно.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 32</span>
+              <pre>std::cout &lt;&lt; &quot;Доказательство перехвата: сообщение «ПЕРЕХВАТ» есть, а сообщение «ОРИГИНАЛ» не появилось — FibThread так и не запустилась.&quot;</pre>
+              <p>Формулирует доказательство перехвата словами. На защите не нужно ничего объяснять отдельно: программа сама говорит, что именно доказывает перехват.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 33</span>
+              <pre>return 0;</pre>
+              <p>Успешное завершение программы с кодом 0. Код 0 — общепринятый признак нормального завершения; его видит вызывающая среда.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============ ТЕОРИЯ ============ -->
+    <div id="teoriya" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Теория — обычная версия</div>
+        <span class="task-path">задания 1–2</span>
+      </div>
+      <div class="task-body">
+
+        <h3>Задание 1. Почему с CreateThread растёт Private Bytes</h3>
+        <p>Поток — это не только код и стек. У каждого потока есть ещё «личное дело» в библиотеке CRT: там хранятся данные функций вроде <code>strtok</code> и <code>asctime</code>. Эти функции не чистые: они запоминают состояние между вызовами. У <code>strtok</code> это указатель на место, где остановился разбор строки. Состояние лежит в TLS — памяти, отдельной для каждого потока.</p>
+        <p><code>CreateThread</code> — это «голый» вызов Windows. Система создаёт поток, но CRT о нём ничего не знает: никто не выделил ему «личное дело» и никто его не заведёт. Когда поток первый раз вызывает <code>strtok</code>, CRT замечает отсутствие данных и выделяет их на ходу, в куче процесса. А когда поток завершается, освободить эти данные некому: завершение потока через <code>CreateThread</code> не вызывает код очистки CRT. Блок памяти остаётся в куче — навсегда.</p>
+        <p>Один поток теряет немного — порядка сотен байт. Но потоков 10 000, и каждый оставляет после себя свой блок. Потеря складывается: Private Bytes (память, принадлежащая только этому процессу) растёт с каждым потоком и после конца программы не возвращается. Это и есть утечка памяти: память выделена, но больше никому не нужна и никто её не освободит.</p>
+        <p>В диспетчере задач это видно так: запускаете вариант <code>create</code> и смотрите на столбец частной памяти процесса <code>task1.exe</code> — число ползёт вверх всё время работы программы. Программа и сама печатает PrivateUsage на старте, каждые 1000 потоков и на финише, поэтому рост виден и без диспетчера.</p>
+
+        <h3>Задание 1. Почему с _beginthreadex потребление стабилизируется</h3>
+        <p><code>_beginthreadex</code> — это обёртка CRT над тем же <code>CreateThread</code>. Разница в том, что делает обёртка до и после работы потока. До старта потока она выделяет и инициализирует CRT-состояние потока: «личное дело» готово заранее, <code>strtok</code> работает с ним с первого вызова. После завершения потока она вызывает код очистки CRT: все данные потока, включая блок для <code>strtok</code>, освобождаются.</p>
+        <p>Итог: каждый поток прибирает за собой. Куча процесса не растёт от потока к потоку, Private Bytes колеблется около одного уровня — небольшие подъёмы и спады от текущей работы, но без постоянного роста. Поэтому правило простое: в программах на C/C++ потоки создают только через <code>_beginthreadex</code> (или <code>std::thread</code>, который делает то же самое внутри), а «голый» <code>CreateThread</code> оставляют для кода, который вообще не пользуется CRT.</p>
+        <div class="callout-success">Коротко: CreateThread не готовит и не убирает CRT-данные потока — каждый поток оставляет мусор, память растёт. _beginthreadex готовит данные до старта и освобождает их после финиша — мусора нет, память стоит на месте.</div>
+
+        <h3>Задание 2. Приостановленный поток и CREATE_SUSPENDED</h3>
+        <p>Обычно поток начинает работу сразу после создания. Флаг <code>CREATE_SUSPENDED</code> меняет это: поток создаётся, но «спит» — процессор не выполняет ни одной его инструкции. У потока есть счётчик приостановки: создание с этим флагом ставит его в 1. Пока счётчик больше нуля, поток не работает. <code>ResumeThread</code> уменьшает счётчик на 1; когда он становится нулём, поток оживает.</p>
+        <p>Пауза нужна, чтобы успеть что-то сделать с потоком до его старта. В задании это «что-то» — подмена точки входа. Без паузы поток начал бы выполнять свою функцию сразу, и менять было бы поздно.</p>
+
+        <h3>Задание 2. Контекст потока и регистр RIP</h3>
+        <p>Контекст потока — это снимок всех его регистров: значения, которые процессор держит в регистрах в данный момент. Самый важный здесь регистр — RIP (на x64) или EIP (на x86): указатель инструкций. Процессор всегда выполняет ту инструкцию, адрес которой лежит в RIP, а после её выполнения переходит к следующей.</p>
+        <p><code>GetThreadContext</code> копирует регистры приостановленного потока в структуру <code>CONTEXT</code>, а <code>SetThreadContext</code> записывает структуру обратно в поток. Важное условие: перед вызовом <code>GetThreadContext</code> нужно поставить <code>ContextFlags = CONTEXT_FULL</code> — иначе система не знает, какие регистры вам нужны, и поле RIP останется пустым. И второе условие: поток обязан быть приостановлен — у работающего потока регистры меняются каждую инструкцию, снимок будет мусором.</p>
+
+        <h3>Задание 2. Хук и доказательство перехвата</h3>
+        <p>Хук (перехватчик) — это функция, которая выполняется вместо оригинальной. В задании мы просто меняем адрес в RIP: вместо адреса <code>FibThread</code> пишем адрес <code>HookThread</code>. Когда <code>ResumeThread</code> будит поток, процессор берёт первую инструкцию по новому адресу — и поток начинает работу с хука, даже не зная, что его «перехватили».</p>
+        <p>Доказательство перехвата — в выводе программы. Хук печатает «ПЕРЕХВАТ», а оригинальная функция печатала бы «ОРИГИНАЛ». Если в выводе есть «ПЕРЕХВАТ» и нет ни одного «ОРИГИНАЛ», значит, <code>FibThread</code> ни разу не выполнилась, а расчёт сделал хук. Дополнительная проверка: результат Fib(40) = 102334155 — известное значение, программа сверяет его сама.</p>
+        <div class="callout-warn">Подмена RIP — приём отладки и исследования, а не обычный способ писать программы. В реальном коде так не делают: это хрупко (нужно точно знать соглашения о вызовах и состояние стека) и антивирусы воспринимают это как подозрительное поведение.</div>
+
+      </div>
+    </div>
+
+    <!-- ============ СЛОВАРЬ ============ -->
+    <div id="slovar" class="task-card">
+      <div class="task-header">
+        <div class="task-title">Словарь терминов — обычная версия</div>
+        <span class="task-path">16 терминов</span>
+      </div>
+      <div class="task-body">
+        <div class="explanation-box">
+          <span class="explanation-title">Термин — короткое определение — аналогия из жизни</span>
+          <table class="breakdown">
+            <tr><th>Термин</th><th>Определение</th><th>Аналогия из жизни</th></tr>
+            <tr><td><code>Поток</code></td><td>Отдельная «дорожка» выполнения внутри процесса: свой стек и свои регистры, общая память с другими потоками того же процесса.</td><td>Как несколько поваров на одной кухне: готовят одновременно, продукты и плита общие, но у каждого свой нож и свой стол.</td></tr>
+            <tr><td><code>CRT</code></td><td>C Runtime Library — стандартная библиотека языка C: strtok, malloc, printf и другие базовые функции, которые подключаются к каждой программе на C/C++.</td><td>Как набор инструментов в мастерской: молотки и отвёртки, которые есть у каждого работника по умолчанию.</td></tr>
+            <tr><td><code>TLS</code></td><td>Thread Local Storage — память, отдельная для каждого потока: у каждого потока своя копия данных, другие потоки её не видят и не портят.</td><td>Как личный шкафчик в раздевалке: у каждого работника свой, чужие вещи туда не попадают.</td></tr>
+            <tr><td><code>Private Bytes</code></td><td>Память, выделенная процессом только для себя и недоступная другим процессам. Растёт при утечках. В диспетчере задач — столбец частной памяти.</td><td>Как вещи, которые вы купили только себе: их нельзя забрать у соседа и они не пропадут, если сосед переедет.</td></tr>
+            <tr><td><code>Утечка памяти</code></td><td>Память выделена, но больше никому не нужна, и никто её не освободил. Повторяется много раз — память процесса растёт без остановки.</td><td>Как кран, который капает: одна капля незаметна, а за месяц набегает лужа.</td></tr>
+            <tr><td><code>strtok</code></td><td>Функция CRT, которая режет строку на слова по заданным разделителям. Запоминает место остановки между вызовами, поэтому хранит состояние в TLS потока.</td><td>Как ножницы, которые помнят, где остановились резать ленту: продолжили с того же места, а не с начала.</td></tr>
+            <tr><td><code>CreateThread</code></td><td>Функция Win32 API, которая создаёт «голый» поток Windows. Не готовит и не убирает CRT-данные потока.</td><td>Как нанять работника, но не выдать ему пропуск и шкафчик: работать он будет, но его вещи некуда положить и никто за ним не уберёт.</td></tr>
+            <tr><td><code>_beginthreadex</code></td><td>Функция CRT для создания потока. Готовит CRT-состояние потока до старта и освобождает его после завершения потока.</td><td>Как нанять работника через кадры: пропуск выдали при приёме, вещи забрали при увольнении — порядок полный.</td></tr>
+            <tr><td><code>CREATE_SUSPENDED</code></td><td>Флаг создания потока: поток создаётся, но не выполняет ни одной инструкции, пока его не «разбудит» ResumeThread.</td><td>Как будильник на паузе: человек уже лёг спать, но будильник не заведён — проснётся только когда его включат.</td></tr>
+            <tr><td><code>Контекст потока</code></td><td>Снимок всех регистров потока в один момент: значения RIP, RSP, остальных регистров. Хранится в структуре CONTEXT.</td><td>Как фотография рабочего места: видно, где лежит каждый инструмент и на какой странице открыта книга.</td></tr>
+            <tr><td><code>RIP</code></td><td>Регистр указателя инструкций на x64: адрес следующей инструкции, которую выполнит процессор. На x86 тот же регистр называется EIP.</td><td>Как закладка в книге: показывает, на какой странице вы остановились и с какой продолжите читать.</td></tr>
+            <tr><td><code>Хук</code></td><td>Функция-перехватчик: выполняется вместо оригинальной функции, подменяя её поведение. В задании поток стартует с хука вместо своей функции.</td><td>Как дублёр в театре: выходит на сцену вместо актёра, а зритель разницы не замечает.</td></tr>
+            <tr><td><code>ResumeThread</code></td><td>Функция Win32 API: уменьшает счётчик приостановки потока на 1. Когда счётчик становится нулём, поток начинает работу.</td><td>Как снять машину с ручника: пока ручник поднят, машина стоит; опустили — поехала.</td></tr>
+            <tr><td><code>GetThreadContext</code></td><td>Функция Win32 API: копирует регистры приостановленного потока в структуру CONTEXT. Требует ContextFlags = CONTEXT_FULL и спящий поток.</td><td>Как списать показания счётчиков: подойти, посмотреть и записать цифры, пока никто ничего не трогает.</td></tr>
+            <tr><td><code>SetThreadContext</code></td><td>Функция Win32 API: записывает изменённую структуру CONTEXT обратно в приостановленный поток. Так подменяют RIP.</td><td>Как переставить закладку в чужой книге на другую страницу: откроет книгу — начнёт читать с нового места.</td></tr>
+            <tr><td><code>Числа Фибоначчи</code></td><td>Ряд, где каждое число — сумма двух предыдущих: 0, 1, 1, 2, 3, 5, 8, 13… Fib(40) = 102334155. Рекурсивный расчёт тяжёлый и хорошо подходит как «настоящая работа» потока.</td><td>Как кролики в задаче Фибоначчи: каждая пара даёт потомство, и число пар растёт как сумма двух предыдущих поколений.</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ STE-ВЕРСИЯ ============ -->
+    <div id="ste" class="task-card">
+      <div class="task-header">
+        <div class="task-title">STE-версия: разбор, теория и словарь</div>
+        <span class="task-path">стиль ASD-STE100, ~60%</span>
+      </div>
+      <div class="task-body">
+        <div class="callout-success">Правила этого раздела. Ответ идёт первым. Одна мысль — одно предложение. Инструкция — не больше 20 слов. Описание — не больше 25 слов. Используй действительный залог. Одно понятие — одно слово.</div>
+
+        <h3>STE-разбор: задание 1</h3>
+        <div class="explanation-box">
+          <span class="explanation-title">STE-разбор — task1_createthread_vs_beginthreadex.cpp</span>
+          <div class="steps">
+            <div class="step">
+              <span class="step-num">Шаг 1</span>
+              <pre>#include &lt;windows.h&gt;</pre>
+              <p>Подключает функции Windows. Программа использует CreateThread и другие вызовы Windows.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 2</span>
+              <pre>#include &lt;process.h&gt;</pre>
+              <p>Подключает _beginthreadex. Второй вариант программы создаёт поток через _beginthreadex.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 3</span>
+              <pre>#include &lt;psapi.h&gt;</pre>
+              <p>Подключает чтение памяти процесса. Программа показывает рост памяти без диспетчера задач.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 4</span>
+              <pre>#include &lt;iostream&gt;, &lt;cstring&gt;</pre>
+              <p>Подключают вывод и работу со строками. Программа печатает результаты и режет строку через strtok.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 5</span>
+              <pre>THREAD_COUNT = 10000, STRTOK_CALLS = 100</pre>
+              <p>Задают число потоков и число вызовов strtok. Задание требует 10 000 потоков. Сто вызовов нагружают CRT.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 6</span>
+              <pre>WorkerThread</pre>
+              <p>Разбирает копию строки 100 раз через strtok. Каждый поток реально использует функции CRT.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 7</span>
+              <pre>strcpy(buffer, TEST_STRING)</pre>
+              <p>Копирует строку перед каждым разбором. strtok портит строку. Свежая копия нужна для нового разбора.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 8</span>
+              <pre>strtok(buffer, &quot;,;: &quot;) / strtok(nullptr, &quot;,;: &quot;)</pre>
+              <p>Режет строку на слова по разделителям. Первый вызов начинает разбор. Вызов с NULL продолжает разбор.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 9</span>
+              <pre>PrintMemory</pre>
+              <p>Печатает WorkingSet и PrivateUsage процесса. Программа показывает память на старте, в середине и на финише.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 10</span>
+              <pre>main: выбор варианта</pre>
+              <p>Проверяет аргумент &quot;begin&quot;. Аргумент &quot;begin&quot; выбирает _beginthreadex. Остальное выбирает CreateThread.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 11</span>
+              <pre>_beginthreadex</pre>
+              <p>Создаёт поток с данными CRT. CRT готовит данные потока до старта и убирает их после финиша.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 12</span>
+              <pre>CreateThread</pre>
+              <p>Создаёт поток без данных CRT. CRT не знает о потоке. Данные потока никто не убирает.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 13</span>
+              <pre>WaitForSingleObject + CloseHandle</pre>
+              <p>Ждёт поток и закрывает его дескриптор. Следующий поток стартует после финиша предыдущего. Дескриптор нельзя оставлять открытым.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 14</span>
+              <pre>Печать каждые 1000 потоков</pre>
+              <p>Показывает счётчик потоков и память. Срезы памяти показывают динамику: рост или стабильность.</p>
+            </div>
+          </div>
+        </div>
+
+        <h3>STE-разбор: задание 2</h3>
+        <div class="explanation-box">
+          <span class="explanation-title">STE-разбор — task2_suspended_hook.cpp</span>
+          <div class="steps">
+            <div class="step">
+              <span class="step-num">Шаг 1</span>
+              <pre>#include &lt;windows.h&gt;, &lt;iostream&gt;</pre>
+              <p>Подключают функции Windows и вывод. Программа управляет потоком и печатает результат.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 2</span>
+              <pre>FIB_N = 40, g_result = -1</pre>
+              <p>Задают номер Фибоначчи и место для ответа. Поток пишет ответ в общую переменную. Main читает ответ после финиша потока.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 3</span>
+              <pre>FibRecursive</pre>
+              <p>Считает числа Фибоначчи рекурсивно. Рекурсия даёт тяжёлый расчёт: Fib(40) требует около 100 миллионов вызовов.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 4</span>
+              <pre>FibThread</pre>
+              <p>Печатает «ОРИГИНАЛ» и считает Fib(40). Это исходная функция потока. Перехват не даёт ей выполниться.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 5</span>
+              <pre>HookThread</pre>
+              <p>Печатает «ПЕРЕХВАТ» и считает Fib(40). Хук выполняет работу вместо исходной функции. Его сообщение доказывает перехват.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 6</span>
+              <pre>CreateThread(..., CREATE_SUSPENDED, ...)</pre>
+              <p>Создаёт спящий поток. Спящий поток не выполняет код. Программа успевает подменить его RIP.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 7</span>
+              <pre>CONTEXT ctx, ContextFlags = CONTEXT_FULL</pre>
+              <p>Готовит структуру контекста. Флаг CONTEXT_FULL запрашивает все регистры, включая RIP.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 8</span>
+              <pre>GetThreadContext</pre>
+              <p>Читает регистры спящего потока. Программа получает исходный RIP потока. Поток обязан спать.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 9</span>
+              <pre>ctx.Rip = HookThread</pre>
+              <p>Меняет RIP на адрес хука. Поток стартует с хука, а не со своей функции. На x64 регистр зовут RIP.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 10</span>
+              <pre>SetThreadContext</pre>
+              <p>Пишет изменённый контекст в поток. Без этого шага подмена остаётся только в локальной структуре.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 11</span>
+              <pre>ResumeThread</pre>
+              <p>Будит поток. Поток выполняет первую инструкцию по новому адресу RIP.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 12</span>
+              <pre>WaitForSingleObject + CloseHandle</pre>
+              <p>Ждёт финиша потока и закрывает дескриптор. Main читает ответ только после финиша потока.</p>
+            </div>
+            <div class="step">
+              <span class="step-num">Шаг 13</span>
+              <pre>Проверка g_result == 102334155</pre>
+              <p>Сверяет ответ с известным значением Fib(40). Проверка подтверждает правильность расчёта хука.</p>
+            </div>
+          </div>
+        </div>
+
+        <h3>STE-теория: задание 1</h3>
+        <p>Ответ: CreateThread теряет память, _beginthreadex не теряет память.</p>
+        <p>CreateThread создаёт поток без данных CRT. strtok хранит состояние в данных CRT. CRT выделяет данные при первом вызове strtok. Никто не освобождает данные после финиша потока. Каждый поток оставляет блок памяти. 10 000 потоков оставляют 10 000 блоков. Private Bytes растёт.</p>
+        <p>_beginthreadex готовит данные CRT до старта потока. _beginthreadex освобождает данные CRT после финиша потока. Каждый поток убирает за собой. Private Bytes не растёт. Используй _beginthreadex для потоков в программах C/C++.</p>
+
+        <h3>STE-теория: задание 2</h3>
+        <p>Ответ: поток стартует с хука после подмены RIP.</p>
+        <p>CREATE_SUSPENDED создаёт спящий поток. Спящий поток не выполняет код. GetThreadContext читает регистры спящего потока. ContextFlags = CONTEXT_FULL запрашивает все регистры. RIP хранит адрес следующей инструкции. Программа пишет адрес хука в RIP. SetThreadContext пишет контекст в поток. ResumeThread будит поток. Поток выполняет первую инструкцию из хука. Сообщение «ПЕРЕХВАТ» доказывает перехват. Сообщение «ОРИГИНАЛ» не появляется. FibThread не выполняется.</p>
+
+        <h3>STE-словарь</h3>
+        <div class="explanation-box">
+          <span class="explanation-title">STE-словарь — тот же набор терминов</span>
+          <table class="breakdown">
+            <tr><th>Термин</th><th>Определение</th><th>Аналогия</th></tr>
+            <tr><td><code>Поток</code></td><td>Поток — отдельная дорожка выполнения в процессе.</td><td>Повара на одной кухне готовят одновременно.</td></tr>
+            <tr><td><code>CRT</code></td><td>CRT — стандартная библиотека языка C.</td><td>Набор инструментов есть у каждого работника.</td></tr>
+            <tr><td><code>TLS</code></td><td>TLS — память, отдельная для каждого потока.</td><td>Личный шкафчик есть у каждого работника.</td></tr>
+            <tr><td><code>Private Bytes</code></td><td>Private Bytes — память только этого процесса.</td><td>Вещи принадлежат только тебе.</td></tr>
+            <tr><td><code>Утечка памяти</code></td><td>Утечка — память выделена, но никто её не освобождает.</td><td>Кран капает. Лужа растёт.</td></tr>
+            <tr><td><code>strtok</code></td><td>strtok — функция, которая режет строку на слова.</td><td>Ножницы помнят место разреза.</td></tr>
+            <tr><td><code>CreateThread</code></td><td>CreateThread — функция, которая создаёт поток Windows.</td><td>Работник принят без пропуска и шкафчика.</td></tr>
+            <tr><td><code>_beginthreadex</code></td><td>_beginthreadex — функция, которая создаёт поток с данными CRT.</td><td>Кадры выдают пропуск и забирают вещи при увольнении.</td></tr>
+            <tr><td><code>CREATE_SUSPENDED</code></td><td>CREATE_SUSPENDED — флаг, который создаёт спящий поток.</td><td>Будильник на паузе не будит человека.</td></tr>
+            <tr><td><code>Контекст потока</code></td><td>Контекст — снимок всех регистров потока.</td><td>Фотография показывает рабочее место.</td></tr>
+            <tr><td><code>RIP</code></td><td>RIP — регистр с адресом следующей инструкции.</td><td>Закладка показывает страницу для чтения.</td></tr>
+            <tr><td><code>Хук</code></td><td>Хук — функция, которая работает вместо исходной функции.</td><td>Дублёр выходит на сцену вместо актёра.</td></tr>
+            <tr><td><code>ResumeThread</code></td><td>ResumeThread — функция, которая будит поток.</td><td>Снятие с ручника разрешает движение.</td></tr>
+            <tr><td><code>GetThreadContext</code></td><td>GetThreadContext — функция, которая читает регистры потока.</td><td>Человек списывает показания счётчиков.</td></tr>
+            <tr><td><code>SetThreadContext</code></td><td>SetThreadContext — функция, которая пишет регистры в поток.</td><td>Человек переставляет закладку в книге.</td></tr>
+            <tr><td><code>Числа Фибоначчи</code></td><td>Числа Фибоначчи — ряд, где каждое число равно сумме двух предыдущих.</td><td>Число пар кроликов растёт как сумма двух поколений.</td></tr>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <footer>Лабораторная работа №8 · <a href="programs.html">Программы и запуск →</a></footer>
+</body>
+</html>
